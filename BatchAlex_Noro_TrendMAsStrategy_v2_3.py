@@ -1,5 +1,5 @@
 '''
-Implementation of the TradingView strategy: Alex(Noro) Trend MAs v2.3
+Batch testing of the implementation of the TradingView strategy: Alex(Noro) Trend MAs v2.3
 '''
  
 import backtrader as bt
@@ -10,14 +10,13 @@ import math
 import argparse
 from backtrader import TimeFrame
 import itertools
-import time
 import pytz
-from pytz import timezone
 from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer 
 
 tradesopen = {}
 tradesclosed = {}
+batch_number = 0
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Alex(Noro) Trend MAs v2.3 Strategy')
@@ -139,7 +138,7 @@ class maxRiskSizerComms(bt.Sizer):
         return comm_adj_size
 
  
-class AlexNoroTrendMAsStrategy(bt.Strategy): 
+class BatchAlexNoroTrendMAsStrategy(bt.Strategy):
     '''
     This is a strategy from TradingView - Alex (Noro) TrendMAs strategy.
     '''
@@ -166,7 +165,6 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
         print('%s  %s' % (dt, txt))
 
     def __init__(self):
-
         self.curr_position = 0
 
         #self.rsi       = bt.talib.RSI(self.data.close, timeperiod=2)
@@ -257,43 +255,7 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
         dn2 = True if self.data.low[0] > self.center[-1] and self.data.low[0] > self.center2[-1] and self.bar[-1] == 1 and self.p.needex == True else False 
         up3 = 1 if self.data.close[0] < self.data.open[0] and self.len[0] > self.sma[0] * 3 and self.minV[0] < self.minV[-1] and fastrsi < 10 else 0
 
-        if args.debug:
-            self.log('----------------------')
-            ddanalyzer = self.analyzers.dd.get_analysis()
-            self.log('Drawdown: {}'.format(round(ddanalyzer.moneydown, 8)))
-            self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
-            self.log('self.curr_position = {}'.format(self.curr_position))
-            self.log('self.position = {}'.format(self.position))
-            self.log('cerebro.broker.get_cash() = {}'.format(cerebro.broker.get_cash()))
-            self.log('cerebro.broker.get_value() = {}'.format(cerebro.broker.get_value()))
-            self.log('self.rsi = {}'.format(self.rsi[0]))
-            self.log('self.data.open[0] = {}'.format(self.data.open[0]))
-            self.log('self.data.high[0]= {}'.format(self.data.high[0]))
-            self.log('self.data.low[0] = {}'.format(self.data.low[0]))
-            self.log('self.data.close[0] = {}'.format(self.data.close[0]))
-            self.log('self.lasthigh = {}'.format(self.lasthigh[0]))
-            self.log('self.lastlow = {}'.format(self.lastlow[0]))
-            self.log('self.lasthigh2 = {}'.format(self.lasthigh2[0]))
-            self.log('self.lastlow2 = {}'.format(self.lastlow2[0]))
-            self.log('self.trend = {}'.format(self.trend[-1]))
-            self.log('self.center = {}'.format(self.center[-1]))
-            self.log('self.center2 = {}'.format(self.center2[-1]))
-            self.log('self.bar = {}'.format(self.bar[-1]))
-            self.log('self.redbars = {}'.format(self.redbars[-1]))
-            self.log('self.greenbars = {}'.format(self.greenbars[-1]))
-            self.log('self.mac = {}'.format(self.mac[0]))
-            self.log('self.len = {}'.format(self.len[0]))
-            self.log('self.sma = {}'.format(self.sma[0]))
-            self.log('self.maxV = {}'.format(self.maxV[0]))
-            self.log('self.minV = {}'.format(self.minV[0]))
-            self.log('self.stoplong = {}'.format(self.stoplong[-1]))
-            self.log('self.stopshort = {}'.format(self.stopshort[-1]))
-            self.log('up1 = {} - True if self.trend[-1]({}) == 1 and (self.data.low[0]({}) < self.center2[-1]({}) or self.p.usefastsma({}) == False) and self.redbars[-1]({}) == 1 else False'.format(up1, self.trend[-1], self.data.low[0], self.center2[-1], self.p.usefastsma, self.redbars[-1]))
-            self.log('dn1 = {} - True if self.trend[-1]({}) == -1 and (self.data.high[0]({}) > self.center2[-1]({}) or self.p.usefastsma({}) == False) and self.greenbars[-1]({}) == 1 else False'.format(dn1, self.trend[-1], self.data.high[0], self.center2[-1], self.p.usefastsma, self.greenbars[-1]))
-            self.log('up2 = {} - True if self.data.high[0]({}) < self.center[-1]({}) and self.data.high[0]({}) < self.center2[-1]({}) and self.bar[-1]({}) == -1 and self.p.needex({}) == True else False'.format(up2, self.data.high[0], self.center[-1], self.data.high[0], self.center2[-1], self.bar[-1], self.p.needex))
-            self.log('dn2 = {}'.format(dn2))
-            self.log('up3 = {} - 1 if self.data.close[0]({}) < self.data.open[0]({}) and self.len[0]({}) > self.sma[0]({}) * 3 and self.minV[0]({}) < self.minV[-1]({}) and fastrsi({}) < 10 else 0'.format(up3, self.data.close[0], self.data.open[0], self.len[0], self.sma[0], self.minV[0], self.minV[-1], fastrsi))
-            self.log('----------------------')
+        self.printdebuginfonextinner()
 
         #Trading
         if up1 == 1 and self.p.needstops == True:
@@ -355,19 +317,7 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
             self.close(tradeid=self.curtradeid)
             self.curr_position = 0
 
-        if args.debug:
-            print('---------------------------- NEXT DEBUG ----------------------------')
-            print("1: Data Name:                            {}".format(data._name))
-            print("2: Bar Num:                              {}".format(len(data)))
-            print("3: Current date:                         {}".format(data.datetime.datetime()))
-            print('4: Open:                                 {}'.format(data.open[0]))
-            print('5: High:                                 {}'.format(data.high[0]))
-            print('6: Low:                                  {}'.format(data.low[0]))
-            print('7: Close:                                {}'.format(data.close[0]))
-            print('8: Volume:                               {}'.format(data.volume[0]))
-            print('9: RSI:                                  {}'.format(self.rsi[0]))
-            print('10: Current Position:                    {}'.format(self.curr_position))
-            print('--------------------------------------------------------------------')
+        self.printdebuginfonextend()
 
     def notify_order(self, order):
         if args.debug:
@@ -388,7 +338,7 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
         elif order.status in [order.Expired, order.Canceled, order.Margin]:
             pass  # Simply log
 
-    def notify_trade(self,trade):
+    def notify_trade(self, trade):
         if args.debug:
             self.log('!!! notify_trade() - self.curr_position={}, traderef={}'.format(self.curr_position, trade.ref))
         if trade.isclosed:
@@ -407,6 +357,65 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
             tradesopen[trade.ref]= trade
             if args.debug:
                 self.log('TRADE JUST OPENED, SIZE {}, REF {}, CASH {}'.format(trade.size, trade.ref, cerebro.broker.getcash()))
+
+    def stop(self):
+        global batch_number
+        batch_number += 1
+        print('!! Finished Batch #: {},  params={}'.format(batch_number, vars(self.params)))
+
+    def printdebuginfonextinner(self):
+        if args.debug:
+            self.log('----------------------')
+            ddanalyzer = self.analyzers.dd.get_analysis()
+            self.log('Drawdown: {}'.format(round(ddanalyzer.moneydown, 8)))
+            self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
+            self.log('self.curr_position = {}'.format(self.curr_position))
+            self.log('self.position = {}'.format(self.position))
+            self.log('cerebro.broker.get_cash() = {}'.format(cerebro.broker.get_cash()))
+            self.log('cerebro.broker.get_value() = {}'.format(cerebro.broker.get_value()))
+            self.log('self.rsi = {}'.format(self.rsi[0]))
+            self.log('self.data.open[0] = {}'.format(self.data.open[0]))
+            self.log('self.data.high[0]= {}'.format(self.data.high[0]))
+            self.log('self.data.low[0] = {}'.format(self.data.low[0]))
+            self.log('self.data.close[0] = {}'.format(self.data.close[0]))
+            self.log('self.lasthigh = {}'.format(self.lasthigh[0]))
+            self.log('self.lastlow = {}'.format(self.lastlow[0]))
+            self.log('self.lasthigh2 = {}'.format(self.lasthigh2[0]))
+            self.log('self.lastlow2 = {}'.format(self.lastlow2[0]))
+            self.log('self.trend = {}'.format(self.trend[-1]))
+            self.log('self.center = {}'.format(self.center[-1]))
+            self.log('self.center2 = {}'.format(self.center2[-1]))
+            self.log('self.bar = {}'.format(self.bar[-1]))
+            self.log('self.redbars = {}'.format(self.redbars[-1]))
+            self.log('self.greenbars = {}'.format(self.greenbars[-1]))
+            self.log('self.mac = {}'.format(self.mac[0]))
+            self.log('self.len = {}'.format(self.len[0]))
+            self.log('self.sma = {}'.format(self.sma[0]))
+            self.log('self.maxV = {}'.format(self.maxV[0]))
+            self.log('self.minV = {}'.format(self.minV[0]))
+            self.log('self.stoplong = {}'.format(self.stoplong[-1]))
+            self.log('self.stopshort = {}'.format(self.stopshort[-1]))
+            self.log('up1 = {} - True if self.trend[-1]({}) == 1 and (self.data.low[0]({}) < self.center2[-1]({}) or self.p.usefastsma({}) == False) and self.redbars[-1]({}) == 1 else False'.format(up1, self.trend[-1], self.data.low[0], self.center2[-1], self.p.usefastsma, self.redbars[-1]))
+            self.log('dn1 = {} - True if self.trend[-1]({}) == -1 and (self.data.high[0]({}) > self.center2[-1]({}) or self.p.usefastsma({}) == False) and self.greenbars[-1]({}) == 1 else False'.format(dn1, self.trend[-1], self.data.high[0], self.center2[-1], self.p.usefastsma, self.greenbars[-1]))
+            self.log('up2 = {} - True if self.data.high[0]({}) < self.center[-1]({}) and self.data.high[0]({}) < self.center2[-1]({}) and self.bar[-1]({}) == -1 and self.p.needex({}) == True else False'.format(up2, self.data.high[0], self.center[-1], self.data.high[0], self.center2[-1], self.bar[-1], self.p.needex))
+            self.log('dn2 = {}'.format(dn2))
+            self.log('up3 = {} - 1 if self.data.close[0]({}) < self.data.open[0]({}) and self.len[0]({}) > self.sma[0]({}) * 3 and self.minV[0]({}) < self.minV[-1]({}) and fastrsi({}) < 10 else 0'.format(up3, self.data.close[0], self.data.open[0], self.len[0], self.sma[0], self.minV[0], self.minV[-1], fastrsi))
+            self.log('----------------------')
+
+    def printdebuginfonextend(self):
+        if args.debug:
+            print('---------------------------- NEXT DEBUG ----------------------------')
+            print("1: Data Name:                            {}".format(data._name))
+            print("2: Bar Num:                              {}".format(len(data)))
+            print("3: Current date:                         {}".format(data.datetime.datetime()))
+            print('4: Open:                                 {}'.format(data.open[0]))
+            print('5: High:                                 {}'.format(data.high[0]))
+            print('6: Low:                                  {}'.format(data.low[0]))
+            print('7: Close:                                {}'.format(data.close[0]))
+            print('8: Volume:                               {}'.format(data.volume[0]))
+            print('9: RSI:                                  {}'.format(self.rsi[0]))
+            print('10: Current Position:                    {}'.format(self.curr_position))
+            print('--------------------------------------------------------------------')
 
 def printTradeAnalysis(analyzer):
     '''
@@ -464,13 +473,29 @@ args = parse_args()
 startcash = 100000
  
 # Create an instance of cerebro
-cerebro = bt.Cerebro()
+cerebro = bt.Cerebro(optreturn=False, optdatas=True)
 
 #Add our strategy
-cerebro.addstrategy(AlexNoroTrendMAsStrategy)
- 
+cerebro.optstrategy(BatchAlexNoroTrendMAsStrategy,
+    needlong=(False, True),
+    needshort=(False, True),
+    needstops=False,
+    stoppercent=5,
+    usefastsma=(False, True),
+    fastlen=range(3, 6),
+    slowlen=21, #range(10, 41),
+    bars=range(0, 6),
+    needex=(False, True),
+    fromyear=1900,
+    toyear=2100,
+    frommonth=1,
+    tomonth=12,
+    fromday=1,
+    today=31)
+
 data = btfeeds.GenericCSVData(
     dataname='bitfinex-BTCUSDT-15m.csv',
+    buffered=True,
     #fromdate=datetime(2018, 10, 1),
     #todate=datetime(2118, 12, 31),
     timeframe=TimeFrame.Ticks,
@@ -502,44 +527,64 @@ if args.commsizer:
     cerebro.addsizer(maxRiskSizerComms, debug=args.debug, risk=args.risk)
 else:
     cerebro.addsizer(maxRiskSizer, debug=args.debug, risk=args.risk)
- 
- 
+
 if args.commtype.lower() == 'percentage':
     cerebro.broker.setcommission(args.commission)
- 
+
 # Run over everything
-strategies = cerebro.run()
- 
+opt_runs = cerebro.run()
+
+# Generate results list
+final_results_list = []
+for run in opt_runs:
+    for strategy in run:
+        value = round(strategy.broker.get_value(),2)
+        PnL = round(value - startcash,2)
+        period = strategy.params.period
+        final_results_list.append([period,PnL])
+
+
+
+
+
+
+
+
+
+
+# Run over everything
+#strategies = cerebro.run()
+
 #Get final portfolio Value
-portvalue = cerebro.broker.getvalue()
-pnl = portvalue - startcash
-pnlpct = 100 * (portvalue/startcash) - 100
+#portvalue = cerebro.broker.getvalue()
+#pnl = portvalue - startcash
+#pnlpct = 100 * (portvalue/startcash) - 100
  
 #Print out the final result
-print('\n')
-for k, t in tradesclosed.items():
-    opentrade = tradesopen[k]
-    side = 'Long' if opentrade.size > 0 else 'Short'
-    print('Trade Ref: {}'.format(t.ref))
-    print('Trade Price: {}'.format(t.price))
-    print('Trade Side: {}'.format(side))
-    print('Trade dtopen: {}'.format(bt.num2date(t.dtopen)))
-    print('Trade dtclose: {}'.format(bt.num2date(t.dtclose)))
-    print('Trade barlen: {}'.format(t.barlen))
-    print('Trade Profit NET: {}'.format(t.pnlcomm))
-    print('Trade Profit GROSS: {}\n'.format(t.pnl))
+#print('\n')
+#for k, t in tradesclosed.items():
+    #    opentrade = tradesopen[k]
+    #side = 'Long' if opentrade.size > 0 else 'Short'
+    #print('Trade Ref: {}'.format(t.ref))
+    #print('Trade Price: {}'.format(t.price))
+    #print('Trade Side: {}'.format(side))
+    #print('Trade dtopen: {}'.format(bt.num2date(t.dtopen)))
+    #print('Trade dtclose: {}'.format(bt.num2date(t.dtclose)))
+    #print('Trade barlen: {}'.format(t.barlen))
+    #print('Trade Profit NET: {}'.format(t.pnlcomm))
+    #print('Trade Profit GROSS: {}\n'.format(t.pnl))
 
 # print the analyzers
-firstStrat = strategies[0]
-printTradeAnalysis(firstStrat.analyzers.ta.get_analysis())
-printSQN(firstStrat.analyzers.sqn.get_analysis())
-printDrawDown(firstStrat.analyzers.dd.get_analysis())
+#firstStrat = strategies[0]
+#printTradeAnalysis(firstStrat.analyzers.ta.get_analysis())
+#printSQN(firstStrat.analyzers.sqn.get_analysis())
+#printDrawDown(firstStrat.analyzers.dd.get_analysis())
 
-print('\nTotal # trades: {}'.format(len(tradesclosed.items())))
+#print('\nTotal # trades: {}'.format(len(tradesclosed.items())))
 
-print('Final Portfolio Value: {}'.format(round(portvalue, 2)))
-print('P/L: {}'.format(round(pnl, 2)))
-print('P/L, %: {}%'.format(round(pnlpct, 2)))
+#print('Final Portfolio Value: {}'.format(round(portvalue, 2)))
+#print('P/L: {}'.format(round(pnl, 2)))
+#print('P/L, %: {}%'.format(round(pnlpct, 2)))
 
 #Finally plot the end results
 #cerebro.plot(style='candlestick')
