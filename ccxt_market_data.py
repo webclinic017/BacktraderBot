@@ -103,7 +103,7 @@ if args.symbol not in exchange.symbols:
 # Get data
 #    def fetch_ohlcv(self, symbol, timeframe='1m', since=None, limit=None, params={}):
 
-start_utc_time = time.strptime("2008-01-01T00:00:00.000Z", "%Y-%m-%dT%H:%M:%S.%fZ")
+start_utc_time = time.strptime("2018-10-01T00:00:00.000Z", "%Y-%m-%dT%H:%M:%S.%fZ")
 start = timegm(start_utc_time) * 1000
 end = time.time() * 1000
 limit = 1000
@@ -112,14 +112,17 @@ last_timestamp = None
 data = []
 
 while timestamp <= end and timestamp != last_timestamp:
-    print("Requesting " + str(timestamp))
+    print("Requesting " + datetime.fromtimestamp(int(timestamp/1000)).strftime("%Y-%m-%dT%H:%M:%S"))
     trades = exchange.fetch_ohlcv(args.symbol, args.timeframe, timestamp, limit)
-    data.extend(trades)
     last_timestamp = timestamp
-    time.sleep(6)
     timestamp = trades[-1][0]
+    data.extend(trades)
+    time.sleep(6)
     if len(data) > 0 and len(trades) > 1:
         del data[-1] 
+
+for t in data:
+    t[0] = datetime.fromtimestamp(int(t[0] / 1000)).strftime("%Y-%m-%dT%H:%M:%S")
 
 header = ['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']
 df = pd.DataFrame(data, columns=header).set_index('Timestamp')
