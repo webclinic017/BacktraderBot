@@ -2,10 +2,10 @@
 
 
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT" "ZECUSDT" "ETPUSDT" "XMRUSDT" "DASHUSDT")
-declare -a arr_symbols=("XMRUSDT")
+declare -a arr_symbols=("BTCUSDT")
 
 #declare -a arr_timeframes=("30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("30m")
+declare -a arr_timeframes=("3h")
 
 declare exchange="bitfinex"
 

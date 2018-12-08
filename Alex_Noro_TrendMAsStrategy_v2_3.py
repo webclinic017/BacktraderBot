@@ -15,17 +15,17 @@ import pytz
 from pytz import timezone
 from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
+from extensions.sizers.percentsizer import VariablePercentSizer
 from strategies.trendmas import AlexNoroTrendMAsStrategy
+from backtrader_plotting import Bokeh
+from backtrader_plotting.schemes import Tradimo
+from backtrader.sizers import PercentSizer
 
 tradesopen = {}
 tradesclosed = {}
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Alex(Noro) Trend MAs v2.3 Strategy')
- 
-    parser.add_argument('--commsizer',
-                            action ='store_true',help=('Use the Sizer '
-                                'that takes commissions into account'))
  
     parser.add_argument('--commtype',
                         default="Percentage",
@@ -48,96 +48,6 @@ def parse_args():
                             help=('Print Debugs'))
  
     return parser.parse_args()
- 
- 
- 
-class maxRiskSizer(bt.Sizer):
-    '''
-    Returns the number of shares rounded down that can be purchased for the
-    max risk tolerance
-    '''
-    params = (('risk', 0.1),
-              ('debug', True))
- 
-    def _getsizing(self, comminfo, cash, data, isbuy):
- 
-        max_risk =  math.floor(cash * self.p.risk)
- 
-        if isbuy == True:
-            size = max_risk / data[0]
-        else:
-            size = max_risk / data[0] * -1
- 
-        #Finally round down to the nearest unit
-        size = math.floor(size)
- 
-        if self.p.debug:
-            if isbuy:
-                buysell = 'Buying'
-            else:
-                buysell = 'Selling'
-            print("------------- Sizer Debug --------------")
-            print("Action: {}".format(buysell))
-            print("Price: {}".format(data[0]))
-            print("Cash: {}".format(cash))
-            print("Max Risk %: {}".format(self.p.risk))
-            print("Max Risk $: {}".format(max_risk))
-            print("Current Price: {}".format(data[0]))
-            print("Size: {}".format(size))
-            print("----------------------------------------")
-        return size
- 
- 
-class maxRiskSizerComms(bt.Sizer):
-    '''
-    Returns the number of shares rounded down that can be purchased for the
-    max risk tolerance
-    '''
-    params = (('risk', 0.1),
-                ('debug', True))
- 
-    def _getsizing(self, comminfo, cash, data, isbuy):
-        size = 0
- 
-        # Work out the maximum size assuming all cash can be used.
-        max_risk = math.floor(cash * self.p.risk)
- 
-        comm = comminfo.p.commission
- 
-        if comminfo.stocklike: # We are using a percentage based commissions
- 
-            # Apply the commission to the price. We can then divide our risk
-            # by this value
-            com_adj_price = data[0] * (1 + (comm * 2)) # *2 for round trip
-            comm_adj_max_risk = "N/A"
- 
-            if isbuy == True:
-                comm_adj_size = max_risk / com_adj_price
-                if comm_adj_size < 0: #Avoid accidentally going short
-                    comm_adj_size = 0
-            else:
-                comm_adj_size = max_risk / com_adj_price * -1
- 
-        #Finally make sure we round down to the nearest unit.
-        comm_adj_size = math.floor(comm_adj_size)
- 
-        if self.p.debug:
-            if isbuy:
-                buysell = 'Buying'
-            else:
-                buysell = 'Selling'
-            print("------------- Sizer Debug --------------")
-            print("Action: {}".format(buysell))
-            print("Price: {}".format(data[0]))
-            print("Cash: {}".format(cash))
-            print("Max Risk %: {}".format(self.p.risk))
-            print("Max Risk $: {}".format(max_risk))
-            print("Current Price: {}".format(data[0]))
-            print("Commission: {}".format(comm))
-            print("Commission Adj Price (Round Trip): {}".format(com_adj_price))
-            print("Size: {}".format(comm_adj_size))
-            print("----------------------------------------")
-        return comm_adj_size
 
  
 def exists(obj, chain):
@@ -209,23 +119,23 @@ cerebro = bt.Cerebro()
 cerebro.addstrategy(AlexNoroTrendMAsStrategy,
                     debug=args.debug,
                     needlong=True,
-                    needshort=False,
+                    needshort=True,
                     needstops=False,
-                    stoppercent=5,
+                    stoppercent=1,
                     usefastsma=True,
                     fastlen=3,
                     slowlen=21,
                     bars=0,
                     needex=True,
-                    fromyear=2018,
+                    fromyear=2000,
                     toyear=2018,
-                    frommonth=10,
-                    tomonth=10,
+                    frommonth=1,
+                    tomonth=12,
                     fromday=1,
                     today=31)
 
 data = btfeeds.GenericCSVData(
-    dataname='./marketdata/bitfinex/BTCUSDT/15m/bitfinex-BTCUSDT-15m.csv',
+    dataname='bitfinex-BTCUSDT-30m.csv',
     #fromdate=datetime(2018, 10, 1),
     #todate=datetime(2118, 12, 31),
     timeframe=TimeFrame.Ticks,
@@ -253,12 +163,8 @@ cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd")
 cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=cerebro.broker.getcash())
 
 #add the sizer
-if args.commsizer:
-    cerebro.addsizer(maxRiskSizerComms, debug=args.debug, risk=args.risk)
-else:
-    cerebro.addsizer(maxRiskSizer, debug=args.debug, risk=args.risk)
- 
- 
+cerebro.addsizer(VariablePercentSizer, percents=99, debug=args.debug)
+
 if args.commtype.lower() == 'percentage':
     cerebro.broker.setcommission(args.commission)
  
@@ -297,4 +203,6 @@ print('P/L: {}'.format(round(pnl, 2)))
 print('P/L, %: {}%'.format(round(pnlpct, 2)))
 
 #Finally plot the end results
+#b = Bokeh(style='bar', plot_mode='single', scheme=Tradimo())
+#cerebro.plot(b)
 #cerebro.plot(style='candlestick')
