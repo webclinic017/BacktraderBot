@@ -31,6 +31,8 @@ import argparse
 import pandas as pd
 import time
 from calendar import timegm
+import pathlib
+import os
 
 def parse_args():
     parser = argparse.ArgumentParser(description='CCXT Market Data Downloader')
@@ -100,10 +102,19 @@ if args.symbol not in exchange.symbols:
     quit()
 
 
+def whereAmI():
+    return os.path.dirname(os.path.realpath(__import__("__main__").__file__))
+
+sym = args.symbol
+symbol_out = args.symbol.replace("/","")
+dirname = whereAmI()
+output_path = '{}/marketdata/{}/{}/{}'.format(dirname, args.exchange, symbol_out, args.timeframe)
+os.makedirs(output_path, exist_ok=True)
+
 # Get data
 #    def fetch_ohlcv(self, symbol, timeframe='1m', since=None, limit=None, params={}):
 
-start_utc_time = time.strptime("2018-10-01T00:00:00.000Z", "%Y-%m-%dT%H:%M:%S.%fZ")
+start_utc_time = time.strptime("2000-01-01T00:00:00.000Z", "%Y-%m-%dT%H:%M:%S.%fZ")
 start = timegm(start_utc_time) * 1000
 end = time.time() * 1000
 limit = 1000
@@ -127,6 +138,5 @@ for t in data:
 header = ['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']
 df = pd.DataFrame(data, columns=header).set_index('Timestamp')
 # Save it
-symbol_out = args.symbol.replace("/","")
-filename = '{}-{}-{}.csv'.format(args.exchange, symbol_out,args.timeframe)
+filename = '{}/{}-{}-{}.csv'.format(output_path, args.exchange, symbol_out,args.timeframe)
 df.to_csv(filename)
