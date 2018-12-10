@@ -242,7 +242,7 @@ cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd")
 cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=cerebro.broker.getcash())
 
 #add the sizer
-cerebro.addsizer(VariablePercentSizer, percents=99, debug=args.debug)
+cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
 
 if args.commtype.lower() == 'percentage':
     cerebro.broker.setcommission(args.commission)

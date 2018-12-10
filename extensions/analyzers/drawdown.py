@@ -56,12 +56,12 @@ class TVNetProfitDrawDown(bt.Analyzer):
         self.rets._close()  # . notation cannot create more keys
 
     def notify_fund(self, cash, value, fundvalue, shares):
-        #print('!! INSIDE notify_fund self._currvalue={}'.format(self._currvalue))
         self._currvalue = value  # record current value
+        #print('!! INSIDE notify_fund self._currvalue={}'.format(self._currvalue))
 
     def notify_trade(self,trade):
         #if trade.justopened:
-            #print('!! INSIDE notify_trade JUSTOPENED self._currvalue={}, trade={}'.format(self._currvalue, trade))
+            #print('!! INSIDE notify_trade JUSTOPENED self._currvalue={}'.format(self._currvalue))
             
         if trade.isclosed:
             r = self.rets

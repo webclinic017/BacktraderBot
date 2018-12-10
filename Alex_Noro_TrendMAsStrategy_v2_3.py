@@ -127,15 +127,15 @@ cerebro.addstrategy(AlexNoroTrendMAsStrategy,
                     slowlen=21,
                     bars=0,
                     needex=True,
-                    fromyear=2000,
+                    fromyear=2018,
                     toyear=2018,
-                    frommonth=1,
-                    tomonth=12,
-                    fromday=1,
-                    today=31)
+                    frommonth=10,
+                    tomonth=10,
+                    fromday=14,
+                    today=15)
 
 data = btfeeds.GenericCSVData(
-    dataname='bitfinex-BTCUSDT-30m.csv',
+    dataname='bitfinex-BTCUSDT-15m.csv',
     #fromdate=datetime(2018, 10, 1),
     #todate=datetime(2118, 12, 31),
     timeframe=TimeFrame.Ticks,
@@ -163,7 +163,7 @@ cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd")
 cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=cerebro.broker.getcash())
 
 #add the sizer
-cerebro.addsizer(VariablePercentSizer, percents=99, debug=args.debug)
+cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
 
 if args.commtype.lower() == 'percentage':
     cerebro.broker.setcommission(args.commission)

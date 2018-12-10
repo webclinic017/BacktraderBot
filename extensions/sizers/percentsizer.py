@@ -37,6 +37,6 @@ class VariablePercentSizer(bt.Sizer):
         size = round(value / com_adj_price * (self.params.percents / 100), 6) # Rounding to 6 digits as in TradingView backtesting window
         
         if self.p.debug:
-            print('VariablePercentSizer._getsizing(): comm={}, value={}, data.close[0]={}, com_adj_price={}, size={}'.format(comm, value, data.close[0], com_adj_price, size))
+            print('VariablePercentSizer._getsizing(): comm={}, self.broker.get_value()={}, data.close[0]={}, com_adj_price={}, size={}'.format(comm, value, data.close[0], com_adj_price, size))
         
         return size

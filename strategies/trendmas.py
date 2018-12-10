@@ -3,6 +3,7 @@ import backtrader.indicators as btind
 from datetime import datetime
 import itertools
 import pytz
+import sys
 
 class AlexNoroTrendMAsStrategy(bt.Strategy):
     '''
@@ -228,10 +229,19 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
             self.stoploss_order = None
 
     def notify_order(self, order):
+        if order.status == order.Margin:
+            if self.p.debug:
+                self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********')
+            self.curr_position = 0
+            self.cancel_stoploss_orders()
+        
         if self.p.debug:
-            self.log('notify_order() - Order Ref={}, Status={}, Broker Cash={}'.format(order.ref, order.Status[order.status], self.broker.getcash()))
+            self.log('notify_order() - Order Ref={}, Status={}, Broker Cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], self.broker.getcash(), self.position.size))
 
-        if order.status in [bt.Order.Submitted, bt.Order.Accepted]:
+        if order.status in [bt.Order.Submitted]:
+            return
+
+        if order.status in [bt.Order.Accepted]:
             return  # Await further notifications
 
         if order.status == order.Completed:
@@ -248,7 +258,7 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
                     selltxt = 'SELL COMPLETE, Order Ref={}, {} - at {}'.format(order.ref, order.executed.price, bt.num2date(order.executed.dt))
                     self.log(selltxt)
 
-        elif order.status in [order.Expired, order.Canceled, order.Margin]:
+        elif order.status in [order.Expired, order.Canceled]:
             pass  # Simply log
 
     def notify_trade(self, trade):
@@ -256,6 +266,8 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
             self.log('!!! BEGIN notify_trade() - self.curr_position={}, traderef={}, self.broker.getcash()={}'.format(self.curr_position, trade.ref, self.broker.getcash()))
         if trade.isclosed:
             self.tradesclosed[trade.ref] = trade
+            ddanalyzer = self.analyzers.dd            
+            ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0) # Notify DrawDown analyzer separately            
             if self.p.debug:
                 self.log('---------------------------- TRADE CLOSED --------------------------')
                 self.log("1: Data Name:                            {}".format(trade.data._name))
