@@ -158,7 +158,7 @@ def optimization_step(strat):
     batch_number += 1
     st = strat[0]
     st.strat_id = batch_number
-    print('!! Finished Batch Run={}'.format(batch_number))
+    #print('!! Finished Batch Run={}'.format(batch_number))
 
 args = parse_args()
 
@@ -188,8 +188,8 @@ cerebro.optstrategy(AlexNoroTrendMAsStrategy,
     needstops=False,
     stoppercent=5,
     usefastsma=(False, True),
-    fastlen=5, #range(3, 6),
-    slowlen=21, #range(10, 31),
+    fastlen=range(3, 6),
+    slowlen=range(10, 31),
     bars=range(0, 6),
     needex=(False, True),
     fromyear=1900,
@@ -286,6 +286,7 @@ for run in stratruns:
 
 # print out the result
 print('\nTime used, seconds:', round(tend - tstart, 4))
+print('\nTotal number of backtesting runs: {}'.format(batch_number))
 
 #Sort Results List
 sorted_list = sorted(final_results, key=lambda x: (x[3], x[5]), reverse=True)
