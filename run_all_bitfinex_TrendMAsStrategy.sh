@@ -2,10 +2,10 @@
 
 
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT" "ZECUSDT" "ETPUSDT" "XMRUSDT" "DASHUSDT")
-declare -a arr_symbols=("BTCUSDT" "ETHUSDT")
+declare -a arr_symbols=("ETHUSDT")
 
 #declare -a arr_timeframes=("30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("1h")
+declare -a arr_timeframes=("12h")
 
 declare exchange="bitfinex"
 
@@ -16,7 +16,7 @@ do
         echo "Running Alex (Noro) TrendMAs v2.3 Strategy for $exchange/$symbol/$timeframe..."
         current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
         echo "Started: $current_date_time..."
-        python BatchAlex_Noro_TrendMAsStrategy_v2_3.py -s $symbol -e $exchange -t $timeframe -b 90
+        python BatchAlex_Noro_TrendMAsStrategy_v2_3.py -s $symbol -e $exchange -t $timeframe -b 90 -p $1
         current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
         echo "Finished: $current_date_time."
     done

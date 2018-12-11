@@ -217,7 +217,8 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
                     self.log('!!! AFTER OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
         if self.currdt > self.todt:
-            self.close(tradeid=self.curtradeid)
+            if 'curtradeid' in self:
+                self.close(tradeid=self.curtradeid)
             self.cancel_stoploss_orders()
             self.curr_position = 0
 

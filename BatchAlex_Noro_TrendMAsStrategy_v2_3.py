@@ -190,7 +190,7 @@ cerebro.optstrategy(AlexNoroTrendMAsStrategy,
     usefastsma=(False, True),
     fastlen=range(3, 6),
     slowlen=range(10, 31),
-    bars=range(0, 6),
+    bars=range(0, 4),
     needex=(False, True),
     fromyear=1900,
     toyear=to_date.year,
@@ -281,8 +281,8 @@ for run in stratruns:
         parameters = "{}".format(vars(strategy.params))
         parameters = parameters.replace("{", "")
         parameters = parameters.replace("}", "")
-        if(net_profit != 0 and total_closed > 0):
-            final_results.append([strat_key, total_closed, net_profit, net_profit_pct, strike_rate, max_drawdown, max_drawdown_length, profitfactor, buyandhold_return_pct, parameters])
+        #if(net_profit != 0 and total_closed > 0):
+        final_results.append([strat_key, total_closed, net_profit, net_profit_pct, strike_rate, max_drawdown, max_drawdown_length, profitfactor, buyandhold_return_pct, parameters])
 
 # print out the result
 print('\nTime used, seconds:', round(tend - tstart, 4))

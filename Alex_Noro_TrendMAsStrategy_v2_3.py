@@ -118,24 +118,25 @@ cerebro = bt.Cerebro()
 #Add our strategy
 cerebro.addstrategy(AlexNoroTrendMAsStrategy,
                     debug=args.debug,
-                    needlong=True,
+                    needlong=False,
                     needshort=True,
                     needstops=False,
-                    stoppercent=1,
-                    usefastsma=True,
+                    stoppercent=5,
+                    usefastsma=False,
                     fastlen=3,
-                    slowlen=21,
+                    slowlen=10,
                     bars=0,
-                    needex=True,
-                    fromyear=2018,
+                    needex=False,
+                    fromyear=1900,
                     toyear=2018,
-                    frommonth=10,
-                    tomonth=10,
-                    fromday=14,
-                    today=15)
+                    frommonth=1,
+                    tomonth=9,
+                    fromday=1,
+                    today=12)
+  
 
 data = btfeeds.GenericCSVData(
-    dataname='bitfinex-BTCUSDT-15m.csv',
+    dataname='bitfinex-ETHUSDT-12h.csv',
     #fromdate=datetime(2018, 10, 1),
     #todate=datetime(2118, 12, 31),
     timeframe=TimeFrame.Ticks,
