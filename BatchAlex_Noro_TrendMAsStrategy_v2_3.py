@@ -18,6 +18,7 @@ import time
 import sys
 import os
 from backtrader.sizers import PercentSizer
+from backtrader.sizers import FixedSize
 
 batch_number = 0
 
@@ -55,6 +56,19 @@ def parse_args():
                         default="",
                         required=False,
                         help='Optional prefix for output file name')
+
+    parser.add_argument('-l', '--lottype',
+                        type=str,
+                        default="Percentage",
+                        required=True,
+                        choices=["Percentage", "Fixed"],
+                        help='Lot type')
+
+    parser.add_argument('-z', '--lotsize',
+                        type=int,
+                        default=98,
+                        required=True,
+                        help='Lot size: either percentage or number of units - depending on lottype parameter')
 
     parser.add_argument('--commsizer',
                             action ='store_true',help=('Use the Sizer '
@@ -143,7 +157,7 @@ def printfinalresults(results):
     #Print the rows
     print_list = [h1]
     print_list.extend(results)
-    row_format ="{:<20}" * (len(h1) + 1)
+    row_format ="{:<22}" * (len(h1) + 1)
     print("\n******************************************************************* Final Results: *************************************************************************************** ")
     for row in print_list:
         print(row_format.format('', *row))
@@ -189,9 +203,9 @@ cerebro.optstrategy(AlexNoroTrendMAsStrategy,
     stoppercent=5,
     usefastsma=(False, True),
     fastlen=range(3, 6),
-    slowlen=range(10, 31),
-    bars=range(0, 4),
-    needex=(False, True),
+    slowlen=range(10, 27),
+    bars=range(0, 3),
+    needex=False,
     fromyear=1900,
     toyear=to_date.year,
     frommonth=1,
@@ -242,7 +256,10 @@ cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd")
 cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=cerebro.broker.getcash())
 
 #add the sizer
-cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
+if(args.lottype != "" and args.lottype == "Percentage"):
+    cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
+else:
+    cerebro.addsizer(FixedSize, stake=1)
 
 if args.commtype.lower() == 'percentage':
     cerebro.broker.setcommission(args.commission)
