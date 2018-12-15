@@ -40,11 +40,6 @@ def parse_args():
                         required=True,
                         help='The timeframe')
 
-    parser.add_argument('-b', '--daysback',
-                        type=int,
-                        required=True,
-                        help='The number of days back of the end of the processing date period')
-
     parser.add_argument('-x', '--maxcpus',
                         type=int,
                         default=8,
@@ -54,7 +49,7 @@ def parse_args():
     parser.add_argument('-p', '--prefix',
                         type=str,
                         default="",
-                        required=False,
+                        required=True,
                         help='Optional prefix for output file name')
 
     parser.add_argument('-l', '--lottype',
@@ -89,6 +84,36 @@ def parse_args():
                         default=0.02,
                         type=float,
                         help='The percentage of available cash to risk on a trade')
+
+    parser.add_argument('--fromyear',
+                        type=int,
+                        required=True,
+                        help='Date Range: From Year')
+
+    parser.add_argument('--toyear',
+                        type=int,
+                        required=True,
+                        help='Date Range: To Year')
+
+    parser.add_argument('--frommonth',
+                        type=int,
+                        required=True,
+                        help='Date Range: From Month')
+
+    parser.add_argument('--tomonth',
+                        type=int,
+                        required=True,
+                        help='Date Range: To Month')
+
+    parser.add_argument('--fromday',
+                        type=int,
+                        required=True,
+                        help='Date Range: From Day')
+
+    parser.add_argument('--today',
+                        type=int,
+                        required=True,
+                        help='Date Range: To Day')
  
     parser.add_argument('--debug',
                             action ='store_true',
@@ -102,6 +127,13 @@ def exists(obj, chain):
     if _key in obj:
         return exists(obj[_key], chain) if chain else obj[_key]
 
+
+def getdaterange():
+    return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(args.fromyear, args.frommonth, args.fromday, args.toyear, args.tomonth, args.today)
+
+
+def getlotsize():
+    return "Lot{}{}".format(args.lotsize, "Pct" if args.lottype == "Percentage" else "Unit")
 
 def printTradeAnalysis(analyzer):
     '''
@@ -153,14 +185,32 @@ def printDrawDown(analyzer):
 def printfinalresults(results):
     #Designate the rows
     h1 = ['Id', 'Total Closed Trades', 'Net Profit', 'Net Profit, %', 'Win Rate, %', 'Max Drawdown, %', 'Max Drawdown Length', 'Profit Factor', 'Buy & Hold Return, %', 'Parameters']
+    row_format ="{:<22}" * (len(h1) + 1)
 
     #Print the rows
-    print_list = [h1]
-    print_list.extend(results)
-    row_format ="{:<22}" * (len(h1) + 1)
-    print("\n******************************************************************* Final Results: *************************************************************************************** ")
-    for row in print_list:
-        print(row_format.format('', *row))
+    section_size = 20
+    print("RESULTS:")
+    print("{} - {} - {} - {} - {}:".format(args.exchange.upper(), args.symbol.upper(), args.timeframe.upper(), getdaterange(), getlotsize()))
+
+    if(len(results) < 2 * section_size):
+        print_list = [h1]
+        print_list.extend(results) 
+        print("\n******************************************************************* Final Results: *************************************************************************************** ")
+        for row in print_list:
+            print(row_format.format('', *row))
+    else:
+        print_list1 = [h1]
+        print_list2 = [h1]
+        print_list1.extend(results[0:section_size])
+        print_list2.extend(results[-section_size:])
+
+        print("Best Results:")
+        print("******************************************************************* Final Results: *************************************************************************************** ")
+        for row1 in print_list1:
+            print(row_format.format('', *row1))
+        print("\nWorst Results:")
+        for row2 in print_list2:
+            print(row_format.format('', *row2))
 
 def printDict(dict):
     for keys,values in dict.items():
@@ -189,11 +239,6 @@ cerebro = bt.Cerebro(optreturn=True, maxcpus=args.maxcpus)
 
 cerebro.optcallback(optimization_step)
 
-input_file_full_name = './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(args.exchange, args.symbol, args.timeframe, args.exchange, args.symbol, args.timeframe)
-now = datetime.now()
-delta = timedelta(days=args.daysback)
-to_date = now - delta
-
 #Add our strategy
 cerebro.optstrategy(AlexNoroTrendMAsStrategy,
     debug=args.debug,
@@ -206,18 +251,21 @@ cerebro.optstrategy(AlexNoroTrendMAsStrategy,
     slowlen=range(10, 27),
     bars=range(0, 3),
     needex=False,
-    fromyear=1900,
-    toyear=to_date.year,
-    frommonth=1,
-    tomonth=to_date.month,
-    fromday=1,
-    today=to_date.day)
+    fromyear=args.fromyear,
+    toyear=args.toyear,
+    frommonth=args.frommonth,
+    tomonth=args.tomonth,
+    fromday=args.fromday,
+    today=args.today)
 
+input_file_full_name = './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(args.exchange, args.symbol, args.timeframe, args.exchange, args.symbol, args.timeframe)
+fromdate_back_delta = timedelta(days=50) # Adjust from date to add more candle data from the past to strategy to prevent any calculation problems with indicators 
+fromdate_back = datetime(args.fromyear, args.frommonth, args.fromday) - fromdate_back_delta
 data = btfeeds.GenericCSVData(
     dataname=input_file_full_name,
     buffered=True,
-    #fromdate=datetime(2018, 10, 1),
-    todate=to_date,
+    fromdate=fromdate_back,
+    todate=datetime(args.toyear, args.tomonth, args.today),
     timeframe=TimeFrame.Ticks,
     #compression=15,
     dtformat="%Y-%m-%dT%H:%M:%S",
@@ -232,17 +280,15 @@ data = btfeeds.GenericCSVData(
 )
 
 dirname = whereAmI()
+now = datetime.now()
 output_datetime_dirname = now.strftime("%Y%m%d_%H%M%S")
-if args.prefix != "": 
-    prefix = ("_" + args.prefix) 
-else: 
-    prefix = "" 
-output_path = '{}/strategyrun_results/TrendMAs2_3/{}/{}/{}/{}{}'.format(dirname, args.exchange, args.symbol, args.timeframe, output_datetime_dirname, prefix)
+daterange_str = getdaterange()
+lotsize_str = getlotsize()
+output_path = '{}/strategyrun_results/TrendMAs2_3/{}/{}/{}/{}_{}_{}_{}'.format(dirname, args.exchange, args.symbol, args.timeframe, output_datetime_dirname, args.prefix, daterange_str, lotsize_str)
 os.makedirs(output_path, exist_ok=True)
-output_file_full_name = '{}/run-output-{}-{}-{}.txt'.format(output_path, args.exchange, args.symbol, args.timeframe)
+output_file_full_name = '{}/run-output-{}-{}-{}-{}-{}.txt'.format(output_path, args.exchange, args.symbol, args.timeframe, daterange_str, lotsize_str)
 print("Writing backtesting run results to: {}".format(output_file_full_name))
 sys.stdout = open(output_file_full_name, "w")
-
 
 #Add the data to Cerebro
 cerebro.adddata(data)
