@@ -261,11 +261,13 @@ cerebro.optstrategy(AlexNoroTrendMAsStrategy,
 input_file_full_name = './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(args.exchange, args.symbol, args.timeframe, args.exchange, args.symbol, args.timeframe)
 fromdate_back_delta = timedelta(days=50) # Adjust from date to add more candle data from the past to strategy to prevent any calculation problems with indicators 
 fromdate_back = datetime(args.fromyear, args.frommonth, args.fromday) - fromdate_back_delta
+todate_delta = timedelta(days=2) # Adjust to date to add more candle data 
+todate_beyond = datetime(args.toyear, args.tomonth, args.today) + todate_delta
 data = btfeeds.GenericCSVData(
     dataname=input_file_full_name,
     buffered=True,
     fromdate=fromdate_back,
-    todate=datetime(args.toyear, args.tomonth, args.today),
+    todate=todate_beyond,
     timeframe=TimeFrame.Ticks,
     #compression=15,
     dtformat="%Y-%m-%dT%H:%M:%S",
