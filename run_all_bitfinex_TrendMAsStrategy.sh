@@ -31,11 +31,11 @@ process_backtest() {
     echo "Running Alex (Noro) TrendMAs v2.3 Strategy for $exchange/$symbol/$timeframe/$daterange"
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
 
-    echo "\n********** Started: $current_date_time"
-    echo "--- Lot Size: 1 unit ---"
-    python BatchAlex_Noro_TrendMAsStrategy_v2_3.py -s $symbol -e $exchange -t $timeframe -p $_prefix -l Fixed -z 1 --fromyear $_year --toyear $_year --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today
-    current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
-    echo "********** Finished: $current_date_time"
+    #echo "\n********** Started: $current_date_time"
+    #echo "--- Lot Size: 1 unit ---"
+    #python BatchAlex_Noro_TrendMAsStrategy_v2_3.py -s $symbol -e $exchange -t $timeframe -p $_prefix -l Fixed -z 1 --fromyear $_year --toyear $_year --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today
+    #current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
+    #echo "********** Finished: $current_date_time"
 
     echo "\n********** Started: $current_date_time"
     echo "--- Lot Size: 98% ---"
