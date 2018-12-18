@@ -188,7 +188,7 @@ def printfinalresults(results):
     row_format ="{:<22}" * (len(h1) + 1)
 
     #Print the rows
-    section_size = 20
+    section_size = 50
     print("RESULTS:")
     print("{} - {} - {} - {} - {}:".format(args.exchange.upper(), args.symbol.upper(), args.timeframe.upper(), getdaterange(), getlotsize()))
 
