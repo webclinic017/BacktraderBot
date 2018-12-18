@@ -233,7 +233,7 @@ def whereAmI():
 
 #Variable for our starting cash
 startcash = 100000
- 
+  
 # Create an instance of cerebro
 cerebro = bt.Cerebro(optreturn=True, maxcpus=args.maxcpus)
 
@@ -242,14 +242,14 @@ cerebro.optcallback(optimization_step)
 #Add our strategy
 cerebro.optstrategy(AlexNoroTrendMAsStrategy,
     debug=args.debug,
-    needlong=True,
-    needshort=True,
+    needlong=(False, True),
+    needshort=(False, True),
     needstops=False,
     stoppercent=5,
-    usefastsma=True,
-    fastlen=3,
-    slowlen=21,
-    bars=0,
+    usefastsma=(False, True),
+    fastlen=range(3, 6),
+    slowlen=range(10, 27),
+    bars=range(0, 3),
     needex=False,
     fromyear=args.fromyear,
     toyear=args.toyear,
