@@ -122,23 +122,23 @@ cerebro.addstrategy(AlexNoroTrendMAsStrategy,
                     needshort=True,
                     needstops=False,
                     stoppercent=5,
-                    usefastsma=False,
-                    fastlen=3,
-                    slowlen=11,
-                    bars=2,
+                    usefastsma=True,
+                    fastlen=5,
+                    slowlen=21,
+                    bars=1,
                     needex=False,
                     fromyear=2018,
                     toyear=2018,
-                    frommonth=8,
-                    tomonth=8,
+                    frommonth=3,
+                    tomonth=3,
                     fromday=1,
                     today=31)
   
 
 data = btfeeds.GenericCSVData(
-    dataname='bitfinex-BTCUSDT-6h.csv',
-    fromdate=datetime(2018, 6, 11),
-    todate=datetime(2018, 9, 2),
+    dataname='bitfinex-BTCUSDT-3h.csv',
+    fromdate=datetime(2018, 1, 11),
+    todate=datetime(2018, 4, 2),
     timeframe=TimeFrame.Ticks,
     #compression=15,
     dtformat="%Y-%m-%dT%H:%M:%S",
@@ -160,7 +160,7 @@ cerebro.broker.setcash(startcash)
 
 # Add the analyzers we are interested in
 cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
-cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd")
+cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd", initial_cash=cerebro.broker.getcash())
 cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=cerebro.broker.getcash())
 
 #add the sizer

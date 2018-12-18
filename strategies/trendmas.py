@@ -177,6 +177,8 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
                 self.close(tradeid=self.curtradeid)
                 self.curr_position = 0
                 self.cancel_stoploss_orders()
+                ddanalyzer = self.analyzers.dd            
+                ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0) # Notify DrawDown analyzer separately  
                 if self.p.debug:
                     self.log('!!! AFTER CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
@@ -200,6 +202,8 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
                 self.close(tradeid=self.curtradeid)
                 self.curr_position = 0
                 self.cancel_stoploss_orders()
+                ddanalyzer = self.analyzers.dd            
+                ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0) # Notify DrawDown analyzer separately  
                 if self.p.debug:
                     self.log('!!! AFTER CLOSE LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
@@ -270,9 +274,7 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
         if self.p.debug:
             self.log('!!! BEGIN notify_trade() - self.curr_position={}, traderef={}, self.broker.getcash()={}'.format(self.curr_position, trade.ref, self.broker.getcash()))
         if trade.isclosed:
-            self.tradesclosed[trade.ref] = trade
-            ddanalyzer = self.analyzers.dd            
-            ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0) # Notify DrawDown analyzer separately            
+            self.tradesclosed[trade.ref] = trade       
             if self.p.debug:
                 self.log('---------------------------- TRADE CLOSED --------------------------')
                 self.log("1: Data Name:                            {}".format(trade.data._name))

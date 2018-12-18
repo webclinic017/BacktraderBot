@@ -242,14 +242,14 @@ cerebro.optcallback(optimization_step)
 #Add our strategy
 cerebro.optstrategy(AlexNoroTrendMAsStrategy,
     debug=args.debug,
-    needlong=(False, True),
-    needshort=(False, True),
+    needlong=True,
+    needshort=True,
     needstops=False,
     stoppercent=5,
-    usefastsma=(False, True),
-    fastlen=range(3, 6),
-    slowlen=range(10, 27),
-    bars=range(0, 3),
+    usefastsma=True,
+    fastlen=3,
+    slowlen=21,
+    bars=0,
     needex=False,
     fromyear=args.fromyear,
     toyear=args.toyear,
@@ -300,7 +300,7 @@ cerebro.broker.setcash(startcash)
 
 # Add the analyzers we are interested in
 cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
-cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd")
+cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd", initial_cash=cerebro.broker.getcash())
 cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=cerebro.broker.getcash())
 
 #add the sizer

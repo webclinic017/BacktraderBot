@@ -34,6 +34,10 @@ class TVNetProfitDrawDown(bt.Analyzer):
         - ``max.len`` - max drawdown length
     '''
 
+    params = (
+        ('initial_cash', 0),
+    )
+
     def start(self):
         super(TVNetProfitDrawDown, self).start()
         self._fundmode = self.strategy.broker.fundmode
@@ -50,7 +54,7 @@ class TVNetProfitDrawDown(bt.Analyzer):
         self.rets.max.moneydown = 0.0
 
         self._currvalue = 0
-        self._maxportfoliovalue = 0
+        self._maxportfoliovalue = self.p.initial_cash
 
     def stop(self):
         self.rets._close()  # . notation cannot create more keys
