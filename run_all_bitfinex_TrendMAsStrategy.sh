@@ -3,10 +3,10 @@
 declare exchange="bitfinex"
 
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT" "ZECUSDT" "ETPUSDT" "XMRUSDT" "DASHUSDT")
-declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT")
+declare -a arr_symbols=("IOTAUSDT")
 
 #declare -a arr_timeframes=("30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("15m" "30m" "1h" "3h")
+declare -a arr_timeframes=("15m")
 
 declare -a date_mode="Monthly" # Yearly/Monthly
 #declare -a arr_years=("2017" "2018")
