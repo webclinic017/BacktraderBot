@@ -68,6 +68,11 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
         # To alternate amongst different tradeids
         self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
+    def start(self):
+        # Check whether to skip this testing round
+        if(self.p.needlong == False and self.p.needshort == False):
+            self.env.runstop()
+
     def next(self):         
         #PriceChannel 1
         self.center.append((self.lasthigh[0] + self.lastlow[0]) / 2)
