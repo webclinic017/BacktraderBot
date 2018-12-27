@@ -296,7 +296,7 @@ for run in stratruns:
         strat_key = strategy.strat_id
         total_closed = ta_analysis.total.closed if exists(ta_analysis, ['total', 'closed']) else 0
         net_profit = round(ta_analysis.pnl.netprofit.total, 8) if exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
-        net_profit_pct = round(100 * ta_analysis.pnl.netprofit.total/startcash, 8) if exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
+        net_profit_pct = round(100 * ta_analysis.pnl.netprofit.total/startcash, 2) if exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
         total_won = ta_analysis.won.total if exists(ta_analysis, ['won', 'total']) else 0
         strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
         max_drawdown = round(dd_analysis.max.drawdown, 2)
