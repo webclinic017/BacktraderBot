@@ -5,7 +5,7 @@ declare -a arr_months=("1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12")
 declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" "31")
 
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT" "ZECUSDT" "ETPUSDT" "XMRUSDT" "DASHUSDT")
-declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" )
+declare -a arr_symbols=("BTCUSDT"  "ETHUSDT")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
 declare -a arr_timeframes=("15m" "30m" "1h" "3h")
@@ -14,7 +14,7 @@ declare -a date_mode="Monthly" # Yearly/Monthly/Absolute
 #declare -a backtest_years=("2017" "2018")
 
 declare -a backtest_startdate="2018-01-01"
-declare -a backtest_enddate="2018-08-01"
+declare -a backtest_enddate="2018-08-31"
 
 startyear=${backtest_startdate:0:4}
 startmonth=${backtest_startdate:5:2}
@@ -46,13 +46,13 @@ process_backtest() {
 
     #echo "--- Lot Size: 1 unit ---"
     #echo "\n********** Started: $current_date_time"
-    #python BatchAlex_Noro_TrendMAsStrategy_v2_3.py -s $symbol -e $exchange -t $timeframe -r $_runid -l Fixed -z 1 --fromyear $_fromyear --toyear $_toyear --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today
+    #python Step1_BatchTestAlex_Noro_TrendMAsStrategy_v2_3.py -s $symbol -e $exchange -t $timeframe -r $_runid -l Fixed -z 1 --fromyear $_fromyear --toyear $_toyear --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today
     #current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
     #echo "********** Finished: $current_date_time"
 
     echo "--- Lot Size: 98% ---"
     echo "********** Started: $current_date_time"
-    python BatchAlex_Noro_TrendMAsStrategy_v2_3.py -s $symbol -e $exchange -t $timeframe -r $_runid -l Percentage -z 98 --fromyear $_fromyear --toyear $_toyear --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today
+    python Step1_BatchTestAlex_Noro_TrendMAsStrategy_v2_3.py -s $symbol -e $exchange -t $timeframe -r $_runid -l Percentage -z 98 --fromyear $_fromyear --toyear $_toyear --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
     echo "********** Finished: $current_date_time"
 }

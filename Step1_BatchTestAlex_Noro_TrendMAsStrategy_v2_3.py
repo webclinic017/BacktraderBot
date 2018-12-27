@@ -1,5 +1,5 @@
 '''
-Batch testing of the implementation of the TradingView strategy: Alex(Noro) Trend MAs v2.3
+Step 1: Batch testing of the implementation of the TradingView strategy: Alex(Noro) Trend MAs v2.3
 '''
  
 import backtrader as bt
@@ -145,40 +145,38 @@ def getparametersstr(params):
     del coll["frommonth"]
     del coll["tomonth"]
     del coll["fromday"]
-    del coll["today"]       
+    del coll["today"]
+    del coll["step1_hash_key"]       
     return "{}".format(coll)
 
 
 def printfinalresultsheader(csv_writer):
     #Designate the rows
-    h1 = ['Exchange', 'Currency Pair', 'Timeframe', 'Date Range', 'Lot Size', 'Total Closed Trades', 'Max Drawdown, %', 'Max Drawdown Length', 'Net Profit', 'Net Profit, %', 'Win Rate, %', 'Profit Factor', 'Buy & Hold Return, %', 'Parameters']
+    h1 = ['Exchange', 'Currency Pair', 'Timeframe', 'Date Range', 'Lot Size', 'Total Closed Trades', 'Net Profit', 'Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length', 'Win Rate, %', 'Profit Factor', 'Buy & Hold Return, %', 'Parameters']
 
     #Print header
     print_list = [h1]
     for row in print_list:
-        writer.writerow(row)
+        csv_writer.writerow(row)
 
 def printfinalresults(csv_writer, results):
-    #Print the rows
-    section_size = 20
+    section_size = 40
 
     if(len(results) < 2 * section_size):
         print_list = []
         print_list.extend(results) 
         for row in print_list:
-            writer.writerow(row)
-
+            if(is_positive_profit(row)):
+                csv_writer.writerow(row)
     else:
         print_list1 = []
-        print_list2 = []
         print_list1.extend(results[0:section_size])
-        print_list2.extend(results[-section_size:])
-
         for row1 in print_list1:
-            writer.writerow(row1)
-        for row2 in print_list2:
-            writer.writerow(row2)
+            if(is_positive_profit(row1) == True):
+                csv_writer.writerow(row1)
 
+def is_positive_profit(data_row):
+    return data_row[7] > 0
 
 def optimization_step(strat):
     global batch_number
@@ -245,12 +243,10 @@ data = btfeeds.GenericCSVData(
 )
 
 dirname = whereAmI()
-daterange_str = getdaterange()
-lotsize_str = getlotsize()
-output_path = '{}/strategyrun_results/TrendMAs2_3/{}'.format(dirname, args.exchange)
+output_path = '{}/strategyrun_results/TrendMAs2_3/{}/{}'.format(dirname, args.exchange, args.runid)
 os.makedirs(output_path, exist_ok=True)
-output_file_full_name = '{}/{}.csv'.format(output_path, args.runid)
-print("Writing backtesting run results to: {}".format(output_file_full_name))
+output_file_full_name = '{}/{}_Step1.csv'.format(output_path, args.runid)
+print("Writing Step1 backtesting run results to: {}".format(output_file_full_name))
 
 outputfile_exists = os.path.exists(output_file_full_name)
 ofile = open(output_file_full_name, "a")
@@ -309,10 +305,10 @@ for run in stratruns:
         buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
         parameters = getparametersstr(strategy.params)
         if(net_profit != 0 and total_closed > 0):
-            final_results.append([args.exchange, args.symbol, args.timeframe, getdaterange(), getlotsize(), total_closed, max_drawdown, max_drawdown_length, net_profit, net_profit_pct, strike_rate, profitfactor, buyandhold_return_pct, parameters])
+            final_results.append([args.exchange, args.symbol, args.timeframe, getdaterange(), getlotsize(), total_closed, net_profit, net_profit_pct, max_drawdown, max_drawdown_length, strike_rate, profitfactor, buyandhold_return_pct, parameters])
 
 #Sort Results List
-sorted_list = sorted(final_results, key=lambda x: (x[6], x[8]), reverse=True)
+sorted_list = sorted(final_results, key=lambda x: (x[7], x[8]), reverse=True)
 
 printfinalresults(writer, sorted_list)
 ofile.close()

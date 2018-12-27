@@ -29,11 +29,15 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
         ("tomonth", 10),
         ("fromday", 1),
         ("today", 31),
+        ("step1_key", ""),
     )
  
     def log(self, txt, dt=None):
         dt = dt or self.data.datetime.datetime()
         print('%s  %s' % (dt, txt))
+
+    def getdaterange(self):
+        return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(self.p.fromyear, self.p.frommonth, self.p.fromday, self.p.toyear, self.p.tomonth, self.p.today)
 
     def __init__(self):
         self.curr_position = 0
@@ -70,10 +74,13 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
 
     def start(self):
         # Check whether to skip this testing round
+        print("start(): id(self)={}, self.p.step1_key={}".format(id(self), self.p.step1_key))
         if(self.p.needlong == False and self.p.needshort == False):
             self.env.runstop()
 
-    def next(self):         
+    def next(self):   
+        #print("next(): id(self)={}, self.p.step1_key={}".format(id(self), self.p.step1_key))
+        #print("next() - Quick!")
         #PriceChannel 1
         self.center.append((self.lasthigh[0] + self.lastlow[0]) / 2)
 
@@ -277,7 +284,7 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
 
     def notify_trade(self, trade):
         if self.p.debug:
-            self.log('!!! BEGIN notify_trade() - self.curr_position={}, traderef={}, self.broker.getcash()={}'.format(self.curr_position, trade.ref, self.broker.getcash()))
+            self.log('!!! BEGIN notify_trade() - id(self)={}, self.curr_position={}, traderef={}, self.broker.getcash()={}'.format(id(self), self.curr_position, trade.ref, self.broker.getcash()))
         if trade.isclosed:
             self.tradesclosed[trade.ref] = trade       
             if self.p.debug:
