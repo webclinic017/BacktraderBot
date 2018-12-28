@@ -8,8 +8,6 @@ import csv
 import pandas as pd
 import ast
 
-month_num_days = {1 : 31, 2 : 28, 3 : 31, 4 : 30, 5 : 31, 6 : 30, 7 : 31, 8 : 31, 9 : 30, 10 : 31, 11 : 30, 12 : 31}
-
 batch_number = 0
 header_dateranges_months = {}
 final_results = {}
@@ -48,10 +46,37 @@ def get_input_filename():
     dirname = whereAmI()
     return '{}/strategyrun_results/TrendMAs2_3/{}/{}/{}_Step1.csv'.format(dirname, args.exchange, args.runid, args.runid)
 
+def get_cumulative_pnl(data_dict):
+    initial_pnl = 100.0
+    pnl = initial_pnl
+    for key, stats_dict in data_dict.items():
+        monthly_pnl_pct = float(stats_dict["_monthly_pnl"])
+        pnl = pnl * (1 + monthly_pnl_pct/100.00)
+
+    return round((pnl - initial_pnl)*100/initial_pnl, 2)
+
+def get_pct_losing_months(data_dict):
+    result = 0.0
+    for key, stats_dict in data_dict.items():
+        monthly_pnl_pct = float(stats_dict["_monthly_pnl"])
+        if(monthly_pnl_pct < 0):
+            result = result + 1
+    return 100 * result/len(data_dict)
+
+def calculate_stats(data):
+    result = data.copy()
+    for index, row in data.items():
+        if("_TotalStats" not in row):
+            result[index]["_TotalStats"] = {}
+        total_stats_dict = result[index]["_TotalStats"]
+        total_stats_dict["Cumulative Pnl"] = get_cumulative_pnl(row["_MonthlyStats"])
+        total_stats_dict["Pct Losing Months"] = get_pct_losing_months(row["_MonthlyStats"])
+
+    return result
 
 def printheader():
     #Designate the rows
-    h1 = ['Exchange', 'Currency Pair', 'Timeframe', 'Parameters']
+    h1 = ['Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Cumulative Pnl, %', 'Losing Months, %']
     for k, v in header_dateranges_months.items():
         h1.append(k)
 
@@ -69,8 +94,11 @@ def printfinalresults(results):
         print_row.append(final_row["Currency Pair"])
         print_row.append(final_row["Timeframe"])
         print_row.append(final_row["Parameters"])
-        date_ranges_stats_dict = final_row["_DateRangesStats"]
-        print_row.extend(date_ranges_stats_dict.values())
+        print_row.append(final_row["_TotalStats"]["Cumulative Pnl"])
+        print_row.append("{}%".format(final_row["_TotalStats"]["Pct Losing Months"]))
+        monthly_stats_dict = final_row["_MonthlyStats"]
+        for k, month_data in monthly_stats_dict.items():
+            print_row.append(month_data["_MonthlyReportValue"])
         print_list.append(print_row)
 
     for row in print_list:
@@ -92,8 +120,9 @@ def init_output():
 def get_step1_key(exc, curr, tf, params):
     return "{}-{}-{}-{}".format(exc, curr, tf, params)
 
-def get_daterange_stats_str(data):
-    return "{}% | {}% | {}".format(data["Net Profit, %"], data["Max Drawdown, %"], data["Total Closed Trades"])
+def get_monthly_stats(data):
+    monthly_report_str = "{}% | {}% | {}".format(data["Net Profit, %"], data["Max Drawdown, %"], data["Total Closed Trades"])
+    return {"_monthly_pnl": data["Net Profit, %"], "_MonthlyReportValue": monthly_report_str}
 
 def strip_unnecessary_params(parameters_json):
     coll = ast.literal_eval(parameters_json)
@@ -104,9 +133,6 @@ def strip_unnecessary_params(parameters_json):
     del coll["fromday"]
     del coll["today"]
     return "{}".format(coll) 
-
-def get_month_num_days(month):
-    return month_num_days[month]
 
 args = parse_args()
 
@@ -128,13 +154,15 @@ for index, step1_row in step1_list_df.iterrows():
     result_row["Currency Pair"] = step1_row["Currency Pair"]
     result_row["Timeframe"] = step1_row["Timeframe"]
     result_row["Parameters"] = parameters_str
-    if("_DateRangesStats" not in result_row):
-        result_row["_DateRangesStats"] = {}
 
-    date_ranges_stats_dict = result_row["_DateRangesStats"]
+    if("_MonthlyStats" not in result_row):
+        result_row["_MonthlyStats"] = {}
+    monthly_stats_dict = result_row["_MonthlyStats"]
     daterange = step1_row["Date Range"]
     header_dateranges_months[daterange] = ""
-    date_ranges_stats_dict[daterange] = get_daterange_stats_str(step1_row)
+    monthly_stats_dict[daterange] = get_monthly_stats(step1_row)
+
+final_results = calculate_stats(final_results)
 
 printheader()
 print("!!! len(final_results)={}".format(len(final_results)))

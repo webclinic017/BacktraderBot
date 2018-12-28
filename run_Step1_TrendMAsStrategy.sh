@@ -52,7 +52,7 @@ process_backtest() {
 
     echo "--- Lot Size: 98% ---"
     echo "********** Started: $current_date_time"
-    python Step1_BatchTestAlex_Noro_TrendMAsStrategy_v2_3.py -s $symbol -e $exchange -t $timeframe -r $_runid -l Percentage -z 98 --fromyear $_fromyear --toyear $_toyear --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today
+    python Step1_Alex_Noro_TrendMAsStrategy_v2_3.py -s $symbol -e $exchange -t $timeframe -r $_runid -l Percentage -z 98 --fromyear $_fromyear --toyear $_toyear --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
     echo "********** Finished: $current_date_time"
 }

@@ -377,7 +377,7 @@ for exchange in exc_list:  #[exc_list[0]]:
                 # print the analyzers
                 ta_analysis  = strategy.analyzers.ta.get_analysis()
                 sqn_analysis = strategy.analyzers.sqn.get_analysis()
-                dd_analysis  = strategy.analyzers.dd.get_analysis()
+                dd_analysis  = strategy.analyzers.dd.get_analysis()step1_list_df
 
                 total_closed = ta_analysis.total.closed if exists(ta_analysis, ['total', 'closed']) else 0
                 #net_profit = round(ta_analysis.pnl.netprofit.total, 8) if exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
