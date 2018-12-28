@@ -139,14 +139,7 @@ def getlotsize():
 
 def getparametersstr(params):
     coll = vars(params)
-    del coll["debug"]
-    del coll["fromyear"]
-    del coll["toyear"]
-    del coll["frommonth"]
-    del coll["tomonth"]
-    del coll["fromday"]
-    del coll["today"]
-    del coll["step1_hash_key"]       
+    del coll["debug"]     
     return "{}".format(coll)
 
 
@@ -160,20 +153,26 @@ def printfinalresultsheader(csv_writer):
         csv_writer.writerow(row)
 
 def printfinalresults(csv_writer, results):
-    section_size = 40
+    #section_size = 40
 
-    if(len(results) < 2 * section_size):
-        print_list = []
-        print_list.extend(results) 
-        for row in print_list:
-            if(is_positive_profit(row)):
-                csv_writer.writerow(row)
-    else:
-        print_list1 = []
-        print_list1.extend(results[0:section_size])
-        for row1 in print_list1:
-            if(is_positive_profit(row1) == True):
-                csv_writer.writerow(row1)
+    #if(len(results) < 2 * section_size):
+    #    print_list = []
+    #    print_list.extend(results) 
+    #    for row in print_list:
+    #        if(is_positive_profit(row)):
+    #            csv_writer.writerow(row)
+    #else:
+    #    print_list1 = []
+    #    print_list1.extend(results[0:section_size])
+    #    for row1 in print_list1:
+    #        if(is_positive_profit(row1) == True):
+    #            csv_writer.writerow(row1)
+
+    print_list = []
+    print_list.extend(results) 
+    for row in print_list:
+        csv_writer.writerow(row)
+
 
 def is_positive_profit(data_row):
     return data_row[7] > 0

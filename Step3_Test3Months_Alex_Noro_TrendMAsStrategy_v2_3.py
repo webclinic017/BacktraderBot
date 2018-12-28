@@ -324,6 +324,8 @@ for exchange in exc_list:  #[exc_list[0]]:
     for symbol in sym_list:  #[sym_list[0]]:
         for timeframe in tf_list:  #[tf_list[3]]:
             candidates_data_df = df.loc[(exchange, symbol, timeframe)]
+            print("!!! exc_list={}, sym_list={}, tf_list={}".format(exc_list, sym_list, tf_list))
+            print("!!! len(candidates_data_df)={}".format(len(candidates_data_df)))
             # Get list of candidates from Step1 for exchange/symbol/timeframe/date range
             date_range_candidates = df.loc[(exchange, symbol, timeframe), 'Date Range']
             proc_daterange = get_processing_daterange(date_range_candidates)
@@ -347,9 +349,9 @@ for exchange in exc_list:  #[exc_list[0]]:
                 parameters_map = get_parameters_map(data_row['Parameters'])
                 stratnum = add_strategies_for_each_month(cerebro, parameters_map, proc_daterange, step1_key)
                 print("Added {} strategies for processing".format(stratnum))
-                #c = c + 1
-                #if (c > 1):
-                #    break
+                c = c + 1
+                if (c > 3):
+                    break
 
             cerebro.optstrategy(StFetcher, idx=StFetcher.COUNT())
             #cerebro.optstrategy(AlexNoroTrendMAsStrategy, debug=args.debug, needlong=True, needshort=True, needstops=False, stoppercent=5, usefastsma=True, fastlen=5, slowlen=22, bars=range(0, 3), needex=False, fromyear=2018, toyear=2018, frommonth=1, tomonth=1, fromday=1, today=31, step1_key="TEST DFDFSDF")
@@ -357,6 +359,7 @@ for exchange in exc_list:  #[exc_list[0]]:
             # clock the start of the process
             tstart = time.time()
 
+            print("!! Started current run: tstart={}. Number of strategies={}".format(tstart, StFetcher.COUNT()))
             # Run over everything
             stratruns = cerebro.run()
 
@@ -364,6 +367,9 @@ for exchange in exc_list:  #[exc_list[0]]:
             tend = time.time()
             duration = int(tend - tstart)
             print("Cerebro has processed {} strategies in {} seconds".format(len(stratruns), duration))
+            
+            cerebro.runstop()
+            del cerebro
 
             # Generate results list
             for run in stratruns:

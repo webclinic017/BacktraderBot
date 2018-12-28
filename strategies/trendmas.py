@@ -29,7 +29,6 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
         ("tomonth", 10),
         ("fromday", 1),
         ("today", 31),
-        ("step1_key", ""),
     )
  
     def log(self, txt, dt=None):
@@ -74,12 +73,12 @@ class AlexNoroTrendMAsStrategy(bt.Strategy):
 
     def start(self):
         # Check whether to skip this testing round
-        print("start(): id(self)={}, self.p.step1_key={}".format(id(self), self.p.step1_key))
+        #print("start(): id(self)={}".format(id(self)))
         if(self.p.needlong == False and self.p.needshort == False):
             self.env.runstop()
 
     def next(self):   
-        #print("next(): id(self)={}, self.p.step1_key={}".format(id(self), self.p.step1_key))
+        #print("next(): id(self)={}".format(id(self)))
         #print("next() - Quick!")
         #PriceChannel 1
         self.center.append((self.lasthigh[0] + self.lastlow[0]) / 2)
