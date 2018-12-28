@@ -55,6 +55,14 @@ def get_cumulative_pnl(data_dict):
 
     return round((pnl - initial_pnl)*100/initial_pnl, 2)
 
+def get_worst_maxdd_across_all_months(data_dict):
+    result = 0.0
+    for key, stats_dict in data_dict.items():
+        maxdd_pct = float(stats_dict["_maxdd_pct"])
+        if(maxdd_pct < result):
+            result = maxdd_pct
+    return result
+
 def get_pct_losing_months(data_dict):
     result = 0.0
     for key, stats_dict in data_dict.items():
@@ -63,22 +71,23 @@ def get_pct_losing_months(data_dict):
             result = result + 1
     return 100 * result/len(data_dict)
 
-def calculate_stats(data):
+def calculate_total_stats(data):
     result = data.copy()
     for index, row in data.items():
         if("_TotalStats" not in row):
             result[index]["_TotalStats"] = {}
         total_stats_dict = result[index]["_TotalStats"]
         total_stats_dict["Cumulative Pnl"] = get_cumulative_pnl(row["_MonthlyStats"])
+        total_stats_dict["Worst Max DD Pct"] = get_worst_maxdd_across_all_months(row["_MonthlyStats"])
         total_stats_dict["Pct Losing Months"] = get_pct_losing_months(row["_MonthlyStats"])
 
     return result
 
 def printheader():
     #Designate the rows
-    h1 = ['Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Cumulative Pnl, %', 'Losing Months, %']
+    h1 = ['Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Step2: Cumulative Pnl, %', 'Step2: Worst Max DD, %', 'Step2: Losing Months, %']
     for k, v in header_dateranges_months.items():
-        h1.append(k)
+        h1.append("Step2: {}".format(k))
 
     #Print header
     print_list = [h1]
@@ -95,6 +104,7 @@ def printfinalresults(results):
         print_row.append(final_row["Timeframe"])
         print_row.append(final_row["Parameters"])
         print_row.append(final_row["_TotalStats"]["Cumulative Pnl"])
+        print_row.append(final_row["_TotalStats"]["Worst Max DD Pct"])
         print_row.append("{}%".format(final_row["_TotalStats"]["Pct Losing Months"]))
         monthly_stats_dict = final_row["_MonthlyStats"]
         for k, month_data in monthly_stats_dict.items():
@@ -122,7 +132,7 @@ def get_step1_key(exc, curr, tf, params):
 
 def get_monthly_stats(data):
     monthly_report_str = "{}% | {}% | {}".format(data["Net Profit, %"], data["Max Drawdown, %"], data["Total Closed Trades"])
-    return {"_monthly_pnl": data["Net Profit, %"], "_MonthlyReportValue": monthly_report_str}
+    return {"_monthly_pnl": data["Net Profit, %"], "_maxdd_pct": data["Max Drawdown, %"], "_MonthlyReportValue": monthly_report_str}
 
 def strip_unnecessary_params(parameters_json):
     coll = ast.literal_eval(parameters_json)
@@ -162,7 +172,7 @@ for index, step1_row in step1_list_df.iterrows():
     header_dateranges_months[daterange] = ""
     monthly_stats_dict[daterange] = get_monthly_stats(step1_row)
 
-final_results = calculate_stats(final_results)
+final_results = calculate_total_stats(final_results)
 
 printheader()
 print("!!! len(final_results)={}".format(len(final_results)))
