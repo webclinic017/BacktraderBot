@@ -274,7 +274,7 @@ def add_strategies_for_each_month(parameters_map, proc_daterange):
     return result
 
 def getparametersstr(params):
-    coll = vars(params)
+    coll = vars(params).copy()
     del coll["debug"]
     del coll["fromyear"]
     del coll["toyear"]
@@ -322,8 +322,8 @@ tf_list = step2_df.index.get_level_values('Timeframe').unique()
 
 init_output()
 
-for exchange in [exc_list[0]]:
-    for symbol in [sym_list[0]]:
+for exchange in exc_list: #[exc_list[0]]:
+    for symbol in sym_list: #[sym_list[0]]:
         for timeframe in tf_list:  #[tf_list[0]]:
             candidates_data_df = step2_df.loc[(exchange, symbol, timeframe)]
             # Get list of candidates from Step2 for exchange/symbol/timeframe/date range
@@ -346,9 +346,9 @@ for exchange in [exc_list[0]]:
                 parameters_map = get_parameters_map(data_row['Parameters'])
                 stratnum = add_strategies_for_each_month(parameters_map, proc_daterange)
                 #print("Added {} strategies for processing".format(stratnum))
-                c = c + 1
-                if (c > 1):
-                    break
+                #c = c + 1
+                #if (c > 1):
+                #    break
 
             cerebro.optstrategy(StFetcher, idx=StFetcher.COUNT())
             #cerebro.optstrategy(AlexNoroTrendMAsStrategy, debug=args.debug, needlong=True, needshort=True, needstops=False, stoppercent=5, usefastsma=True, fastlen=5, slowlen=22, bars=range(0, 3), needex=False, fromyear=2018, toyear=2018, frommonth=1, tomonth=1, fromday=1, today=31, step1_key="TEST DFDFSDF")
@@ -401,7 +401,6 @@ for exchange in [exc_list[0]]:
                 step3_dateranges_months[daterange] = ""
                 monthly_stats_dict[daterange] = get_monthly_stats(net_profit_pct, max_drawdown, total_closed)
 
-
 step3_header_names = sorted(step3_dateranges_months.keys())
 step3_dateranges_months = {}
 for ii in step3_header_names:
@@ -414,6 +413,7 @@ printheader(step2_df)
 final_results_copy = step2_df.values.tolist()
 final_results = []
 
+print("len(step3_results)={}".format(len(step3_results)))
 for final_row in final_results_copy:
     step1_key = get_step1_key(final_row[0], final_row[1], final_row[2], final_row[3])
     if(step1_key in step3_results):

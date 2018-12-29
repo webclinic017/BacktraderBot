@@ -138,7 +138,7 @@ def getlotsize():
 
 
 def getparametersstr(params):
-    coll = vars(params)
+    coll = vars(params).copy()
     del coll["debug"]     
     return "{}".format(coll)
 
