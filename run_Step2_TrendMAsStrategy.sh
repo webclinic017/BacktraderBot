@@ -1,3 +1,5 @@
+#! /bin/sh
+
 runid=$1
 
 declare exchange="bitfinex"

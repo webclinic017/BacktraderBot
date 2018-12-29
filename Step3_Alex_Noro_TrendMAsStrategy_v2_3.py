@@ -1,11 +1,10 @@
 '''
-Step2: Batch testing of the implementation of the TradingView strategy: Alex(Noro) Trend MAs v2.3
+Step3: Batch testing of results of Step2 testing of the TradingView strategy: Alex(Noro) Trend MAs v2.3
 '''
  
 import backtrader as bt
 import backtrader.feeds as btfeeds
 
-import math
 import argparse
 from backtrader import TimeFrame
 from extensions.analyzers.drawdown import TVNetProfitDrawDown
@@ -15,8 +14,6 @@ from strategies.trendmas import AlexNoroTrendMAsStrategy
 from datetime import datetime
 from datetime import timedelta
 from datetime import date
-import time
-import sys
 import os
 import csv
 import pandas as pd
@@ -25,14 +22,21 @@ from backtrader.sizers import FixedSize
 
 month_num_days = {1 : 31, 2 : 28, 3 : 31, 4 : 30, 5 : 31, 6 : 30, 7 : 31, 8 : 31, 9 : 30, 10 : 31, 11 : 30, 12 : 31}
 
+final_results = []
+step3_results = {}
+
 batch_number = 0
-all_proc_months = {}
+step3_dateranges_months = {}
 
 ofile = None
 csv_writer = None
 
 class StFetcher(object):
     _STRATS = []
+
+    @classmethod
+    def cleanall(cls, ):
+        cls._STRATS = []
 
     @classmethod
     def register(cls, target, *args, **kwargs):
@@ -44,14 +48,17 @@ class StFetcher(object):
 
     def __new__(cls, *args, **kwargs):
         idx = kwargs.pop('idx')
-        args_arr = cls._STRATS[idx][1]
-        #args_arr = cerebro.datas + list(args_arr)  # Workaround on workaround, horrible!
         kwargs_arr = cls._STRATS[idx][2]
         obj = cls._STRATS[idx][0](*args, **kwargs_arr)
         return obj
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Alex(Noro) Trend MAs v2.3 Strategy')
+
+    parser.add_argument('-d', '--testdaterange',
+                        type=str,
+                        required=True,
+                        help='Step3 testing date range in the following format (startdate-enddate): \"YYYYMMDD-YYYYMMDD\"')
 
     parser.add_argument('-x', '--maxcpus',
                         type=int,
@@ -110,7 +117,7 @@ def optimization_step(strat):
 
 def get_input_filename():
     dirname = whereAmI()
-    return '{}/strategyrun_results/TrendMAs2_3/{}/{}/{}_Step1.csv'.format(dirname, args.exchange, args.runid, args.runid)
+    return '{}/strategyrun_results/TrendMAs2_3/{}/{}/{}_Step2.csv'.format(dirname, args.exchange, args.runid, args.runid)
 
 def init_cerebro(startcash):
     # Create an instance of cerebro
@@ -134,30 +141,12 @@ def init_cerebro(startcash):
 
     return cerebro
 
-
-def printheader():
-    #Designate the rows
-    h1 = ['Exchange', 'Currency Pair', 'Timeframe', 'Date Range', 'Parameters']
-    for k, v in all_proc_months.items():
-        h1.append(k)
-
-    #Print header
-    print_list = [h1]
-    for row in print_list:
-        csv_writer.writerow(row)
-
-def printfinalresults(results):
-    print_list = []
-    print_list.extend(results)
-    for row in print_list:
-        csv_writer.writerow(row)
-
 def init_output():
     dirname = whereAmI()
     output_path = '{}/strategyrun_results/TrendMAs2_3/{}/{}'.format(dirname, args.exchange, args.runid)
     os.makedirs(output_path, exist_ok=True)
-    output_file_full_name = '{}/{}_Step2.csv'.format(output_path, args.runid)
-    print("Writing Step2 optimization results to: {}".format(output_file_full_name))
+    output_file_full_name = '{}/{}_Step3.csv'.format(output_path, args.runid)
+    print("Writing Step3 optimization results to: {}".format(output_file_full_name))
 
     global ofile
     ofile = open(output_file_full_name, "w")
@@ -194,14 +183,15 @@ def get_marketdata(filename, daterange):
     )
     return data
     
-def get_step1_key(exc, curr, tf, daterange, params):
-    return "{}-{}-{}-{}-{}".format(exc, curr, tf, daterange, params)
+def get_step1_key(exc, curr, tf, params):
+    return "{}-{}-{}-{}".format(exc, curr, tf, params)
 
 def get_processing_daterange(data):
     result = {}
-    
-    start_date=data[0].split('-')[0]
-    end_date=data[-1].split('-')[1]
+
+    range_splitted = data.split('-')
+    start_date = range_splitted[0]
+    end_date = range_splitted[1]
     s = datetime.strptime(start_date, '%Y%m%d') 
     e = datetime.strptime(end_date, '%Y%m%d') 
 
@@ -212,9 +202,6 @@ def get_processing_daterange(data):
     result['tomonth'] = e.month
     result['today'] = e.day
     return result
-
-def get_processing_daterange_str(proc_daterange):
-    return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(proc_daterange['fromyear'], proc_daterange['frommonth'], proc_daterange['fromday'], proc_daterange['toyear'], proc_daterange['tomonth'], proc_daterange['today'])
 
 def get_processing_daterange_str2(fromyear, frommonth, fromday, toyear, tomonth, today):
     return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(fromyear, frommonth, fromday, toyear, tomonth, today)
@@ -239,17 +226,13 @@ def get_processing_months(proc_daterange):
 
     return result
 
-def add_proc_months(proc_months):
-    for key, value in proc_months.items():
-        all_proc_months[key] = value
-
 def get_parameters_map(parameters_json):
     return ast.literal_eval(parameters_json)
 
 def get_month_num_days(month):
     return month_num_days[month]
 
-def add_strategy(parameters_map, year, month, step1_hk):
+def add_strategy(parameters_map, year, month):
     StFetcher.register(AlexNoroTrendMAsStrategy, 
         debug=args.debug,
         needlong=parameters_map["needlong"],
@@ -267,10 +250,9 @@ def add_strategy(parameters_map, year, month, step1_hk):
         tomonth=month,
         fromday=1,
         today=get_month_num_days(month),
-        step1_key=step1_hk
     )
 
-def add_strategies_for_each_month(cerebro, parameters_map, proc_daterange, step1_key):
+def add_strategies_for_each_month(parameters_map, proc_daterange):
     result = 0
     fromyear  = int(proc_daterange['fromyear'])
     frommonth = int(proc_daterange['frommonth'])
@@ -280,13 +262,13 @@ def add_strategies_for_each_month(cerebro, parameters_map, proc_daterange, step1
     today     = int(proc_daterange['today'])
     fromdate_month = date(fromyear, frommonth, 1)
     todate_month   = date(toyear, tomonth, 1)
-    print("add_strategies_for_each_month(): fromdate_month={}, todate_month={}".format(fromdate_month, todate_month))
+    #print("add_strategies_for_each_month(): fromdate_month={}, todate_month={}".format(fromdate_month, todate_month))
     for curryear in range(fromyear, toyear + 1):
         for currmonth in range(1, 13):
             currdate_month = date(curryear, currmonth, 1)
             if (currdate_month >= fromdate_month and currdate_month <= todate_month):
                 #print("To process: currdate_month={}, fromdate_month={}, todate_month={}, get_month_num_days={}".format(currdate_month, fromdate_month, todate_month, get_month_num_days(currmonth)))
-                add_strategy(parameters_map, curryear, currmonth, step1_key)
+                add_strategy(parameters_map, curryear, currmonth)
                 result = result + 1
 
     return result
@@ -300,39 +282,55 @@ def getparametersstr(params):
     del coll["tomonth"]
     del coll["fromday"]
     del coll["today"]
-    del coll["step1_key"]       
     return "{}".format(coll)
 
-final_results = []
-step2_results = {}
+def get_monthly_stats(net_profit_pct, max_drawdown, total_closed):
+    monthly_report_str = "{}% | {}% | {}".format(net_profit_pct, max_drawdown, total_closed)
+    return {"_MonthlyReportValue": monthly_report_str}
+
+def printheader(step2_df):
+    #Designate the rows
+    step3_data_header = sorted(step3_dateranges_months.keys())
+    h1 = step2_df.columns.tolist()
+    for k in step3_data_header:
+        h1.append("Step3: {}".format(k))
+
+    #Print header
+    print_list = [h1]
+    for row in print_list:
+        csv_writer.writerow(row)
+
+def printfinalresults(results):
+    print_list = []
+    print_list.extend(results)
+
+    for row in print_list:
+        csv_writer.writerow(row)
+
+
 args = parse_args()
 
 startcash = 100000
 
 filepath = get_input_filename()
 
-#pd.set_option('display.max_colwidth', -1)
-df = pd.read_csv(filepath, index_col=[0, 1, 2])
-#df = df.sort_index()
-exc_list = df.index.get_level_values('Exchange').unique()
-sym_list = df.index.get_level_values('Currency Pair').unique()
-tf_list = df.index.get_level_values('Timeframe').unique()
+step2_df = pd.read_csv(filepath, index_col=[0, 1, 2])
+step2_df = step2_df.sort_index()
+exc_list = step2_df.index.get_level_values('Exchange').unique()
+sym_list = step2_df.index.get_level_values('Currency Pair').unique()
+tf_list = step2_df.index.get_level_values('Timeframe').unique()
 
 init_output()
 
-for exchange in exc_list:  #[exc_list[0]]:
-    for symbol in sym_list:  #[sym_list[0]]:
-        for timeframe in tf_list:  #[tf_list[3]]:
-            candidates_data_df = df.loc[(exchange, symbol, timeframe)]
-            print("!!! exc_list={}, sym_list={}, tf_list={}".format(exc_list, sym_list, tf_list))
-            print("!!! len(candidates_data_df)={}".format(len(candidates_data_df)))
-            # Get list of candidates from Step1 for exchange/symbol/timeframe/date range
-            date_range_candidates = df.loc[(exchange, symbol, timeframe), 'Date Range']
-            proc_daterange = get_processing_daterange(date_range_candidates)
+for exchange in [exc_list[0]]:
+    for symbol in [sym_list[0]]:
+        for timeframe in tf_list:  #[tf_list[0]]:
+            candidates_data_df = step2_df.loc[(exchange, symbol, timeframe)]
+            # Get list of candidates from Step2 for exchange/symbol/timeframe/date range
+            test_date_range = args.testdaterange
+            proc_daterange = get_processing_daterange(test_date_range)
             proc_months = get_processing_months(proc_daterange)
-            add_proc_months(proc_months)
-            if(len(candidates_data_df) > 0):
-                print("\n******** Processing {} rows for: {}, {}, {}, {} ********".format(len(candidates_data_df), exchange, symbol, timeframe, get_processing_daterange_str(proc_daterange)))
+            print("\n******** Processing {} rows for: {}, {}, {}, {} ********".format(len(candidates_data_df), exchange, symbol, timeframe, test_date_range))
         
             cerebro = init_cerebro(startcash)
 
@@ -342,43 +340,44 @@ for exchange in exc_list:  #[exc_list[0]]:
 
             c = 1
             for index, data_row in candidates_data_df.iterrows():
-                step1_key = get_step1_key(index[0], index[1], index[2], data_row["Date Range"], data_row["Parameters"])
-                if(not step1_key in step2_results):
-                    step2_results[step1_key] = {}
-                final_results.append([index[0], index[1], index[2], data_row["Date Range"], data_row["Parameters"]])
+                step1_key = get_step1_key(index[0], index[1], index[2], data_row["Parameters"])
+                if(not step1_key in step3_results):
+                    step3_results[step1_key] = {}
                 parameters_map = get_parameters_map(data_row['Parameters'])
-                stratnum = add_strategies_for_each_month(cerebro, parameters_map, proc_daterange, step1_key)
-                print("Added {} strategies for processing".format(stratnum))
+                stratnum = add_strategies_for_each_month(parameters_map, proc_daterange)
+                #print("Added {} strategies for processing".format(stratnum))
                 c = c + 1
-                if (c > 3):
+                if (c > 1):
                     break
 
             cerebro.optstrategy(StFetcher, idx=StFetcher.COUNT())
             #cerebro.optstrategy(AlexNoroTrendMAsStrategy, debug=args.debug, needlong=True, needshort=True, needstops=False, stoppercent=5, usefastsma=True, fastlen=5, slowlen=22, bars=range(0, 3), needex=False, fromyear=2018, toyear=2018, frommonth=1, tomonth=1, fromday=1, today=31, step1_key="TEST DFDFSDF")
 
             # clock the start of the process
-            tstart = time.time()
+            tstart = datetime.now()
+            tstart_str = tstart.strftime("%Y-%m-%d %H:%M:%S")
 
-            print("!! Started current run: tstart={}. Number of strategies={}".format(tstart, StFetcher.COUNT()))
+            print("!! Started current run at {}. Number of strategies={}".format(tstart_str, len(StFetcher.COUNT())))
             # Run over everything
             stratruns = cerebro.run()
 
             # clock the end of the process
-            tend = time.time()
-            duration = int(tend - tstart)
-            print("Cerebro has processed {} strategies in {} seconds".format(len(stratruns), duration))
-            
+            tend = datetime.now()
+            tend_str = tend.strftime("%Y-%m-%d %H:%M:%S")
+
+            print("Cerebro has processed {} strategies at {}".format(len(stratruns), tend_str))
+
+            # Clean up and destroy cerebro
             cerebro.runstop()
-            del cerebro
+            cerebro = None
+            StFetcher.cleanall()
 
             # Generate results list
             for run in stratruns:
                 strategy = run[0]
-                # print the analyzers
                 ta_analysis  = strategy.analyzers.ta.get_analysis()
                 sqn_analysis = strategy.analyzers.sqn.get_analysis()
-                dd_analysis  = strategy.analyzers.dd.get_analysis()step1_list_df
-
+                dd_analysis  = strategy.analyzers.dd.get_analysis()
                 total_closed = ta_analysis.total.closed if exists(ta_analysis, ['total', 'closed']) else 0
                 #net_profit = round(ta_analysis.pnl.netprofit.total, 8) if exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
                 net_profit_pct = round(100 * ta_analysis.pnl.netprofit.total/startcash, 2) if exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
@@ -389,22 +388,46 @@ for exchange in exc_list:  #[exc_list[0]]:
                 #profitfactor = round(ta_analysis.total.profitfactor, 3) if exists(ta_analysis, ['total', 'profitfactor']) else 0
                 #buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
                 daterange = strategy.getdaterange()
-                key = strategy.p.step1_key
-                dict_val = step2_results[key][daterange] = "{}: {} | {}% | {}%".format(daterange, total_closed, net_profit_pct, max_drawdown)
+
+                step1_key = get_step1_key(exchange, symbol, timeframe, getparametersstr(strategy.params))
+                if (step1_key not in step3_results):
+                    step3_results[step1_key] = {}
+
+                result_row = step3_results[step1_key]
+                if ("_MonthlyStats" not in result_row):
+                    result_row["_MonthlyStats"] = {}
+                monthly_stats_dict = result_row["_MonthlyStats"]
+                daterange = strategy.getdaterange()
+                step3_dateranges_months[daterange] = ""
+                monthly_stats_dict[daterange] = get_monthly_stats(net_profit_pct, max_drawdown, total_closed)
 
 
-# Merge Step2 results into final list
-for final_row in final_results:
-    step1_key = get_step1_key(final_row[0], final_row[1], final_row[2], final_row[3], final_row[4])
-    step2_results_dict = step2_results[step1_key]
-    if(len(step2_results_dict) > 0):
-        for key_month, month in all_proc_months.items():
-            if (key_month in step2_results_dict.keys()):
-                final_row.append(step2_results_dict[key_month])
-            else:
-                final_row.append(" ")
+step3_header_names = sorted(step3_dateranges_months.keys())
+step3_dateranges_months = {}
+for ii in step3_header_names:
+    step3_dateranges_months[ii] = ""
+step2_df = step2_df.reset_index()
+printheader(step2_df)
 
-printheader()
+
+# Get Step2 results list and merge Step3 results into it
+final_results_copy = step2_df.values.tolist()
+final_results = []
+
+for final_row in final_results_copy:
+    step1_key = get_step1_key(final_row[0], final_row[1], final_row[2], final_row[3])
+    if(step1_key in step3_results):
+        step3_results_dict = step3_results[step1_key]
+        monthly_stats_dict = step3_results_dict["_MonthlyStats"]
+        if(len(monthly_stats_dict) > 0):
+            added_row = final_row
+            for key_month, month in step3_dateranges_months.items():
+                if (key_month in monthly_stats_dict.keys()):
+                   added_row.append(monthly_stats_dict[key_month]["_MonthlyReportValue"])
+                else:
+                   added_row.append(" ")
+            final_results.append(added_row)
+
 printfinalresults(final_results)
 
 ofile.close()
