@@ -7,6 +7,7 @@ import os
 import csv
 import pandas as pd
 import ast
+import math
 
 batch_number = 0
 header_dateranges_months = {}
@@ -46,8 +47,9 @@ def get_input_filename():
     dirname = whereAmI()
     return '{}/strategyrun_results/TrendMAs2_3/{}/{}/{}_Step1.csv'.format(dirname, args.exchange, args.runid, args.runid)
 
+
 def get_cumulative_pnl(data_dict):
-    initial_pnl = 100.0
+    initial_pnl = 10.0
     pnl = initial_pnl
     for key, stats_dict in data_dict.items():
         monthly_pnl_pct = float(stats_dict["_monthly_pnl"])
@@ -55,37 +57,65 @@ def get_cumulative_pnl(data_dict):
 
     return round((pnl - initial_pnl)*100/initial_pnl, 2)
 
+def get_average_pnl(data_dict):
+    sum_pnl = 0.0
+    for key, stats_dict in data_dict.items():
+        monthly_pnl_pct = float(stats_dict["_monthly_pnl"])
+        sum_pnl = sum_pnl + monthly_pnl_pct
+
+    return round(sum_pnl/len(data_dict), 2)
+
 def get_worst_maxdd_across_all_months(data_dict):
-    result = 0.0
+    result = 0
     for key, stats_dict in data_dict.items():
         maxdd_pct = float(stats_dict["_maxdd_pct"])
         if(maxdd_pct < result):
             result = maxdd_pct
     return result
 
-def get_pct_losing_months(data_dict):
+def get_average_maxdd_across_all_months(data_dict):
+    sum_maxdd = 0.0
+    for key, stats_dict in data_dict.items():
+        sum_maxdd = sum_maxdd + float(stats_dict["_maxdd_pct"])
+
+    return round(sum_maxdd/len(data_dict), 2)
+
+def get_pct_winning_months(data_dict):
     result = 0.0
     for key, stats_dict in data_dict.items():
         monthly_pnl_pct = float(stats_dict["_monthly_pnl"])
-        if(monthly_pnl_pct < 0):
+        if(monthly_pnl_pct >= 0):
             result = result + 1
-    return 100 * result/len(data_dict)
+    return round(100 * result/len(data_dict), 2)
 
-def calculate_total_stats(data):
+def get_total_rank(avg_pnl, avg_max_dd_pct, pct_winning_months):
+    avg_pnl_f = float(avg_pnl) if(float(avg_pnl) > 1.0) else 1.0 
+    avg_max_dd_f = float(avg_max_dd_pct)
+    pct_winning_months_f = float(pct_winning_months)
+
+    total_rank = int(10000 * round(avg_pnl_f) + 100 * round(100 - abs(avg_max_dd_f)) + round(pct_winning_months_f))
+
+    return total_rank
+
+def add_total_stats(data):
     result = data.copy()
     for index, row in data.items():
         if("_TotalStats" not in row):
             result[index]["_TotalStats"] = {}
         total_stats_dict = result[index]["_TotalStats"]
         total_stats_dict["Cumulative Pnl"] = get_cumulative_pnl(row["_MonthlyStats"])
+        total_stats_dict["Avg Pnl"] = get_average_pnl(row["_MonthlyStats"])
         total_stats_dict["Worst Max DD Pct"] = get_worst_maxdd_across_all_months(row["_MonthlyStats"])
-        total_stats_dict["Pct Losing Months"] = get_pct_losing_months(row["_MonthlyStats"])
+        total_stats_dict["Avg Max DD Pct"] = get_average_maxdd_across_all_months(row["_MonthlyStats"])
+        total_stats_dict["Pct Winning Months"] = get_pct_winning_months(row["_MonthlyStats"])
+        total_stats_dict["Total Rank"] = get_total_rank(total_stats_dict["Avg Pnl"], total_stats_dict["Avg Max DD Pct"], total_stats_dict["Pct Winning Months"])
 
     return result
 
+
 def printheader():
     #Designate the rows
-    h1 = ['Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Step2: Cumulative Pnl, %', 'Step2: Worst Max DD, %', 'Step2: Losing Months, %']
+    h1 = ['Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Step2: Cumulative Pnl, %', 'Step2: Avg Pnl, %', 'Step2: Worst Max DD, %', 'Step2: Avg Max DD, %', 'Step2: Winning Months, %', 'Step2: Total Rank']
     for k, v in header_dateranges_months.items():
         h1.append("Step2: {}".format(k))
 
@@ -97,18 +127,25 @@ def printheader():
 def printfinalresults(results):
     print_list = []
 
-    for index, final_row in results.items():
+    for item in results:
+        final_row = item[1]
         print_row = []
         print_row.append(final_row["Exchange"])
         print_row.append(final_row["Currency Pair"])
         print_row.append(final_row["Timeframe"])
         print_row.append(final_row["Parameters"])
         print_row.append(final_row["_TotalStats"]["Cumulative Pnl"])
+        print_row.append(final_row["_TotalStats"]["Avg Pnl"])
         print_row.append(final_row["_TotalStats"]["Worst Max DD Pct"])
-        print_row.append("{}%".format(final_row["_TotalStats"]["Pct Losing Months"]))
+        print_row.append(final_row["_TotalStats"]["Avg Max DD Pct"])
+        print_row.append("{}".format(final_row["_TotalStats"]["Pct Winning Months"]))
+        print_row.append("{}".format(final_row["_TotalStats"]["Total Rank"]))
         monthly_stats_dict = final_row["_MonthlyStats"]
-        for k, month_data in monthly_stats_dict.items():
-            print_row.append(month_data["_MonthlyReportValue"])
+        for key_h in header_dateranges_months.keys():
+            if(key_h in monthly_stats_dict):
+                print_row.append(monthly_stats_dict[key_h]["_MonthlyReportValue"])
+            else:
+                print_row.append(" ")
         print_list.append(print_row)
 
     for row in print_list:
@@ -131,7 +168,8 @@ def get_step1_key(exc, curr, tf, params):
     return "{}-{}-{}-{}".format(exc, curr, tf, params)
 
 def get_monthly_stats(data):
-    monthly_report_str = "{}% | {}% | {}".format(data["Net Profit, %"], data["Max Drawdown, %"], data["Total Closed Trades"])
+    win_rate_str = data["Win Rate, %"].replace("%", "")
+    monthly_report_str = "{:05.2f}% | {:04.2f}% | {} | {}".format(data["Net Profit, %"], data["Max Drawdown, %"], data["Win Rate, %"], data["Total Closed Trades"])
     return {"_monthly_pnl": data["Net Profit, %"], "_maxdd_pct": data["Max Drawdown, %"], "_MonthlyReportValue": monthly_report_str}
 
 def strip_unnecessary_params(parameters_json):
@@ -172,7 +210,10 @@ for index, step1_row in step1_list_df.iterrows():
     header_dateranges_months[daterange] = ""
     monthly_stats_dict[daterange] = get_monthly_stats(step1_row)
 
-final_results = calculate_total_stats(final_results)
+final_results = add_total_stats(final_results)
+
+#Sort Results List
+final_results = sorted(final_results.items(), key=lambda kv: kv[1]["_TotalStats"]["Total Rank"], reverse=True)
 
 printheader()
 print("!!! len(final_results)={}".format(len(final_results)))

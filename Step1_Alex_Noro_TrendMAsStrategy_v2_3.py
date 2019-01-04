@@ -20,6 +20,7 @@ import os
 import csv
 from backtrader.sizers import PercentSizer
 from backtrader.sizers import FixedSize
+import pandas as pd
 
 batch_number = 0
 
@@ -123,6 +124,18 @@ def parse_args():
     return parser.parse_args()
 
  
+def check_csv_has_data_for_datarange(filename):
+    df = pd.read_csv(filename)
+    startdate = datetime(args.fromyear, args.frommonth, args.fromday, 0, 0, 0)
+    enddate = datetime(args.toyear, args.tomonth, args.today, 0, 0, 0)
+    for index, row in df.iterrows():
+        timestamp_str = row['Timestamp']
+        timestamp = datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%S')
+        if(startdate < timestamp and enddate < timestamp):
+            return False
+        else:
+            return True
+
 def exists(obj, chain):
     _key = chain.pop(0)
     if _key in obj:
@@ -218,7 +231,12 @@ cerebro.optstrategy(AlexNoroTrendMAsStrategy,
     fromday=args.fromday,
     today=args.today)
 
+
 input_file_full_name = './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(args.exchange, args.symbol, args.timeframe, args.exchange, args.symbol, args.timeframe)
+if(not check_csv_has_data_for_datarange(input_file_full_name)):
+    print("!!! There is no market data for the start/end date range provided. Finishing execution.")
+    quit()
+
 fromdate_back_delta = timedelta(days=50) # Adjust from date to add more candle data from the past to strategy to prevent any calculation problems with indicators 
 fromdate_back = datetime(args.fromyear, args.frommonth, args.fromday) - fromdate_back_delta
 todate_delta = timedelta(days=2) # Adjust to date to add more candle data 

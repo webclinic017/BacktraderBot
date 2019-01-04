@@ -284,14 +284,82 @@ def getparametersstr(params):
     del coll["today"]
     return "{}".format(coll)
 
-def get_monthly_stats(net_profit_pct, max_drawdown, total_closed):
-    monthly_report_str = "{}% | {}% | {}".format(net_profit_pct, max_drawdown, total_closed)
-    return {"_MonthlyReportValue": monthly_report_str}
+def get_monthly_stats(net_profit_pct, max_drawdown, strike_rate, total_closed):
+    monthly_report_str = "{:05.2f}% | {:04.2f}% | {} | {}".format(net_profit_pct, max_drawdown, strike_rate, total_closed)
+    return {"_monthly_pnl": net_profit_pct, "_maxdd_pct": max_drawdown, "_MonthlyReportValue": monthly_report_str}
+
+def get_cumulative_pnl(data_dict):
+    initial_pnl = 10.0
+    pnl = initial_pnl
+    for key, stats_dict in data_dict.items():
+        monthly_pnl_pct = float(stats_dict["_monthly_pnl"])
+        pnl = pnl * (1 + monthly_pnl_pct/100.00)
+
+    return round((pnl - initial_pnl)*100/initial_pnl, 2)
+
+def get_average_pnl(data_dict):
+    sum_pnl = 0.0
+    for key, stats_dict in data_dict.items():
+        monthly_pnl_pct = float(stats_dict["_monthly_pnl"])
+        sum_pnl = sum_pnl + monthly_pnl_pct
+
+    return round(sum_pnl/len(data_dict), 2)
+
+def get_worst_maxdd_across_all_months(data_dict):
+    result = 0
+    for key, stats_dict in data_dict.items():
+        maxdd_pct = float(stats_dict["_maxdd_pct"])
+        if(maxdd_pct < result):
+            result = maxdd_pct
+    return result
+
+def get_average_maxdd_across_all_months(data_dict):
+    sum_maxdd = 0.0
+    for key, stats_dict in data_dict.items():
+        sum_maxdd = sum_maxdd + float(stats_dict["_maxdd_pct"])
+
+    return round(sum_maxdd/len(data_dict), 2)
+
+def get_pct_winning_months(data_dict):
+    result = 0.0
+    for key, stats_dict in data_dict.items():
+        monthly_pnl_pct = float(stats_dict["_monthly_pnl"])
+        if(monthly_pnl_pct >= 0):
+            result = result + 1
+    return round(100 * result/len(data_dict), 2)
+
+def get_total_rank(avg_pnl, avg_max_dd_pct, pct_winning_months):
+    avg_pnl_f = float(avg_pnl) if(float(avg_pnl) > 1.0) else 1.0 
+    avg_max_dd_f = float(avg_max_dd_pct)
+    pct_winning_months_f = float(pct_winning_months)
+
+    total_rank = int(10000 * round(avg_pnl_f) + 100 * round(100 - abs(avg_max_dd_f)) + round(pct_winning_months_f))
+
+    return total_rank
+
+def add_total_stats_for_row(row_arr, monthly_stats_dict):
+    cumulative_pnl = get_cumulative_pnl(monthly_stats_dict)
+    avg_pnl = get_average_pnl(monthly_stats_dict)
+    worst_max_dd_pct = get_worst_maxdd_across_all_months(monthly_stats_dict)
+    avg_max_dd_pct = get_average_maxdd_across_all_months(monthly_stats_dict)
+    pct_winning_months = get_pct_winning_months(monthly_stats_dict)
+    total_rank = get_total_rank(avg_pnl, avg_max_dd_pct, pct_winning_months)
+
+    row_arr.append(cumulative_pnl)
+    row_arr.append(avg_pnl)
+    row_arr.append(worst_max_dd_pct)
+    row_arr.append(avg_max_dd_pct)
+    row_arr.append("{}".format(pct_winning_months))
+    row_arr.append("{}".format(total_rank))
+
+    return row_arr
 
 def printheader(step2_df):
     #Designate the rows
     step3_data_header = sorted(step3_dateranges_months.keys())
     h1 = step2_df.columns.tolist()
+    h1.extend(['Step3: Cumulative Pnl, %', 'Step3: Avg Pnl, %', 'Step3: Worst Max DD, %', 'Step3: Avg Max DD, %', 'Step3: Winning Months, %', 'Step3: Total Rank'])
+
     for k in step3_data_header:
         h1.append("Step3: {}".format(k))
 
@@ -381,8 +449,8 @@ for exchange in exc_list: #[exc_list[0]]:
                 total_closed = ta_analysis.total.closed if exists(ta_analysis, ['total', 'closed']) else 0
                 #net_profit = round(ta_analysis.pnl.netprofit.total, 8) if exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
                 net_profit_pct = round(100 * ta_analysis.pnl.netprofit.total/startcash, 2) if exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
-                #total_won = ta_analysis.won.total if exists(ta_analysis, ['won', 'total']) else 0
-                #strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
+                total_won = ta_analysis.won.total if exists(ta_analysis, ['won', 'total']) else 0
+                strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
                 max_drawdown = round(dd_analysis.max.drawdown, 2)
                 max_drawdown_length = round(dd_analysis.max.len, 2)
                 #profitfactor = round(ta_analysis.total.profitfactor, 3) if exists(ta_analysis, ['total', 'profitfactor']) else 0
@@ -399,7 +467,7 @@ for exchange in exc_list: #[exc_list[0]]:
                 monthly_stats_dict = result_row["_MonthlyStats"]
                 daterange = strategy.getdaterange()
                 step3_dateranges_months[daterange] = ""
-                monthly_stats_dict[daterange] = get_monthly_stats(net_profit_pct, max_drawdown, total_closed)
+                monthly_stats_dict[daterange] = get_monthly_stats(net_profit_pct, max_drawdown, strike_rate, total_closed)
 
 step3_header_names = sorted(step3_dateranges_months.keys())
 step3_dateranges_months = {}
@@ -417,16 +485,18 @@ print("len(step3_results)={}".format(len(step3_results)))
 for final_row in final_results_copy:
     step1_key = get_step1_key(final_row[0], final_row[1], final_row[2], final_row[3])
     if(step1_key in step3_results):
+        added_row = final_row
         step3_results_dict = step3_results[step1_key]
         monthly_stats_dict = step3_results_dict["_MonthlyStats"]
+        added_row = add_total_stats_for_row(added_row, monthly_stats_dict)
         if(len(monthly_stats_dict) > 0):
-            added_row = final_row
             for key_month, month in step3_dateranges_months.items():
                 if (key_month in monthly_stats_dict.keys()):
                    added_row.append(monthly_stats_dict[key_month]["_MonthlyReportValue"])
                 else:
                    added_row.append(" ")
             final_results.append(added_row)
+
 
 printfinalresults(final_results)
 
