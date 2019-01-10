@@ -7,7 +7,7 @@ import sys
 
 class AlexNoroTrendMAsStrategy(bt.Strategy):
     '''
-    This is an implementation of a strategy from TradingView - Alex (Noro) TrendMAs strategy.
+    This is an implementation of a strategy from TradingView - Alex (Noro) TrendMAs v2.3 strategy.
     '''
 
     strat_id = -1
