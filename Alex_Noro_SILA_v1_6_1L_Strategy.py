@@ -1,5 +1,5 @@
 '''
-Implementation of the TradingView strategy: Alex(Noro) Trend MAs v2.3
+Implementation of the TradingView strategy: Alex(Noro) SILA v1.6.1L Strategy
 '''
  
 import backtrader as bt
@@ -10,16 +10,13 @@ from backtrader import TimeFrame
 from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
-from strategies.trendmas import AlexNoroTrendMAsStrategy
-#from backtrader_plotting import Bokeh
-#from backtrader_plotting.schemes import Tradimo
-#from backtrader.sizers import PercentSizer
+from strategies.sila import AlexNoroSILAStrategy
 
 tradesopen = {}
 tradesclosed = {}
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Alex(Noro) Trend MAs v2.3 Strategy')
+    parser = argparse.ArgumentParser(description='Alex(Noro) SILA v1.6.1L Strategy')
  
     parser.add_argument('--commtype',
                         default="Percentage",
@@ -39,7 +36,7 @@ def parse_args():
  
     parser.add_argument('--debug',
                             action ='store_true',
-                            help=('Print Debugs'))
+                            help=('Print Debug logs'))
  
     return parser.parse_args()
 
@@ -110,29 +107,31 @@ startcash = 100000
 cerebro = bt.Cerebro()
 
 #Add our strategy
-cerebro.addstrategy(AlexNoroTrendMAsStrategy,
+cerebro.addstrategy(AlexNoroSILAStrategy,
                     debug=args.debug,
-                    needlong=True,
-                    needshort=True,
-                    needstops=False,
-                    stoppercent=5,
-                    usefastsma=True,
-                    fastlen=5,
-                    slowlen=21,
-                    bars=1,
-                    needex=False,
+                    sensup=0,
+                    sensdn=0,
+                    usewow=True,
+                    usebma=True, #True,
+                    usebc=True, #True,
+                    usest=True, #True,
+                    usedi=True, #True,
+                    usetts=True, #True,
+                    usersi=True, #True,
+                    usewto=True, #True,
+                    uselocoentry=False,
                     fromyear=2018,
                     toyear=2018,
-                    frommonth=3,
-                    tomonth=3,
+                    frommonth=1,
+                    tomonth=10,
                     fromday=1,
                     today=31)
   
 
 data = btfeeds.GenericCSVData(
     dataname='bitfinex-BTCUSDT-3h.csv',
-    fromdate=datetime(2018, 1, 11),
-    todate=datetime(2018, 4, 2),
+    fromdate=datetime(2017, 12, 1),
+    todate=datetime(2018, 11, 2),
     timeframe=TimeFrame.Ticks,
     #compression=15,
     dtformat="%Y-%m-%dT%H:%M:%S",
@@ -198,6 +197,5 @@ print('P/L: {}'.format(round(pnl, 2)))
 print('P/L, %: {}%'.format(round(pnlpct, 2)))
 
 #Finally plot the end results
-#b = Bokeh(style='bar', plot_mode='single', scheme=Tradimo())
 #cerebro.plot(b)
 #cerebro.plot(style='candlestick')

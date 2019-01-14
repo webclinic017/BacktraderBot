@@ -3,7 +3,6 @@ import backtrader.indicators as btind
 from datetime import datetime
 import itertools
 import pytz
-import sys
 
 class AlexNoroTrendMAsStrategy(bt.Strategy):
     '''
