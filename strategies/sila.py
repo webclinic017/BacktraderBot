@@ -125,7 +125,7 @@ class AlexNoroSILAStrategy(bt.Strategy):
         self.entry = [0, 0]
 
     def start(self):
-        # print("start(): id(self)={}".format(id(self)))
+        #print("start(): vars(self.p)={}".format(vars(self.p)))
         pass
 
     def next(self):
@@ -325,23 +325,24 @@ class AlexNoroSILAStrategy(bt.Strategy):
         else:
             self.locobot.append(0)
         if self.posi[-1] == self.posi[-2]:
-            self.entry.append(1)
-        else:
             if (self.locotop[-1] == 1 and self.posi[-1] == -1) or (self.locobot[-1] == 1 and self.posi[-1] == 1):
-                self.entry.append(-1)
+                self.entry.append(1)
             else:
                 self.entry.append(self.entry[-1])
-        uploco = True if self.locobot[-1] == 1 and self.entry[-2] == 0 and self.posi[-1] == 1 else False
-        dnloco = True if self.locotop[-1] == 1 and self.entry[-2] == 0 and self.posi[-1] == -1 else False
+        else:
+            self.entry.append(0)
+
+        self.uploco = True if self.locobot[-1] == 1 and self.entry[-2] == 0 and self.posi[-1] == 1 else False
+        self.dnloco = True if self.locotop[-1] == 1 and self.entry[-2] == 0 and self.posi[-1] == -1 else False
         long_condition = False
         if self.p.uselocoentry is True:
-            long_condition = uploco
+            long_condition = self.uploco
         else:
             long_condition = True if self.arr[-1] == 1 else False
 
         short_condition = False
         if self.p.uselocoentry is True:
-            short_condition = dnloco
+            short_condition = self.dnloco
         else:
             short_condition = True if self.arr[-1] == -1 else False
 
@@ -509,6 +510,8 @@ class AlexNoroSILAStrategy(bt.Strategy):
         self.log('self.locobot = {}'.format(self.locobot[-1]))
         self.log('self.entry = {}'.format(self.entry[-1]))
         self.log('self.curtradeid = {}'.format(self.curtradeid))
+        self.log('self.uploco = {}'.format(self.uploco))
+        self.log('self.dnloco = {}'.format(self.dnloco))
         self.log('self.up1 = {}'.format(self.up1))
         self.log('self.dn1 = {}'.format(self.dn1))
         self.log('self.is_up = {}'.format(self.is_up))

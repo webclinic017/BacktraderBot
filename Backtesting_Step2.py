@@ -1,5 +1,5 @@
 '''
-Step2: Prepare analytics on Step1 results of backtesting of strategy: Alex(Noro) Trend MAs v2.3
+Step 2 of backtesting process
 '''
  
 import argparse
@@ -7,7 +7,7 @@ import os
 import csv
 import pandas as pd
 import ast
-import math
+from strategies.strategy import BTStrategyEnum
 
 batch_number = 0
 header_dateranges_months = {}
@@ -17,7 +17,12 @@ ofile = None
 csv_writer = None
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Alex(Noro) Trend MAs v2.3 Strategy')
+    parser = argparse.ArgumentParser(description='Backtesting Step 2')
+
+    parser.add_argument('-y', '--strategy',
+                        type=str,
+                        required=True,
+                        help='The strategy ID')
 
     parser.add_argument('-e', '--exchange',
                         type=str,
@@ -45,7 +50,9 @@ def whereAmI():
 
 def get_input_filename():
     dirname = whereAmI()
-    return '{}/strategyrun_results/TrendMAs2_3/{}/{}/{}_Step1.csv'.format(dirname, args.exchange, args.runid, args.runid)
+    strategy_enum = BTStrategyEnum.get_strategy_enum_by_str(args.strategy)
+    path_prefix = strategy_enum.value.prefix_name
+    return '{}/strategyrun_results/{}/{}/{}/{}_Step1.csv'.format(dirname, path_prefix, args.exchange, args.runid, args.runid)
 
 
 def get_cumulative_pnl(data_dict):
@@ -153,7 +160,9 @@ def printfinalresults(results):
 
 def init_output():
     dirname = whereAmI()
-    output_path = '{}/strategyrun_results/TrendMAs2_3/{}/{}'.format(dirname, args.exchange, args.runid)
+    strategy_enum = BTStrategyEnum.get_strategy_enum_by_str(args.strategy)
+    path_prefix = strategy_enum.value.prefix_name
+    output_path = '{}/strategyrun_results/{}/{}/{}'.format(dirname, path_prefix, args.exchange, args.runid)
     os.makedirs(output_path, exist_ok=True)
     output_file_full_name = '{}/{}_Step2.csv'.format(output_path, args.runid)
     print("Writing Step2 results to: {}".format(output_file_full_name))

@@ -1,31 +1,35 @@
 '''
-Step 1: Batch testing of the implementation of the TradingView strategy: Alex(Noro) Trend MAs v2.3
+Step 1 of backtesting process
 '''
  
 import backtrader as bt
 import backtrader.feeds as btfeeds
 
-import math
 import argparse
 from backtrader import TimeFrame
 from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
-from strategies.trendmas import AlexNoroTrendMAsStrategy
 from datetime import datetime
 from datetime import timedelta
+from strategies.config import BTStrategyConfig
+from strategies.strategy import BTStrategyEnum
 import time
 import sys
 import os
 import csv
-from backtrader.sizers import PercentSizer
 from backtrader.sizers import FixedSize
 import pandas as pd
 
 batch_number = 0
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Alex(Noro) Trend MAs v2.3 Strategy')
+    parser = argparse.ArgumentParser(description='Backtesting Step 1')
+
+    parser.add_argument('-y', '--strategy',
+                        type=str,
+                        required=True,
+                        help='The strategy ID')
 
     parser.add_argument('-e', '--exchange',
                         type=str,
@@ -35,7 +39,7 @@ def parse_args():
     parser.add_argument('-s', '--symbol',
                         type=str,
                         required=True,
-                        help='The Symbol of the Instrument/Currency Pair To Process')
+                        help='The Symbol/Currency Pair To Process')
 
     parser.add_argument('-t', '--timeframe',
                         type=str,
@@ -213,24 +217,18 @@ cerebro = bt.Cerebro(optreturn=True, maxcpus=args.maxcpus)
 cerebro.optcallback(optimization_step)
 
 #Add our strategy
-cerebro.optstrategy(AlexNoroTrendMAsStrategy,
-    debug=args.debug,
-    needlong=(False, True),
-    needshort=(False, True),
-    needstops=False,
-    stoppercent=5,
-    usefastsma=True,
-    fastlen=range(3, 6),
-    slowlen=range(10, 27),
-    bars=range(0, 3),
-    needex=False,
-    fromyear=args.fromyear,
-    toyear=args.toyear,
-    frommonth=args.frommonth,
-    tomonth=args.tomonth,
-    fromday=args.fromday,
-    today=args.today)
+strategy_enum = BTStrategyEnum.get_strategy_enum_by_str(args.strategy)
+strategy_class = strategy_enum.value.clazz
+step1_params = BTStrategyConfig.get_step1_strategy_params(strategy_enum).copy()
+step1_params.update({   ("debug", args.debug),
+                        ("fromyear", args.fromyear),
+                        ("toyear", args.toyear),
+                        ("frommonth", args.frommonth),
+                        ("tomonth", args.tomonth),
+                        ("fromday", args.fromday),
+                        ("today", args.today)})
 
+cerebro.optstrategy(strategy_class, **step1_params)
 
 input_file_full_name = './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(args.exchange, args.symbol, args.timeframe, args.exchange, args.symbol, args.timeframe)
 if(not check_csv_has_data_for_datarange(input_file_full_name)):
@@ -260,7 +258,8 @@ data = btfeeds.GenericCSVData(
 )
 
 dirname = whereAmI()
-output_path = '{}/strategyrun_results/TrendMAs2_3/{}/{}'.format(dirname, args.exchange, args.runid)
+path_prefix = strategy_enum.value.prefix_name
+output_path = '{}/strategyrun_results/{}/{}/{}'.format(dirname, path_prefix, args.exchange, args.runid)
 os.makedirs(output_path, exist_ok=True)
 output_file_full_name = '{}/{}_Step1.csv'.format(output_path, args.runid)
 print("Writing Step1 backtesting run results to: {}".format(output_file_full_name))
