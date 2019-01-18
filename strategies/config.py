@@ -27,6 +27,22 @@ class BTStrategyConfig(object):
             "usewto": True,
             "uselocoentry": (False, True),
         },
+        BTStrategyEnum.ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
+            "needlong": (False, True),
+            "needshort": (False, True),
+            "rsiperiod": 7,
+            "rsibars": range(0, 6),
+            "rsilong": range(15, 31, 3),
+            "rsishort": range(70, 86, 3),
+            "useocf": True,
+            "useccf": True,
+            "openbars": range(0, 5),
+            "closebars": range(0, 3),
+            "useobf": True,
+            "usecbf": True,
+            "openbody": range(10, 21, 3),
+            "closebody": range(10, 21, 3),
+        }
     }
 
     _STEP3_STRATEGY_DEFAULT_PARAMS_DICT = {
@@ -54,6 +70,22 @@ class BTStrategyConfig(object):
             "usewto": False,
             "uselocoentry": False,
         },
+        BTStrategyEnum.ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
+            "needlong": False,
+            "needshort": False,
+            "rsiperiod": 0,
+            "rsibars": 0,
+            "rsilong": 0,
+            "rsishort": 0,
+            "useocf": False,
+            "useccf": False,
+            "openbars": 0,
+            "closebars": 0,
+            "useobf": False,
+            "usecbf": False,
+            "openbody": 0,
+            "closebody": 0,
+        }
     }
 
     @classmethod

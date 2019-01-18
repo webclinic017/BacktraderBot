@@ -1,5 +1,5 @@
 '''
-Implementation of the TradingView strategy: Alex(Noro) SILA v1.6.1L Strategy
+Implementation of the TradingView strategy: Alex (Noro) Robot BitMEX Fast RSI v1.0
 '''
  
 import backtrader as bt
@@ -10,13 +10,13 @@ from backtrader import TimeFrame
 from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
-from strategies.sila import AlexNoroSILAStrategy
+from strategies.fastrsi import AlexNoroRobotBitMEXFastRSIStrategy
 
 tradesopen = {}
 tradesclosed = {}
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Alex(Noro) SILA v1.6.1L Strategy')
+    parser = argparse.ArgumentParser(description='Alex (Noro) Robot BitMEX Fast RSI v1.0 Strategy')
  
     parser.add_argument('--commtype',
                         default="Percentage",
@@ -35,8 +35,8 @@ def parse_args():
                         help='The percentage of available cash to risk on a trade')
  
     parser.add_argument('--debug',
-                            action ='store_true',
-                            help=('Print Debug logs'))
+                        action ='store_true',
+                        help=('Print Debug logs'))
  
     return parser.parse_args()
 
@@ -107,26 +107,28 @@ startcash = 100000
 cerebro = bt.Cerebro()
 
 #Add our strategy
-cerebro.addstrategy(AlexNoroSILAStrategy,
+cerebro.addstrategy(AlexNoroRobotBitMEXFastRSIStrategy,
                     debug=args.debug,
-                    sensup=0,
-                    sensdn=0,
-                    usewow=True,
-                    usebma=True, #True,
-                    usebc=True, #True,
-                    usest=True, #True,
-                    usedi=True, #True,
-                    usetts=True, #True,
-                    usersi=True, #True,
-                    usewto=True, #True,
-                    uselocoentry=True,
+                    needlong=True,
+                    needshort=True,
+                    rsiperiod=7,
+                    rsibars=1,
+                    rsilong=30,
+                    rsishort=70,
+                    useocf=True,
+                    useccf=True,
+                    openbars=1,
+                    closebars=1,
+                    useobf=True,
+                    usecbf=True,
+                    openbody=20,
+                    closebody=20,
                     fromyear=2018,
                     toyear=2018,
                     frommonth=10,
                     tomonth=10,
                     fromday=1,
                     today=31)
-  
 
 data = btfeeds.GenericCSVData(
     dataname='bitfinex-BTCUSDT-3h.csv',

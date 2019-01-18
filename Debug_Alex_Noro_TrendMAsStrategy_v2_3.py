@@ -11,9 +11,7 @@ from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
 from strategies.trendmas import AlexNoroTrendMAsStrategy
-#from backtrader_plotting import Bokeh
-#from backtrader_plotting.schemes import Tradimo
-#from backtrader.sizers import PercentSizer
+
 
 tradesopen = {}
 tradesclosed = {}
@@ -28,7 +26,7 @@ def parse_args():
                         help='The type of commission to apply to a trade')
  
     parser.add_argument('--commission',
-                        default=0.001,
+                        default=0.0015,
                         type=float,
                         help='The amount of commission to apply to a trade')
  
