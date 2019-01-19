@@ -199,7 +199,7 @@ def optimization_step(strat):
     batch_number += 1
     st = strat[0]
     st.strat_id = batch_number
-    #print('!! Finished Batch Run={}'.format(batch_number))
+    print('!! Finished Batch Run={}'.format(batch_number))
 
 args = parse_args()
 
@@ -266,7 +266,7 @@ print("Writing Step1 backtesting run results to: {}".format(output_file_full_nam
 
 outputfile_exists = os.path.exists(output_file_full_name)
 ofile = open(output_file_full_name, "a")
-sys.stdout = ofile
+#sys.stdout = ofile
 writer = csv.writer(ofile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 if (outputfile_exists == False):
     printfinalresultsheader(writer)
