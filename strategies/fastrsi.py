@@ -58,14 +58,14 @@ class AlexNoroRobotBitMEXFastRSIStrategy(bt.Strategy):
         self.rsiup = bt.If(self.rsi > self.p.rsishort, 1, 0)
         self.sma_rsidn = btind.SimpleMovingAverage(self.rsidn, period=self.p.rsibars)
         self.sma_rsiup = btind.SimpleMovingAverage(self.rsiup, period=self.p.rsibars)
-        self.rsidnok = bt.If(self.sma_rsidn == 1, True, False)
-        self.rsiupok = bt.If(self.sma_rsiup == 1, True, False)
+        self.rsidnok = bt.If(self.sma_rsidn == 1, 1, 0)
+        self.rsiupok = bt.If(self.sma_rsiup == 1, 1, 0)
 
         # Body Filter
         self.body = abs(self.data.close - self.data.open)
         self.abody = btind.SimpleMovingAverage(self.body, period=10)
-        self.openbodyok = bt.If(bt.Or(self.body >= self.abody / 100 * self.p.openbody, self.p.useobf is False), True, False)
-        self.closebodyok = bt.If(bt.Or(self.body >= self.abody / 100 * self.p.closebody, self.p.usecbf is False), True, False)
+        self.openbodyok = bt.If(bt.Or(self.body >= self.abody / 100 * self.p.openbody, self.p.useobf is False), 1, 0)
+        self.closebodyok = bt.If(bt.Or(self.body >= self.abody / 100 * self.p.closebody, self.p.usecbf is False), 1, 0)
 
         # Color Filter
         self.bar = bt.If(self.data.close > self.data.open, 1, bt.If(self.data.close < self.data.open, -1, 0))
@@ -76,10 +76,10 @@ class AlexNoroRobotBitMEXFastRSIStrategy(bt.Strategy):
         self.sma_gbar_closebars = btind.SimpleMovingAverage(self.gbar, period=self.p.closebars)
         self.sma_rbar_closebars = btind.SimpleMovingAverage(self.rbar, period=self.p.closebars)
 
-        self.opengbarok = bt.If(bt.Or(self.sma_gbar_openbars == 1, self.p.useocf is False), True, False)
-        self.openrbarok = bt.If(bt.Or(self.sma_rbar_openbars == 1, self.p.useocf is False), True, False)
-        self.closegbarok = bt.If(bt.Or(self.sma_gbar_closebars == 1, self.p.useccf is False), True, False)
-        self.closerbarok = bt.If(bt.Or(self.sma_rbar_closebars == 1, self.p.useccf is False), True, False)
+        self.opengbarok = bt.If(bt.Or(self.sma_gbar_openbars == 1, self.p.useocf is False), 1, 0)
+        self.openrbarok = bt.If(bt.Or(self.sma_rbar_openbars == 1, self.p.useocf is False), 1, 0)
+        self.closegbarok = bt.If(bt.Or(self.sma_gbar_closebars == 1, self.p.useccf is False), 1, 0)
+        self.closerbarok = bt.If(bt.Or(self.sma_rbar_closebars == 1, self.p.useccf is False), 1, 0)
 
         # To alternate amongst different tradeids
         self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -95,10 +95,11 @@ class AlexNoroRobotBitMEXFastRSIStrategy(bt.Strategy):
         # print("next() - Quick!")
 
         # Signals
-        self.up = self.openrbarok is True and self.rsidnok is True and self.openbodyok is True and (self.curr_position == 0 or self.data.close < self.position_avg_price)
-        self.dn = self.opengbarok is True and self.rsiupok is True and self.openbodyok is True and (self.curr_position == 0 or self.data.close > self.position_avg_price)
-        self.exit = ((self.curr_position > 0 and self.closegbarok is True and self.rsi > self.p.rsilong) or
-                     (self.curr_position < 0 and self.closerbarok is True and self.rsi < self.p.rsishort)) and self.closebodyok is True
+        self.up = self.openrbarok[0] == 1 and self.rsidnok[0] == 1 and self.openbodyok[0] == 1 and (self.curr_position == 0 or self.data.close[0] < self.position_avg_price)
+        self.dn = self.opengbarok[0] == 1 and self.rsiupok[0] == 1 and self.openbodyok[0] == 1 and (self.curr_position == 0 or self.data.close[0] > self.position_avg_price)
+        self.exit = ((self.curr_position > 0 and self.closegbarok[0] == 1 and self.rsi[0] > self.p.rsilong) or
+                     (self.curr_position < 0 and self.closerbarok[0] == 1 and self.rsi[0] < self.p.rsishort)) and \
+                      self.closebodyok[0] == 1
 
         # Trading
         self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
@@ -170,9 +171,6 @@ class AlexNoroRobotBitMEXFastRSIStrategy(bt.Strategy):
             return  # Await further notifications
 
         if order.status == order.Completed:
-            if (self.stoploss_order and order.ref == self.stoploss_order.ref):
-                self.log('Setting self.stoploss_order=None')
-                self.stoploss_order = None
             if order.isbuy():
                 buytxt = 'BUY COMPLETE, Order Ref={}, {} - at {}'.format(order.ref, order.executed.price,
                                                                              bt.num2date(order.executed.dt))
