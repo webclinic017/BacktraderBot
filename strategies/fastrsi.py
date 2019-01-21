@@ -44,6 +44,12 @@ class AlexNoroRobotBitMEXFastRSIStrategy(bt.Strategy):
     def getdaterange(self):
         return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(self.p.fromyear, self.p.frommonth, self.p.fromday, self.p.toyear, self.p.tomonth, self.p.today)
 
+
+    def check_arr_equal(self, arr, val, last_num):
+        cmp_arr = arr[len(arr) - last_num:len(arr)]
+        return cmp_arr[0] == val and cmp_arr[1:] == cmp_arr[:-1]
+        
+
     def __init__(self):
         self.curtradeid = -1
         self.curr_position = 0
@@ -54,32 +60,31 @@ class AlexNoroRobotBitMEXFastRSIStrategy(bt.Strategy):
 
         # RSI
         self.rsi = btind.RSI(self.data.close, period=self.p.rsiperiod, safediv=True)
-        self.rsidn = bt.If(self.rsi < self.p.rsilong, 1, 0)
-        self.rsiup = bt.If(self.rsi > self.p.rsishort, 1, 0)
-        self.sma_rsidn = btind.SimpleMovingAverage(self.rsidn, period=self.p.rsibars)
-        self.sma_rsiup = btind.SimpleMovingAverage(self.rsiup, period=self.p.rsibars)
-        self.rsidnok = bt.If(self.sma_rsidn == 1, 1, 0)
-        self.rsiupok = bt.If(self.sma_rsiup == 1, 1, 0)
+        self.rsidn = [0] * 2
+        self.rsiup = [0] * 2
+        self.rsidnok = [0] * 2
+        self.rsiupok = [0] * 2
 
         # Body Filter
         self.body = abs(self.data.close - self.data.open)
         self.abody = btind.SimpleMovingAverage(self.body, period=10)
-        self.openbodyok = bt.If(bt.Or(self.body >= self.abody / 100 * self.p.openbody, self.p.useobf is False), 1, 0)
-        self.closebodyok = bt.If(bt.Or(self.body >= self.abody / 100 * self.p.closebody, self.p.usecbf is False), 1, 0)
+        self.openbodyok = [0, 0]
+        self.closebodyok = [0, 0]
 
         # Color Filter
-        self.bar = bt.If(self.data.close > self.data.open, 1, bt.If(self.data.close < self.data.open, -1, 0))
-        self.gbar = bt.If(self.bar == 1, 1, 0)
-        self.rbar = bt.If(self.bar == -1, 1, 0)
-        self.sma_gbar_openbars = btind.SimpleMovingAverage(self.gbar, period=self.p.openbars)
-        self.sma_rbar_openbars = btind.SimpleMovingAverage(self.rbar, period=self.p.openbars)
-        self.sma_gbar_closebars = btind.SimpleMovingAverage(self.gbar, period=self.p.closebars)
-        self.sma_rbar_closebars = btind.SimpleMovingAverage(self.rbar, period=self.p.closebars)
+        self.bar = [0] * 2
+        self.gbar = [0] * 2
+        self.rbar = [0] * 2
 
-        self.opengbarok = bt.If(bt.Or(self.sma_gbar_openbars == 1, self.p.useocf is False), 1, 0)
-        self.openrbarok = bt.If(bt.Or(self.sma_rbar_openbars == 1, self.p.useocf is False), 1, 0)
-        self.closegbarok = bt.If(bt.Or(self.sma_gbar_closebars == 1, self.p.useccf is False), 1, 0)
-        self.closerbarok = bt.If(bt.Or(self.sma_rbar_closebars == 1, self.p.useccf is False), 1, 0)
+        self.check_gbar_openbars = [0] * 2
+        self.check_rbar_openbars = [0] * 2
+        self.check_gbar_closebars = [0] * 2
+        self.check_rbar_closebars = [0] * 2 
+
+        self.opengbarok = [0] * 2
+        self.openrbarok = [0] * 2
+        self.closegbarok = [0] * 2
+        self.closerbarok = [0] * 2
 
         # To alternate amongst different tradeids
         self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -94,12 +99,81 @@ class AlexNoroRobotBitMEXFastRSIStrategy(bt.Strategy):
         # print("next(): id(self)={}".format(id(self)))
         # print("next() - Quick!")
 
+        # RSI
+        if self.rsi[0] < self.p.rsilong:
+            self.rsidn.append(1)
+        else:
+            self.rsidn.append(0)
+        if self.rsi[0] > self.p.rsishort:
+            self.rsiup.append(1)
+        else:
+            self.rsiup.append(0)
+
+        if self.check_arr_equal(self.rsidn, 1, self.p.rsibars):
+            self.rsidnok.append(1)
+        else:
+            self.rsidnok.append(0)
+        if self.check_arr_equal(self.rsiup, 1, self.p.rsibars):
+            self.rsiupok.append(1)
+        else:
+            self.rsiupok.append(0)
+
+        # Body Filter
+        if self.body[0] >= self.abody[0] / 100 * self.p.openbody or self.p.useobf is False:
+            self.openbodyok.append(1)
+        else:
+            self.openbodyok.append(0)
+        if self.body[0] >= self.abody[0] / 100 * self.p.closebody or self.p.usecbf is False:
+            self.closebodyok.append(1)
+        else:
+            self.closebodyok.append(0)
+
+        # Color Filter
+        if self.data.close[0] > self.data.open[0]:
+            self.bar.append(1)
+        else:
+            if self.data.close[0] < self.data.open[0]:
+                self.bar.append(-1)
+            else:
+                self.bar.append(0)
+
+        if self.bar[-1] == 1:
+            self.gbar.append(1)
+        else:
+            self.gbar.append(0)
+        if self.bar[-1] == -1:
+            self.rbar.append(1)
+        else:
+            self.rbar.append(0)
+
+        self.check_gbar_openbars.append(self.check_arr_equal(self.gbar, 1, self.p.openbars))
+        self.check_rbar_openbars.append(self.check_arr_equal(self.rbar, 1, self.p.openbars))
+        self.check_gbar_closebars.append(self.check_arr_equal(self.gbar, 1, self.p.closebars)) 
+        self.check_rbar_closebars.append(self.check_arr_equal(self.rbar, 1, self.p.closebars))
+
+        if self.check_gbar_openbars[-1] is True or self.p.useocf is False:
+            self.opengbarok.append(1)
+        else:
+            self.opengbarok.append(0)
+        if self.check_rbar_openbars[-1] is True or self.p.useocf is False:
+            self.openrbarok.append(1)
+        else:
+            self.openrbarok.append(0)
+        if self.check_gbar_closebars[-1] is True or self.p.useccf is False:
+            self.closegbarok.append(1)
+        else:
+            self.closegbarok.append(0)
+        if self.check_rbar_closebars[-1] is True or self.p.useccf is False:
+            self.closerbarok.append(1)
+        else:
+            self.closerbarok.append(0)
+
         # Signals
-        self.up = self.openrbarok[0] == 1 and self.rsidnok[0] == 1 and self.openbodyok[0] == 1 and (self.curr_position == 0 or self.data.close[0] < self.position_avg_price)
-        self.dn = self.opengbarok[0] == 1 and self.rsiupok[0] == 1 and self.openbodyok[0] == 1 and (self.curr_position == 0 or self.data.close[0] > self.position_avg_price)
-        self.exit = ((self.curr_position > 0 and self.closegbarok[0] == 1 and self.rsi[0] > self.p.rsilong) or
-                     (self.curr_position < 0 and self.closerbarok[0] == 1 and self.rsi[0] < self.p.rsishort)) and \
-                      self.closebodyok[0] == 1
+        self.up = self.openrbarok[-1] == 1 and self.rsidnok[-1] == 1 and self.openbodyok[-1] == 1 and (self.curr_position == 0 or self.data.close[0] < self.position_avg_price)
+        self.dn = self.opengbarok[-1] == 1 and self.rsiupok[-1] == 1 and self.openbodyok[-1] == 1 and (self.curr_position == 0 or self.data.close[0] > self.position_avg_price)
+        self.exit = ((self.curr_position > 0 and self.closegbarok[-1] == 1 and self.rsi[0] > self.p.rsilong) or
+                     (self.curr_position < 0 and self.closerbarok[-1] == 1 and self.rsi[0] < self.p.rsishort)) and \
+                      self.closebodyok[-1] == 1
 
         # Trading
         self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
@@ -213,25 +287,23 @@ class AlexNoroRobotBitMEXFastRSIStrategy(bt.Strategy):
         self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
         self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
         self.log('self.rsi = {}'.format(self.rsi[0]))
-        self.log('self.rsidn = {}'.format(self.rsidn[0]))
-        self.log('self.rsiup = {}'.format(self.rsiup[0]))
-        self.log('self.sma_rsidn = {}'.format(self.sma_rsidn[0]))
-        self.log('self.sma_rsiup = {}'.format(self.sma_rsiup[0]))
-        self.log('self.rsidnok = {}'.format(self.rsidnok[0]))
-        self.log('self.rsiupok = {}'.format(self.rsiupok[0]))
+        self.log('self.rsidn = {}'.format(self.rsidn[-1]))
+        self.log('self.rsiup = {}'.format(self.rsiup[-1]))
+        self.log('self.rsidnok = {}'.format(self.rsidnok[-1]))
+        self.log('self.rsiupok = {}'.format(self.rsiupok[-1]))
         self.log('self.body = {}'.format(self.body[0]))
         self.log('self.abody = {}'.format(self.abody[0]))
-        self.log('self.openbodyok = {}'.format(self.openbodyok[0]))
-        self.log('self.closebodyok = {}'.format(self.closebodyok[0]))
-        self.log('self.bar = {}'.format(self.bar[0]))
-        self.log('self.gbar = {}'.format(self.gbar[0]))
-        self.log('self.rbar = {}'.format(self.rbar[0]))
-        self.log('self.sma_gbar_openbars = {}'.format(self.sma_gbar_openbars[0]))
-        self.log('self.sma_rbar_openbars = {}'.format(self.sma_rbar_openbars[0]))
-        self.log('self.sma_gbar_closebars = {}'.format(self.sma_gbar_closebars[0]))
-        self.log('self.sma_rbar_closebars = {}'.format(self.sma_rbar_closebars[0]))
-        self.log('self.opengbarok = {}'.format(self.opengbarok[0]))
-        self.log('self.openrbarok = {}'.format(self.openrbarok[0]))
-        self.log('self.closegbarok = {}'.format(self.closegbarok[0]))
-        self.log('self.closerbarok = {}'.format(self.closerbarok[0]))
+        self.log('self.openbodyok = {}'.format(self.openbodyok[-1]))
+        self.log('self.closebodyok = {}'.format(self.closebodyok[-1]))
+        self.log('self.bar = {}'.format(self.bar[-1]))
+        self.log('self.gbar = {}'.format(self.gbar[-1]))
+        self.log('self.rbar = {}'.format(self.rbar[-1]))
+        self.log('self.check_gbar_openbars = {}'.format(self.check_gbar_openbars[-1]))
+        self.log('self.check_rbar_openbars = {}'.format(self.check_rbar_openbars[-1]))
+        self.log('self.check_gbar_closebars = {}'.format(self.check_gbar_closebars[-1]))
+        self.log('self.check_rbar_closebars = {}'.format(self.check_rbar_closebars[-1]))
+        self.log('self.opengbarok = {}'.format(self.opengbarok[-1]))
+        self.log('self.openrbarok = {}'.format(self.openrbarok[-1]))
+        self.log('self.closegbarok = {}'.format(self.closegbarok[-1]))
+        self.log('self.closerbarok = {}'.format(self.closerbarok[-1]))
         self.log('-------------------------------------------------------------------')

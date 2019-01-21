@@ -32,16 +32,16 @@ class BTStrategyConfig(object):
             "needshort": (False, True),
             "rsiperiod": 7,
             "rsibars": range(1, 5),
-            "rsilong": range(15, 31, 3),
-            "rsishort": range(70, 86, 3),
+            "rsilong": 30, #range(15, 31, 3),
+            "rsishort": 70, #range(70, 86, 3),
             "useocf": True,
             "useccf": True,
-            "openbars": range(1, 3),
-            "closebars": range(1, 3),
+            "openbars": range(1, 4),
+            "closebars": range(1, 4),
             "useobf": True,
             "usecbf": True,
-            "openbody": range(10, 21, 3),
-            "closebody": range(10, 21, 3),
+            "openbody": 20,
+            "closebody": range(20, 51, 5),
         }
     }
 

@@ -9,13 +9,13 @@ declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" 
 declare -a arr_symbols=("BTCUSDT")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
-#declare -a arr_timeframes=("30m" "1h" "3h")
 declare -a arr_timeframes=("3h")
+#declare -a arr_timeframes=("5m" "15m" "30m")
 
 declare -a date_mode="Monthly" # Yearly/Monthly/Absolute
 #declare -a backtest_years=("2017" "2018")
 
-declare -a backtest_startdate="2018-08-01"
+declare -a backtest_startdate="2018-02-01"
 declare -a backtest_enddate="2018-08-31"
 
 startyear=${backtest_startdate:0:4}
