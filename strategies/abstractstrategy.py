@@ -14,6 +14,16 @@ class AbstractStrategy(bt.Strategy):
     def getdaterange(self):
         return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(self.p.fromyear, self.p.frommonth, self.p.fromday, self.p.toyear, self.p.tomonth, self.p.today)
 
+    def check_arr_equal(self, arr, val, last_num):
+        cmp_arr = arr[len(arr) - last_num:len(arr)]
+        return cmp_arr[0] == val and cmp_arr[1:] == cmp_arr[:-1]
+
+    def _nz(self, data_arr, idx):
+        if len(data_arr) < (abs(idx) + 1):
+            return 0
+        else:
+            return data_arr[idx]
+
     def __init__(self):
         self.curr_position = 0
         self.position_avg_price = 0
