@@ -42,6 +42,16 @@ class BTStrategyConfig(object):
             "usecbf": True,
             "openbody": 20,
             "closebody": range(20, 51, 5),
+        },
+        BTStrategyEnum.ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
+            "needlong": (False, True),
+            "needshort": (False, True),
+            "takepercent": range(0, 4),
+            "needbe": (False, True),
+            "needct": (False, True),
+            "bodylen": range(0, 16, 3),
+            "trb": range(1, 6),
+            "len": range(15, 28, 3),
         }
     }
 
@@ -85,6 +95,93 @@ class BTStrategyConfig(object):
             "usecbf": False,
             "openbody": 0,
             "closebody": 0,
+        },
+        BTStrategyEnum.ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
+            "needlong": False,
+            "needshort": False,
+            "takepercent": 0,
+            "needbe": False,
+            "needct": False,
+            "bodylen": 0,
+            "trb": 0,
+            "len": 0,
+        }
+    }
+
+    _DEBUG_STRATEGY_PARAMS_DICT = {
+        BTStrategyEnum.ALEX_NORO_TRENDMAS_STRATEGY_ID: {
+            "needlong": True,
+            "needshort": True,
+            "needstops": False,
+            "stoppercent": 5,
+            "usefastsma": True,
+            "fastlen": 3,
+            "slowlen": 17,
+            "bars": 2,
+            "needex": False,
+            "fromyear": 2018,
+            "toyear": 2018,
+            "frommonth": 11,
+            "tomonth": 11,
+            "fromday": 1,
+            "today": 30,
+        },
+        BTStrategyEnum.ALEX_NORO_SILA_STRATEGY_ID: {
+            "sensup": 0,
+            "sensdn": 0,
+            "usewow": True,
+            "usebma": True,
+            "usebc": True,
+            "usest": True,
+            "usedi": True,
+            "usetts": True,
+            "usersi": True,
+            "usewto": True,
+            "uselocoentry": False,
+            "fromyear": 2018,
+            "toyear": 2018,
+            "frommonth": 11,
+            "tomonth": 11,
+            "fromday": 1,
+            "today": 30,
+        },
+        BTStrategyEnum.ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
+            "needlong": True,
+            "needshort": True,
+            "rsiperiod": 7,
+            "rsibars": 3,
+            "rsilong": 30,
+            "rsishort": 70,
+            "useocf": True,
+            "useccf": True,
+            "openbars": 3,
+            "closebars": 1,
+            "useobf": True,
+            "usecbf": True,
+            "openbody": 20,
+            "closebody": 20,
+            "fromyear": 2018,
+            "toyear": 2018,
+            "frommonth": 10,
+            "tomonth": 10,
+            "fromday": 1,
+            "today": 31,
+        },
+        BTStrategyEnum.ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
+            "needlong": True,
+            "needshort": True,
+            "takepercent": 1,
+            "needbe": True,
+            "needct": True,
+            "bodylen": 10,
+            "trb": 1,
+            "len": 20,
+            "fromyear": 2018,
+            "toyear": 2018,
+            "frommonth": 10,
+            "tomonth": 10,
+            "fromday": 1,
+            "today": 31,
         }
     }
 
@@ -95,3 +192,7 @@ class BTStrategyConfig(object):
     @classmethod
     def get_step3_strategy_params(cls, strategy_enum):
         return cls._STEP3_STRATEGY_DEFAULT_PARAMS_DICT[strategy_enum]
+
+    @classmethod
+    def get_debug_strategy_params(cls, strategy_enum):
+        return cls._DEBUG_STRATEGY_PARAMS_DICT[strategy_enum]
