@@ -4,7 +4,7 @@ from datetime import datetime
 import itertools
 import pytz
 
-class AlexNoroSILAStrategy(bt.Strategy):
+class S002_AlexNoroSILAStrategy(bt.Strategy):
     '''
     This is an implementation of a strategy from TradingView - Alex (Noro) SILA v1.6.1L Strategy.
     '''

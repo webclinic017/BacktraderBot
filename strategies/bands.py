@@ -1,4 +1,3 @@
-import backtrader as bt
 import backtrader.indicators as btind
 from datetime import datetime
 import itertools
@@ -6,7 +5,7 @@ import pytz
 from strategies.abstractstrategy import AbstractStrategy
 
 
-class AlexNoroBandsScalperStrategy(AbstractStrategy):
+class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
     '''
     This is an implementation of a strategy from TradingView - Alex (Noro) Bands Sclaper v1.6 strategy.
     '''

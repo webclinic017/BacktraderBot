@@ -4,7 +4,7 @@ from datetime import datetime
 import itertools
 import pytz
 
-class AlexNoroTrendMAsStrategy(bt.Strategy):
+class S001_AlexNoroTrendMAsStrategy(bt.Strategy):
     '''
     This is an implementation of a strategy from TradingView - Alex (Noro) TrendMAs v2.3 strategy.
     '''

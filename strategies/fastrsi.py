@@ -5,7 +5,7 @@ import itertools
 import pytz
 
 
-class AlexNoroRobotBitMEXFastRSIStrategy(bt.Strategy):
+class S003_AlexNoroRobotBitMEXFastRSIStrategy(bt.Strategy):
     '''
     This is an implementation of a strategy from TradingView - Alex (Noro) Robot BitMEX Fast RSI v1.0 strategy.
     '''

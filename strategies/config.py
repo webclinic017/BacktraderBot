@@ -3,7 +3,7 @@ from strategies.strategy import BTStrategyEnum
 class BTStrategyConfig(object):
 
     _STEP1_STRATEGY_PARAMS_DICT = {
-        BTStrategyEnum.ALEX_NORO_TRENDMAS_STRATEGY_ID: {
+        BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: {
             "needlong": (False, True),
             "needshort": (False, True),
             "needstops": False,
@@ -14,7 +14,7 @@ class BTStrategyConfig(object):
             "bars": range(0, 3),
             "needex": False
         },
-        BTStrategyEnum.ALEX_NORO_SILA_STRATEGY_ID: {
+        BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
             "sensup": range(0, 9),
             "sensdn": range(0, 9),
             "usewow": True,
@@ -27,7 +27,7 @@ class BTStrategyConfig(object):
             "usewto": True,
             "uselocoentry": (False, True),
         },
-        BTStrategyEnum.ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
+        BTStrategyEnum.S003_ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
             "needlong": (False, True),
             "needshort": (False, True),
             "rsiperiod": 7,
@@ -43,7 +43,7 @@ class BTStrategyConfig(object):
             "openbody": 20,
             "closebody": range(20, 51, 5),
         },
-        BTStrategyEnum.ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
+        BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
             "needlong": (False, True),
             "needshort": (False, True),
             "takepercent": range(0, 4),
@@ -56,7 +56,7 @@ class BTStrategyConfig(object):
     }
 
     _STEP3_STRATEGY_DEFAULT_PARAMS_DICT = {
-        BTStrategyEnum.ALEX_NORO_TRENDMAS_STRATEGY_ID: {
+        BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: {
             "needlong": False,
             "needshort": False,
             "needstops": False,
@@ -67,7 +67,7 @@ class BTStrategyConfig(object):
             "bars": 0,
             "needex": False
         },
-        BTStrategyEnum.ALEX_NORO_SILA_STRATEGY_ID: {
+        BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
             "sensup": 0,
             "sensdn": 0,
             "usewow": False,
@@ -80,7 +80,7 @@ class BTStrategyConfig(object):
             "usewto": False,
             "uselocoentry": False,
         },
-        BTStrategyEnum.ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
+        BTStrategyEnum.S003_ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
             "needlong": False,
             "needshort": False,
             "rsiperiod": 0,
@@ -96,7 +96,7 @@ class BTStrategyConfig(object):
             "openbody": 0,
             "closebody": 0,
         },
-        BTStrategyEnum.ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
+        BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
             "needlong": False,
             "needshort": False,
             "takepercent": 0,
@@ -109,7 +109,7 @@ class BTStrategyConfig(object):
     }
 
     _DEBUG_STRATEGY_PARAMS_DICT = {
-        BTStrategyEnum.ALEX_NORO_TRENDMAS_STRATEGY_ID: {
+        BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: {
             "needlong": True,
             "needshort": True,
             "needstops": False,
@@ -126,7 +126,7 @@ class BTStrategyConfig(object):
             "fromday": 1,
             "today": 30,
         },
-        BTStrategyEnum.ALEX_NORO_SILA_STRATEGY_ID: {
+        BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
             "sensup": 0,
             "sensdn": 0,
             "usewow": True,
@@ -145,7 +145,7 @@ class BTStrategyConfig(object):
             "fromday": 1,
             "today": 30,
         },
-        BTStrategyEnum.ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
+        BTStrategyEnum.S003_ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
             "needlong": True,
             "needshort": True,
             "rsiperiod": 7,
@@ -167,7 +167,7 @@ class BTStrategyConfig(object):
             "fromday": 1,
             "today": 31,
         },
-        BTStrategyEnum.ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
+        BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
             "needlong": True,
             "needshort": True,
             "takepercent": 1,
