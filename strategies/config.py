@@ -46,12 +46,12 @@ class BTStrategyConfig(object):
         BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
             "needlong": (False, True),
             "needshort": (False, True),
-            "takepercent": range(0, 4),
+            "takepercent": range(0, 5),
             "needbe": (False, True),
             "needct": (False, True),
-            "bodylen": range(0, 16, 3),
-            "trb": range(1, 6),
-            "len": range(15, 28, 3),
+            "bodylen": range(0, 13, 3),
+            "trb": range(1, 5),
+            "len": 20,
         }
     }
 
@@ -170,11 +170,11 @@ class BTStrategyConfig(object):
         BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
             "needlong": True,
             "needshort": True,
-            "takepercent": 0,
+            "takepercent": 1,
             "needbe": True,
-            "needct": False,
+            "needct": True,
             "bodylen": 10,
-            "trb": 1,
+            "trb": 5,
             "len": 20,
             "fromyear": 2018,
             "toyear": 2018,
