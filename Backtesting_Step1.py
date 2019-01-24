@@ -320,8 +320,8 @@ for run in stratruns:
         profitfactor = round(ta_analysis.total.profitfactor, 3) if exists(ta_analysis, ['total', 'profitfactor']) else 0
         buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
         parameters = getparametersstr(strategy.params)
-        if(net_profit != 0 and total_closed > 0):
-            final_results.append([args.exchange, args.symbol, args.timeframe, getdaterange(), getlotsize(), total_closed, net_profit, net_profit_pct, max_drawdown, max_drawdown_length, strike_rate, profitfactor, buyandhold_return_pct, parameters])
+        #if net_profit != 0 and total_closed > 0:
+        final_results.append([args.exchange, args.symbol, args.timeframe, getdaterange(), getlotsize(), total_closed, net_profit, net_profit_pct, max_drawdown, max_drawdown_length, strike_rate, profitfactor, buyandhold_return_pct, parameters])
 
 #Sort Results List
 sorted_list = sorted(final_results, key=lambda x: (x[7], x[8]), reverse=True)
