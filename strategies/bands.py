@@ -31,6 +31,10 @@ class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
     def __init__(self):
         super().__init__()
 
+        self.up7 = 0
+        self.dn7 = 0
+        self.up8 = 0
+        self.dn8 = 0
         self.is_up = False
         self.is_down = False
 
@@ -141,12 +145,25 @@ class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
 
         # Signals
         self.up7 = 1 if self.trend[-1] == 1  and ((self.bar[-1] == -1 and self.bar[-2] == -1) or (self.body[0] > self.smabody[0] and self.bar[-1] == -1)) else 0
-        self.dn7 = 1 if self.trend[-1] == 1  and ((self.bar[-1] == 1  and self.bar[-2] == 1)  or (self.data.close[0] > self.hd[-1] and self.p.needbe is True)) and self.data.close[0] > self.position_avg_price * (100 + self.p.takepercent) / 100 else 0
-        self.up8 = 1 if self.trend[-1] == -1 and ((self.bar[-1] == -1 and self.bar[-2] == -1) or (self.data.close[0] < self.ld2[-1] and self.p.needbe is True)) and self.data.close[0] < self.position_avg_price * (100 - self.p.takepercent) / 100 else 0
+        self.dn7 = 1 if self.trend[-1] == 1  and ((self.bar[-1] == 1  and self.bar[-2] == 1)  or (self.data.close[0] > self.hd[-1] and self.p.needbe is True)) and self.is_open_position() and self.data.close[0] > self.position_avg_price * (100 + self.p.takepercent) / 100 else 0
+        self.up8 = 1 if self.trend[-1] == -1 and ((self.bar[-1] == -1 and self.bar[-2] == -1) or (self.data.close[0] < self.ld2[-1] and self.p.needbe is True)) and self.is_open_position() and self.data.close[0] < self.position_avg_price * (100 - self.p.takepercent) / 100 else 0
         self.dn8 = 1 if self.trend[-1] == -1 and ((self.bar[-1] == 1  and self.bar[-2] == 1)  or (self.body[0] > self.smabody[0] and self.bar[-1] == 1)) else 0
 
         self.is_up = True if self.up7 == 1 or self.up8 == 1 else False
         self.is_down = True if self.dn7 == 1 or self.dn8 == 1 else False
+
+        if self.is_up is True and self.is_down is True:
+            self.log('!!! Signals in opposite directions produced! is_up={}, is_down={}'.format(self.is_up, self.is_down))
+            if (self.position.size < 0):
+                self.is_up = True
+                self.is_down = False
+            if (self.position.size > 0):
+                self.is_up = False
+                self.is_down = True
+            if (self.position.size == 0):
+                self.is_up = True if self.p.needlong and not self.p.needshort or self.p.needlong and self.p.needshort else False
+                self.is_down = True if not self.p.needlong and self.p.needshort else False
+            self.log('!!! Changed signals as follows: is_up={}, is_down={}'.format(self.is_up, self.is_down))
 
         # Trading
         self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
@@ -175,7 +192,7 @@ class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
                 self.curtradeid = next(self.tradeid)
                 self.buy(tradeid=self.curtradeid)
                 self.curr_position = 1
-                self.position_avg_price = self.data.close
+                self.position_avg_price = self.data.close[0]
                 self.log('!!! AFTER OPEN LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
             if self.curr_position > 0 and self.is_down is True:
@@ -192,7 +209,7 @@ class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
                 self.curtradeid = next(self.tradeid)
                 self.sell(tradeid=self.curtradeid)
                 self.curr_position = -1
-                self.position_avg_price = self.data.close
+                self.position_avg_price = self.data.close[0]
                 self.log('!!! AFTER OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
         if self.currdt > self.todt:
@@ -210,10 +227,13 @@ class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
         self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
         self.log('self.curr_position = {}'.format(self.curr_position))
         self.log('self.position.size = {}'.format(self.position.size))
+        self.log('self.position_avg_price = {}'.format(self.position_avg_price))
         self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
         self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
-        self.log('self.is_up = {}'.format(self.is_up))
-        self.log('self.is_down = {}'.format(self.is_down))
+        self.log('self.data.open = {}'.format(self.data.open[0]))
+        self.log('self.data.high = {}'.format(self.data.high[0]))
+        self.log('self.data.low = {}'.format(self.data.low[0]))
+        self.log('self.data.close = {}'.format(self.data.close[0]))
         self.log('self.lasthigh[0] = {}'.format(self.lasthigh[0]))
         self.log('self.lastlow[0] = {}'.format(self.lastlow[0]))
         self.log('self.center[0] = {}'.format(self.center[0]))
@@ -231,4 +251,10 @@ class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
         self.log('self.body[0] = {}'.format(self.body[0]))
         self.log('self.smabody[0] = {}'.format(self.smabody[0]))
         self.log('self.bar[-1] = {}'.format(self.bar[-1]))
+        self.log('self.up7 = {}'.format(self.up7))
+        self.log('self.dn7 = {}'.format(self.dn7))
+        self.log('self.up8 = {}'.format(self.up8))
+        self.log('self.dn8 = {}'.format(self.dn8))
+        self.log('self.is_up = {}'.format(self.is_up))
+        self.log('self.is_down = {}'.format(self.is_down))
         self.log('----------------------')

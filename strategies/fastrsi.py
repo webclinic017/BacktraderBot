@@ -188,7 +188,7 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
                 self.curtradeid = next(self.tradeid)
                 self.buy(tradeid=self.curtradeid)
                 self.curr_position = 1
-                self.position_avg_price = self.data.close
+                self.position_avg_price = self.data.close[0]
                 self.log('!!! AFTER OPEN LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
             if self.curr_position > 0 and (self.dn or self.exit):
@@ -205,7 +205,7 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
                 self.curtradeid = next(self.tradeid)
                 self.sell(tradeid=self.curtradeid)
                 self.curr_position = -1
-                self.position_avg_price = self.data.close
+                self.position_avg_price = self.data.close[0]
                 self.log('!!! AFTER OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
         if self.currdt > self.todt:

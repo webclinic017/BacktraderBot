@@ -170,9 +170,9 @@ class BTStrategyConfig(object):
         BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
             "needlong": True,
             "needshort": True,
-            "takepercent": 1,
+            "takepercent": 0,
             "needbe": True,
-            "needct": True,
+            "needct": False,
             "bodylen": 10,
             "trb": 1,
             "len": 20,

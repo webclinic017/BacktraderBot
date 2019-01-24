@@ -24,6 +24,9 @@ class AbstractStrategy(bt.Strategy):
         else:
             return data_arr[idx]
 
+    def is_open_position(self):
+        return self.curr_position != 0
+
     def __init__(self):
         self.curr_position = 0
         self.position_avg_price = 0
