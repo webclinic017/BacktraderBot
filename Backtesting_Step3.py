@@ -50,7 +50,7 @@ def parse_args():
 
     parser.add_argument('-x', '--maxcpus',
                         type=int,
-                        default=4,
+                        default=8,
                         choices=[1, 2, 3, 4, 5, 7, 8],
                         help='The max number of CPUs to use for processing')
 
