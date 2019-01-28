@@ -21,6 +21,7 @@ import csv
 import pandas as pd
 import ast
 from backtrader.sizers import FixedSize
+import gc
 
 month_num_days = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
 
@@ -49,7 +50,7 @@ def parse_args():
 
     parser.add_argument('-x', '--maxcpus',
                         type=int,
-                        default=8,
+                        default=4,
                         choices=[1, 2, 3, 4, 5, 7, 8],
                         help='The max number of CPUs to use for processing')
 
@@ -450,6 +451,7 @@ for exchange in exc_list: #[exc_list[0]]:
             cerebro.runstop()
             cerebro = None
             StFetcher.cleanall()
+            gc.collect()
 
             # Generate results list
             for run in stratruns:

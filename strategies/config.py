@@ -52,6 +52,13 @@ class BTStrategyConfig(object):
             "bodylen": range(0, 13, 3),
             "trb": range(1, 5),
             "len": 20,
+        },
+        BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: {
+            "needlong": (False, True),
+            "needshort": (False, True),
+            "leverage": 1,
+            "accuracy": range(1, 11),
+            "isreversive": (False, True),
         }
     }
 
@@ -105,6 +112,13 @@ class BTStrategyConfig(object):
             "bodylen": 0,
             "trb": 0,
             "len": 0,
+        },
+        BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: {
+            "needlong": False,
+            "needshort": False,
+            "leverage": 0,
+            "accuracy": 0,
+            "isreversive": False,
         }
     }
 
@@ -182,6 +196,19 @@ class BTStrategyConfig(object):
             "tomonth": 10,
             "fromday": 1,
             "today": 31,
+        },
+        BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: {
+            "needlong": True,
+            "needshort": True,
+            "leverage": 1,
+            "accuracy": 1,
+            "isreversive": False,
+            "fromyear": 2018,
+            "toyear": 2018,
+            "frommonth": 11,
+            "tomonth": 11,
+            "fromday": 1,
+            "today": 30,
         }
     }
 
