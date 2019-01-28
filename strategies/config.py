@@ -59,7 +59,35 @@ class BTStrategyConfig(object):
             "leverage": 1,
             "accuracy": range(1, 11),
             "isreversive": (False, True),
-        }
+        },
+        BTStrategyEnum.S006_ALEX_NORO_SQUEEZE_MOMENTUM_STRATEGY_ID: {
+            "needlong": (False, True),
+            "needshort": (False, True),
+            "length": 20,
+            "mult": 2.0,
+            "lengthKC": 20,
+            "multKC": 1.5,
+            "useTrueRange": (False, True),
+            "usecolor": (False, True),
+            "usebody": (False, True),
+        },
+        BTStrategyEnum.S007_ALEX_NORO_MULTIMA_STRATEGY_ID: {
+            "needlong": (False, True),
+            "needshort": (False, True),
+            "usema1": True,
+            "usema2": True,
+            "lenma1": range(20, 201, 10),
+            "lenma2": range(20, 201, 10),
+            "usecf": (False, True),
+        },
+        BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: {
+            "needlong": (False, True),
+            "needshort": (False, True),
+            "cloud": range(10, 41, 5),
+            "Factor": range(1, 4), # Really needed?
+            "ATR": 7,
+        },
+
     }
 
     _STEP3_STRATEGY_DEFAULT_PARAMS_DICT = {
@@ -119,7 +147,34 @@ class BTStrategyConfig(object):
             "leverage": 0,
             "accuracy": 0,
             "isreversive": False,
-        }
+        },
+        BTStrategyEnum.S006_ALEX_NORO_SQUEEZE_MOMENTUM_STRATEGY_ID: {
+            "needlong": False,
+            "needshort": False,
+            "length": 0,
+            "mult": 0,
+            "lengthKC": 0,
+            "multKC": 0,
+            "useTrueRange": False,
+            "usecolor": False,
+            "usebody": False,
+        },
+        BTStrategyEnum.S007_ALEX_NORO_MULTIMA_STRATEGY_ID: {
+            "needlong": False,
+            "needshort": False,
+            "usema1": False,
+            "usema2": False,
+            "lenma1": 0,
+            "lenma2": 0,
+            "usecf": False,
+        },
+        BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: {
+            "needlong": False,
+            "needshort": False,
+            "cloud": 0,
+            "Factor": 0,
+            "ATR": 0,
+        },
     }
 
     _DEBUG_STRATEGY_PARAMS_DICT = {
@@ -209,7 +264,34 @@ class BTStrategyConfig(object):
             "tomonth": 11,
             "fromday": 1,
             "today": 30,
-        }
+        },
+        BTStrategyEnum.S006_ALEX_NORO_SQUEEZE_MOMENTUM_STRATEGY_ID: {
+            "needlong": True,
+            "needshort": True,
+            "length": 20,
+            "mult": 2.0,
+            "lengthKC": 20,
+            "multKC": 1.5,
+            "useTrueRange": True,
+            "usecolor": True,
+            "usebody": True,
+        },
+        BTStrategyEnum.S007_ALEX_NORO_MULTIMA_STRATEGY_ID: {
+            "needlong": True,
+            "needshort": True,
+            "usema1": True,
+            "usema2": True,
+            "lenma1": 40,
+            "lenma2": 40,
+            "usecf": True,
+        },
+        BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: {
+            "needlong": True,
+            "needshort": True,
+            "cloud": 25,
+            "Factor": 3,
+            "ATR": 7,
+        },
     }
 
     @classmethod
