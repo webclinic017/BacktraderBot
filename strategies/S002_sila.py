@@ -8,7 +8,7 @@ from strategies.abstractstrategy import AbstractStrategy
 
 class S002_AlexNoroSILAStrategy(AbstractStrategy):
     '''
-    This is an implementation of a strategy from TradingView - Alex (Noro) SILA v1.6.1L Strategy.
+    This is an implementation of a strategy from TradingView - S002 Alex (Noro) SILA v1.6.1L strategy.
     '''
 
     params = (

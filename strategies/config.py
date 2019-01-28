@@ -1,4 +1,4 @@
-from strategies.strategy import BTStrategyEnum
+from strategies.strategy_enum import BTStrategyEnum
 
 class BTStrategyConfig(object):
 

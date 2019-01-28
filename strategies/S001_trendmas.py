@@ -7,7 +7,7 @@ from strategies.abstractstrategy import AbstractStrategy
 
 class S001_AlexNoroTrendMAsStrategy(AbstractStrategy):
     '''
-    This is an implementation of a strategy from TradingView - Alex (Noro) TrendMAs v2.3 strategy.
+    This is an implementation of a strategy from TradingView - S001 Alex (Noro) TrendMAs v2.3 strategy.
     '''
 
     params = (

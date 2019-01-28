@@ -7,7 +7,7 @@ from strategies.abstractstrategy import AbstractStrategy
 
 class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
     '''
-    This is an implementation of a strategy from TradingView - Alex (Noro) Robot BitMEX Fast RSI v1.0 strategy.
+    This is an implementation of a strategy from TradingView - S003 Alex (Noro) Robot BitMEX Fast RSI v1.0 strategy.
     '''
 
     params = (

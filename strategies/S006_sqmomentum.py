@@ -5,9 +5,9 @@ import pytz
 from strategies.abstractstrategy import AbstractStrategy
 
 
-class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
+class S006_AlexNoroSqueezeMomentumStrategy(AbstractStrategy):
     '''
-    This is an implementation of a strategy from TradingView - S004 Alex (Noro) Bands Sclaper v1.6 strategy.
+    This is an implementation of a strategy from TradingView - "S006 Alex (Noro) Squeeze Momentum v1.1 strategy.
     '''
 
     params = (

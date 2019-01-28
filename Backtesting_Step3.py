@@ -12,7 +12,7 @@ from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
 from common.stfetcher import StFetcher
 from strategies.config import BTStrategyConfig
-from strategies.strategy import BTStrategyEnum
+from strategies.strategy_enum import BTStrategyEnum
 from datetime import datetime
 from datetime import timedelta
 from datetime import date

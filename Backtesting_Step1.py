@@ -13,7 +13,7 @@ from extensions.sizers.percentsizer import VariablePercentSizer
 from datetime import datetime
 from datetime import timedelta
 from strategies.config import BTStrategyConfig
-from strategies.strategy import BTStrategyEnum
+from strategies.strategy_enum import BTStrategyEnum
 import time
 import sys
 import os
