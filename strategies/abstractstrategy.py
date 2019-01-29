@@ -24,6 +24,12 @@ class AbstractStrategy(bt.Strategy):
         else:
             return data_arr[idx]
 
+    def _nz(self, data_arr, idx, defvalue):
+        if len(data_arr) < (abs(idx) + 1):
+            return defvalue
+        else:
+            return data_arr[idx]
+
     def is_open_position(self):
         return self.curr_position != 0
 
