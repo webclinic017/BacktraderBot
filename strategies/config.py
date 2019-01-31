@@ -75,15 +75,15 @@ class BTStrategyConfig(object):
             "needshort": (False, True),
             "usema1": True,
             "usema2": True,
-            "lenma1": range(20, 201, 10),
-            "lenma2": range(20, 201, 10),
+            "lenma1": (10, 20, 40, 80, 100, 120, 150, 180, 200),
+            "lenma2": (10, 20, 40, 80, 100, 120, 150, 180, 200),
             "usecf": (False, True),
         },
         BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: {
             "needlong": (False, True),
             "needshort": (False, True),
-            "cloud": range(10, 41, 5),
-            "Factor": range(1, 4), # Really needed?
+            "cloud": 25,
+            "Factor": range(1, 11),
             "ATR": 7,
         },
 

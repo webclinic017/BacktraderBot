@@ -9,7 +9,7 @@ declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTA
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
 #declare -a arr_timeframes=("3h")
-declare -a arr_timeframes=("5m" "15m" "30m" "1h")
+declare -a arr_timeframes=("15m" "30m" "1h" "3h")
 
 declare -a date_mode="Monthly" # Yearly/Monthly/Absolute
 #declare -a backtest_years=("2017" "2018")
