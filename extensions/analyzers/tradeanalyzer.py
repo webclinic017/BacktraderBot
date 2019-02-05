@@ -8,17 +8,17 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import sys
-
+import backtrader as bt
 from backtrader import Analyzer
 from backtrader.utils import AutoOrderedDict, AutoDict
 from backtrader.utils.py3 import MAXINT
+from calendar import monthrange
 
 __all__ = ['TVTradeAnalyzer']
 
 class TVTradeAnalyzer(Analyzer):
     '''
-    Modified version of Backtrader's TradeAnalyzer that calculates NetProfit, GrossProfit, GrossLoss, ProfitFactor, BuyAndHoldReturn values in the same way as in tTradingView
+    Modified version of Backtrader's TradeAnalyzer that calculates NetProfit, GrossProfit, GrossLoss, ProfitFactor, BuyAndHoldReturn values in the same way as in TradingView
     '''
     params = (
         ('cash', 0),
@@ -30,28 +30,111 @@ class TVTradeAnalyzer(Analyzer):
         self.buyandholdcalcbegin = False
         self.buyandholdnumshares = 0
         self.buyandholdstartvalue = 0
+        self.netprofits_data = AutoOrderedDict()
+
+    def set_netprofit_value(self, value):
+        self.netprofits_data[self.get_currentdate()] = value
+
+    def get_currentdate(self):
+        return bt.num2date(self.data.datetime[0])
+
+    def getdaterange(self, fromyear, frommonth, fromday, toyear, tomonth, today):
+        return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(fromyear, frommonth, fromday, toyear, tomonth, today)
+
+    def get_month_daterange(self, date):
+        return self.getdaterange(date.year, date.month, 1, date.year, date.month, self.get_month_num_days(date.year, date.month))
+
+    def get_currentmonth_daterange(self):
+        curr_datetime = self.get_currentdate()
+        return self.get_month_daterange(curr_datetime)
+
+    def get_month_num_days(self, year, month):
+        return monthrange(year, month)[1]
+
+    def get_monthly_stats_entry(self, curr_month_daterange_str):
+        trades = self.rets
+
+        entry = trades.monthly_stats[curr_month_daterange_str]
+        if len(entry) == 0:
+            entry = trades.monthly_stats[curr_month_daterange_str] = AutoOrderedDict()
+        return entry
+
+    def check_next_month(self, prev_datetime, curr_datetime):
+        months_diff = (curr_datetime.year - prev_datetime.year) * 12 + (curr_datetime.month - prev_datetime.month)
+        return months_diff >= 1
+
+    def update_tradenums_monthly_stats(self, trade):
+        if trade.status == trade.Closed:
+            curr_month_daterange_str = self.get_currentmonth_daterange()
+            curr_month_arr = self.get_monthly_stats_entry(curr_month_daterange_str)
+            curr_month_arr.total.closed += 1
+
+            won = int(trade.pnlcomm >= 0.0)
+            curr_month_arr.won.total += won
+
+    def update_netprofit_monthly_stats(self):
+        npd_list = list(self.netprofits_data.items())
+        if len(npd_list) > 0:
+            monthbegin_date = npd_list[0][0]
+            monthbegin_equity_val = self.p.cash
+            curr_equity_date = None
+            curr_equity_val = self.p.cash
+            for npd in npd_list:
+                if curr_equity_date and self.check_next_month(monthbegin_date, npd[0]) is True:
+                    monthbegin_date = npd[0]
+                    monthbegin_equity_val = curr_equity_val
+
+                curr_equity_date = npd[0]
+                curr_equity_val += npd[1]
+
+                monthly_pnl_pct = ((curr_equity_val - monthbegin_equity_val) * 100 / monthbegin_equity_val) if monthbegin_equity_val != 0 else 0
+                curr_month_daterange_str = self.get_month_daterange(curr_equity_date)
+                curr_month_arr = self.get_monthly_stats_entry(curr_month_daterange_str)
+                curr_month_arr.pnl.netprofit.total = monthly_pnl_pct
+
+    def print_debug_info(self):
+        print("!!!!! self.netprofits_data={}\n".format(self.netprofits_data))
+        print("All Trades:")
+        npd_list = list(self.netprofits_data.items())
+        prev_equity_val = self.p.cash
+        curr_equity_val = self.p.cash
+        for npd in npd_list:
+            curr_equity_date = npd[0]
+            curr_equity_val += npd[1]
+            pnl_pct = ((curr_equity_val - prev_equity_val) * 100 / prev_equity_val) if prev_equity_val != 0 else 0
+            print("Trade closed. Date = {}, Net Profit = {}, curr_equity_val = {}, Net Profit(Pnl %) = {}".format(curr_equity_date, npd[1], curr_equity_val, pnl_pct))
+            prev_equity_val = curr_equity_val
+
+        print("\n!!!!! self.rets.monthly_stats={}\n".format(self.rets.monthly_stats))
+        for key, val in self.rets.monthly_stats.items():
+            print("Month {}: pnl.netprofit.total={}, total.closed={}, won.total={}".format(key, val.pnl.netprofit.total, val.total.closed, val.won.total))
 
     def stop(self):
+        self.update_netprofit_monthly_stats()
+        #self.print_debug_info()
         super(TVTradeAnalyzer, self).stop()
         self.rets._close()
 
     def next(self):
+        #print('!! INSIDE next(): strategy.position.size={}, broker.get_value()={}, broker.get_cash()={}, data.open={}, data.close={}, datetime[0]={}'.format(self.strategy.position.size, self.strategy.broker.get_value(), self.strategy.broker.get_cash(), self.data.open[0], self.data.close[0], self.get_currentdate()))
         trades = self.rets
-        if self.buyandholdcalcbegin == True:
+        if self.buyandholdcalcbegin is True:
             trades.total.buyandholdreturn = self.data.close[0] * self.buyandholdnumshares - self.buyandholdstartvalue
             trades.total.buyandholdreturnpct = 100 * trades.total.buyandholdreturn / self.buyandholdstartvalue
 
     def notify_trade(self, trade):
         if trade.justopened:
+            #print('!! INSIDE notify_trade JUST OPENED trade={}, strategy.position.size={}, broker.get_value()={}, broker.get_cash()={}, data.open={}, data.close={}, datetime[0]={}\n'.format(trade, self.strategy.position.size, self.strategy.broker.get_value(), self.strategy.broker.get_cash(), self.data.open[0], self.data.close[0], self.get_currentdate()))
             # Trade just opened
             self.rets.total.total += 1
             self.rets.total.open += 1
-            if self.buyandholdcalcbegin == False:
+            if self.buyandholdcalcbegin is False:
                 self.buyandholdcalcbegin = True
                 self.buyandholdnumshares = int(self.p.cash / trade.price)
                 self.buyandholdstartvalue = self.buyandholdnumshares * trade.price         
 
         elif trade.status == trade.Closed:
+            #print('!! INSIDE notify_trade CLOSED trade={}, broker.get_value()={}, data.open={}, data.close={}, datetime[0]={}\n'.format(trade, self.strategy.broker.get_value(), self.data.open[0], self.data.close[0], self.get_currentdate()))
             trades = self.rets
 
             res = AutoDict()
@@ -105,6 +188,8 @@ class TVTradeAnalyzer(Analyzer):
             trades.pnl.grossloss.average = (trades.pnl.grossloss.total / trades.lost.total) if trades.lost.total > 0 else 0
             trades.pnl.netprofit.total = trades.pnl.grossprofit.total + trades.pnl.grossloss.total
             trades.total.profitfactor = abs(trades.pnl.grossprofit.total / trades.pnl.grossloss.total) if trades.pnl.grossloss.total != 0 else 0
+            self.set_netprofit_value(trade.pnlcomm)
+            self.update_tradenums_monthly_stats(trade)
 
             # Long/Short statistics
             for tname in ['long', 'short']:

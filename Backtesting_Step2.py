@@ -9,7 +9,7 @@ import pandas as pd
 import ast
 from strategies.strategy_enum import BTStrategyEnum
 
-batch_number = 0
+_batch_number = 0
 header_dateranges_months = {}
 final_results = {}
 

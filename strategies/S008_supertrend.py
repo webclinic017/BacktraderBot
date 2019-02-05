@@ -4,7 +4,6 @@ import itertools
 import pytz
 from strategies.abstractstrategy import AbstractStrategy
 
-
 class S008_AlexNoroSuperTrendStrategy(AbstractStrategy):
     '''
     This is an implementation of a strategy from TradingView - S008 Alex (Noro) SuperTrend v1.0 Strategy.

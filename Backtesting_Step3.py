@@ -28,7 +28,7 @@ month_num_days = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30,
 final_results = []
 step3_results = {}
 
-batch_number = 0
+_batch_number = 0
 step3_dateranges_months = {}
 
 ofile = None
@@ -100,7 +100,7 @@ def whereAmI():
 
 
 def optimization_step(strat):
-    global batch_number
+    global _batch_number
     batch_number += 1
     st = strat[0]
     st.strat_id = batch_number
