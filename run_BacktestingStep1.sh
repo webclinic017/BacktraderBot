@@ -17,7 +17,7 @@ declare -a arr_timeframes=("1h")
 
 #declare -a backtest_years=("2017" "2018")
 
-declare -a backtest_startdate="2017-02-01"
+declare -a backtest_startdate="2018-02-01"
 declare -a backtest_enddate="2018-08-31"
 
 startyear=${backtest_startdate:0:4}

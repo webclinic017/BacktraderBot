@@ -329,6 +329,21 @@ class BacktestingStep1(object):
         del coll["debug"]
         return "{}".format(coll)
 
+    def get_avg_monthly_net_profit_pct(self, monthly_stats, num_months):
+        sum_netprofits = 0
+        for key, val in monthly_stats.items():
+            curr_netprofit = val.pnl.netprofit.total
+            sum_netprofits += curr_netprofit
+        return round(sum_netprofits / float(num_months) if num_months > 0 else 0, 2)
+
+    def get_num_winning_months(self, monthly_stats, num_months):
+        num_positive_netprofit_months = 0
+        for key, val in monthly_stats.items():
+            curr_netprofit = val.pnl.netprofit.total
+            if curr_netprofit > 0:
+                num_positive_netprofit_months += 1
+        return round(num_positive_netprofit_months * 100 / float(num_months) if num_months > 0 else 0, 2)
+
     def generate_results_list(self, stratruns, args, startcash):
         # Generate results list
         model = BacktestingStep1Model(args.fromyear, args.frommonth, args.toyear, args.tomonth)
@@ -341,23 +356,26 @@ class BacktestingStep1(object):
 
                 strat_key = strategy.strat_id
                 parameters = self.getparametersstr(strategy.params)
+                monthly_stats = ta_analysis.monthly_stats if self.exists(ta_analysis, ['monthly_stats']) else {}
+                num_months = model.get_num_months()
                 total_closed = ta_analysis.total.closed if self.exists(ta_analysis, ['total', 'closed']) else 0
                 net_profit = round(ta_analysis.pnl.netprofit.total, 8) if self.exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
                 net_profit_pct = round(100 * ta_analysis.pnl.netprofit.total / startcash, 2) if self.exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
+                avg_monthly_net_profit_pct = '{}%'.format(self.get_avg_monthly_net_profit_pct(monthly_stats, num_months))
                 total_won = ta_analysis.won.total if self.exists(ta_analysis, ['won', 'total']) else 0
                 strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
                 max_drawdown_pct = round(dd_analysis.max.drawdown, 2)
                 max_drawdown_length = round(dd_analysis.max.len, 2)
+                num_winning_months = '{}%'.format(self.get_num_winning_months(monthly_stats, num_months))
                 profitfactor = round(ta_analysis.total.profitfactor, 3) if self.exists(ta_analysis, ['total', 'profitfactor']) else 0
                 buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if self.exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
                 sqn_number = round(sqn_analysis.sqn, 2)
                 monthlystatsprefix = args.monthlystatsprefix
-                monthly_stats = ta_analysis.monthly_stats if self.exists(ta_analysis, ['monthly_stats']) else {}
                 netprofitsdata = ta_analysis.total.netprofitsdata
 
                 if net_profit > 0 and total_closed > 0:
                     model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters, self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
-                                        net_profit_pct, max_drawdown_pct, max_drawdown_length, strike_rate, profitfactor,
+                                        net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, strike_rate, num_winning_months, profitfactor,
                                         buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, netprofitsdata)
 
         return model

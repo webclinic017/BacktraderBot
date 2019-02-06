@@ -100,17 +100,13 @@ class TVTradeAnalyzer(Analyzer):
                 curr_month_daterange_str = self.get_month_daterange(curr_equity_date)
                 curr_month_arr = self.get_monthly_stats_entry(curr_month_daterange_str)
                 curr_month_arr.pnl.netprofit.total = monthly_pnl_pct
+        # Workaround: delete last element of self.rets.monthly_stats array - do not need to see last month of the whole calculation
+        if len(self.rets.monthly_stats) > 0:
+            self.rets.monthly_stats.popitem()
 
     def update_netprofits_data(self):
         trades = self.rets
         trades.total.netprofitsdata = self.get_netprofits_data()
-
-    def update_avgpnl_and_winning_months_stats(self):
-        pass
-        # TODO: 'Step3: Avg Pnl, %', 'Step3: Worst Max DD, %', 'Step3: Avg Max DD, %', 'Step3: Winning Months, %',
-        #npd_list = list(self.netprofits_data.items())
-        #for npd in npd_list:
-
 
     def print_debug_info(self):
         print("!!!!! self.netprofits_data={}\n".format(self.netprofits_data))
@@ -132,7 +128,6 @@ class TVTradeAnalyzer(Analyzer):
     def stop(self):
         self.update_netprofit_monthly_stats()
         self.update_netprofits_data()
-        self.update_avgpnl_and_winning_months_stats()
         #self.print_debug_info()
         super(TVTradeAnalyzer, self).stop()
         self.rets._close()
