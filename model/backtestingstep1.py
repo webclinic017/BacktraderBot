@@ -10,8 +10,11 @@ class BacktestingStep1Model(object):
 
     _report_rows = []
 
+    _netprofitsdata_model = None
+
     def __init__(self, fromyear, frommonth, toyear, tomonth):
         self.populate_monthly_stats_column_names(fromyear, frommonth, toyear, tomonth)
+        self._netprofitsdata_model = BacktestingStep1NetProfitsDataModel()
 
     def get_month_num_days(self, year, month):
         return monthrange(year, month)[1]
@@ -28,10 +31,11 @@ class BacktestingStep1Model(object):
                 if currdate >= fromdate and currdate <= todate:
                     self._monthly_stats_column_names.append(self.getdaterange_month(year, month, year, month))
 
-    def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, buy_and_hold_return_pct, sqn_number, monthlystatsprefix, monthly_stats):
+    def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, buy_and_hold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, netprofitsdata):
         self._monthlystatsprefix = monthlystatsprefix
         row = BacktestingStep1ReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats)
         self._report_rows.append(row)
+        self._netprofitsdata_model.add_row(strategyid, exchange, currency_pair, timeframe, parameters, daterange, netprofitsdata)
 
     def get_monthly_stats_column_names(self):
         result = []
@@ -78,6 +82,8 @@ class BacktestingStep1Model(object):
             result.append(report_row)
         return result
 
+    def get_netprofitsdata_model(self):
+        return self._netprofitsdata_model
 
 class BacktestingStep1ReportRow(object):
 
@@ -136,21 +142,78 @@ class BacktestingStep1ReportRow(object):
 
     def get_row_data(self):
         result = [
-                self.strategyid,
-                self.exchange,
-                self.currency_pair,
-                self.timeframe,
-                self.parameters,
-                self.daterange,
-                self.lot_size,
-                self.total_closed_trades,
-                self.net_profit,
-                self.net_profit_pct,
-                self.max_drawdown_pct,
-                self.max_drawdown_length,
-                self.win_rate_pct,
-                self.profit_factor,
-                self.buy_and_hold_return_pct,
-                self.sqn_number]
+            self.strategyid,
+            self.exchange,
+            self.currency_pair,
+            self.timeframe,
+            self.parameters,
+            self.daterange,
+            self.lot_size,
+            self.total_closed_trades,
+            self.net_profit,
+            self.net_profit_pct,
+            self.max_drawdown_pct,
+            self.max_drawdown_length,
+            self.win_rate_pct,
+            self.profit_factor,
+            self.buy_and_hold_return_pct,
+            self.sqn_number
+        ]
+        return result
 
+
+class BacktestingStep1NetProfitsDataModel(object):
+
+    _report_rows = []
+
+    def add_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, netprofitsdata):
+        row = BacktestingStep1NetProfitsDataRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, netprofitsdata)
+        self._report_rows.append(row)
+
+    def get_header_names(self):
+        return ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Date Range', 'Net Profits Data']
+
+    def get_model_data_arr(self):
+        result = []
+        for row in self._report_rows:
+            report_row = row.get_row_data()
+            result.append(report_row)
+        return result
+
+
+class BacktestingStep1NetProfitsDataRow(object):
+
+    strategyid = None
+
+    exchange = None
+
+    currency_pair = None
+
+    timeframe = None
+
+    parameters = None
+
+    daterange = None
+
+    netprofitsdata = None
+
+    def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, netprofitsdata):
+        self.strategyid = strategyid
+        self.exchange = exchange
+        self.currency_pair = currency_pair
+        self.timeframe = timeframe
+        self.parameters = parameters
+        self.daterange = daterange
+        self.netprofitsdata = netprofitsdata
+
+    def get_row_data(self):
+        result = [
+            self.strategyid,
+            self.exchange,
+            self.currency_pair,
+            self.timeframe,
+            self.parameters,
+            self.daterange,
+            self.netprofitsdata
+        ]
         return result

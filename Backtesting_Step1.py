@@ -15,6 +15,7 @@ from datetime import timedelta
 from strategies.config import BTStrategyConfig
 from strategies.strategy_enum import BTStrategyEnum
 from model.backtestingstep1 import BacktestingStep1Model
+from model.backtestingstep1 import BacktestingStep1NetProfitsDataModel
 import os
 import csv
 import pandas as pd
@@ -40,11 +41,14 @@ class BacktestingStep1(object):
     _cerebro = None
     _strategy_enum = None
     _params = None
-    _is_output_file_exists = None
+    _is_output_file1_exists = None
     _input_filename = None
-    _output_file_full_name = None
-    _ofile = None
-    _writer = None
+    _output_file1_full_name = None
+    _output_file2_full_name = None
+    _ofile1 = None
+    _ofile2 = None
+    _writer1 = None
+    _writer2 = None
     _step1_model = None
 
     def parse_args(self):
@@ -212,8 +216,11 @@ class BacktestingStep1(object):
     def get_output_path(self, base_dir, args):
         return '{}/strategyrun_results/{}'.format(base_dir, args.runid)
 
-    def get_output_filename(self, base_path, args):
+    def get_output_filename1(self, base_path, args):
         return '{}/{}_Step1.csv'.format(base_path, args.runid)
+
+    def get_output_filename2(self, base_path, args):
+        return '{}/{}_Step1_NetProfitsData.csv'.format(base_path, args.runid)
 
     def get_fromdate(self, arr):
         fromyear = arr["fromyear"]
@@ -260,32 +267,46 @@ class BacktestingStep1(object):
         return os.path.dirname(os.path.realpath(__import__("__main__").__file__))
 
     def check_outputfile_exists(self):
-        return os.path.exists(self._output_file_full_name)
+        return os.path.exists(self._output_file1_full_name)
 
-    def init_output_file(self, args):
+    def init_output_files(self, args):
         base_dir = self.whereAmI()
         output_path = self.get_output_path(base_dir, args)
         os.makedirs(output_path, exist_ok=True)
-        self._output_file_full_name = self.get_output_filename(output_path, args)
 
-        if os.path.exists(self._output_file_full_name):
-            self._is_output_file_exists = True
+        self._output_file1_full_name = self.get_output_filename1(output_path, args)
+        if os.path.exists(self._output_file1_full_name):
+            self._is_output_file1_exists = True
         else:
-            self._is_output_file_exists = False
+            self._is_output_file1_exists = False
 
-        self._ofile = open(self._output_file_full_name, "a")
-        self._writer = csv.writer(self._ofile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        self._ofile1 = open(self._output_file1_full_name, "a")
+        self._writer1 = csv.writer(self._ofile1, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
+        self._output_file2_full_name = self.get_output_filename2(output_path, args)
+        self._ofile2 = open(self._output_file2_full_name, "w")
+        self._writer2 = csv.writer(self._ofile2, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+
 
     def run_strategies(self):
         # Run over everything
         return self._cerebro.run()
 
     def printfinalresultsheader(self, writer, model):
-        if self._is_output_file_exists is True:
+        if self._is_output_file1_exists is True:
             return
 
         # Designate the rows
         h1 = model.get_header_names()
+
+        # Print header
+        print_list = [h1]
+        for row in print_list:
+            writer.writerow(row)
+
+    def printnetprofitsdataheader(self, writer, model):
+        # Designate the rows
+        h1 = model.get_netprofitsdata_model().get_header_names()
 
         # Print header
         print_list = [h1]
@@ -332,11 +353,12 @@ class BacktestingStep1(object):
                 sqn_number = round(sqn_analysis.sqn, 2)
                 monthlystatsprefix = args.monthlystatsprefix
                 monthly_stats = ta_analysis.monthly_stats if self.exists(ta_analysis, ['monthly_stats']) else {}
+                netprofitsdata = ta_analysis.total.netprofitsdata
 
                 if net_profit > 0 and total_closed > 0:
                     model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters, self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
                                         net_profit_pct, max_drawdown_pct, max_drawdown_length, strike_rate, profitfactor,
-                                        buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats)
+                                        buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, netprofitsdata)
 
         return model
 
@@ -346,8 +368,15 @@ class BacktestingStep1(object):
         for item in print_list:
             writer.writerow(item)
 
+    def printnetprofitsdataresults(self, writer, arr):
+        print_list = []
+        print_list.extend(arr)
+        for item in print_list:
+            writer.writerow(item)
+
     def cleanup(self):
-        self._ofile.close()
+        self._ofile1.close()
+        self._ofile2.close()
 
     def run(self):
         args = self.parse_args()
@@ -366,23 +395,25 @@ class BacktestingStep1(object):
 
         self.add_data_to_cerebro(self._input_filename)
 
-        self.init_output_file(args)
+        self.init_output_files(args)
 
         self.enqueue_strategies()
 
-        print("Writing Step1 backtesting run results to: {}".format(self._output_file_full_name))
+        print("Writing Step1 backtesting run results to: {}".format(self._output_file1_full_name))
 
         run_results = self.run_strategies()
 
         self._step1_model = self.generate_results_list(run_results, args, startcash)
 
-        self.printfinalresultsheader(self._writer, self._step1_model)
+        self.printfinalresultsheader(self._writer1, self._step1_model)
+
+        self.printnetprofitsdataheader(self._writer2, self._step1_model)
 
         self._step1_model.sort_results()
 
-        final_results = self._step1_model.get_model_data_arr()
+        self.printfinalresults(self._writer1, self._step1_model.get_model_data_arr())
 
-        self.printfinalresults(self._writer, final_results)
+        self.printnetprofitsdataresults(self._writer2, self._step1_model.get_netprofitsdata_model().get_model_data_arr())
 
         self.cleanup()
 

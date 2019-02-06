@@ -13,6 +13,7 @@ from backtrader import Analyzer
 from backtrader.utils import AutoOrderedDict, AutoDict
 from backtrader.utils.py3 import MAXINT
 from calendar import monthrange
+import json
 
 __all__ = ['TVTradeAnalyzer']
 
@@ -34,6 +35,14 @@ class TVTradeAnalyzer(Analyzer):
 
     def set_netprofit_value(self, value):
         self.netprofits_data[self.get_currentdate()] = value
+
+    def get_netprofits_data(self):
+        result = {}
+        counter = 0
+        for date, netprofit in self.netprofits_data.items():
+            counter += 1
+            result[counter] = round(netprofit, 2)
+        return json.dumps(result)
 
     def get_currentdate(self):
         return bt.num2date(self.data.datetime[0])
@@ -92,6 +101,10 @@ class TVTradeAnalyzer(Analyzer):
                 curr_month_arr = self.get_monthly_stats_entry(curr_month_daterange_str)
                 curr_month_arr.pnl.netprofit.total = monthly_pnl_pct
 
+    def update_netprofits_data(self):
+        trades = self.rets
+        trades.total.netprofitsdata = self.get_netprofits_data()
+
     def update_avgpnl_and_winning_months_stats(self):
         pass
         # TODO: 'Step3: Avg Pnl, %', 'Step3: Worst Max DD, %', 'Step3: Avg Max DD, %', 'Step3: Winning Months, %',
@@ -118,6 +131,7 @@ class TVTradeAnalyzer(Analyzer):
 
     def stop(self):
         self.update_netprofit_monthly_stats()
+        self.update_netprofits_data()
         self.update_avgpnl_and_winning_months_stats()
         #self.print_debug_info()
         super(TVTradeAnalyzer, self).stop()
