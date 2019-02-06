@@ -1,25 +1,44 @@
 
+from datetime import date
+from calendar import monthrange
+
 class BacktestingStep1Model(object):
 
     _monthlystatsprefix = None
 
-    _monthly_stats_column_names = set([])
+    _monthly_stats_column_names = []
 
     _report_rows = []
+
+    def __init__(self, fromyear, frommonth, toyear, tomonth):
+        self.populate_monthly_stats_column_names(fromyear, frommonth, toyear, tomonth)
+
+    def get_month_num_days(self, year, month):
+        return monthrange(year, month)[1]
+
+    def getdaterange_month(self, fromyear, frommonth, toyear, tomonth):
+        return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(fromyear, frommonth, 1, toyear, tomonth, self.get_month_num_days(toyear, tomonth))
+
+    def populate_monthly_stats_column_names(self, fromyear, frommonth, toyear, tomonth):
+        fromdate = date(fromyear, frommonth, 1)
+        todate = date(toyear, tomonth, 1)
+        for year in range(fromyear, toyear + 1):
+            for month in range(1, 13):
+                currdate = date(year, month, 1)
+                if currdate >= fromdate and currdate <= todate:
+                    self._monthly_stats_column_names.append(self.getdaterange_month(year, month, year, month))
 
     def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, buy_and_hold_return_pct, sqn_number, monthlystatsprefix, monthly_stats):
         self._monthlystatsprefix = monthlystatsprefix
         row = BacktestingStep1ReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats)
         self._report_rows.append(row)
-        for date_item in monthly_stats.keys():
-            self._monthly_stats_column_names.add(date_item)
 
     def get_monthly_stats_column_names(self):
         result = []
         for column_name in self._monthly_stats_column_names:
             result.append("{}: {}".format(self._monthlystatsprefix, column_name))
 
-        return sorted(result, key=lambda x: x, reverse=False)
+        return result
 
     def get_header_names(self):
         result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Date Range', 'Lot Size', 'Total Closed Trades', 'Net Profit',
@@ -51,7 +70,7 @@ class BacktestingStep1Model(object):
 
     def get_model_data_arr(self):
         result = []
-        column_names = sorted(self._monthly_stats_column_names, key=lambda x: x, reverse=False)
+        column_names = self._monthly_stats_column_names
         for row in self._report_rows:
             report_row = row.get_row_data()
             monthly_stats_data = self.get_monthly_stats_data_arr(row, column_names)

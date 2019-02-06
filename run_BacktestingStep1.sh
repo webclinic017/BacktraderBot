@@ -8,11 +8,12 @@ declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" 
 declare -a arr_strategies=("S008_AlexNoroSuperTrendStrategy")
 
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT" "ZECUSDT" "ETPUSDT" "XMRUSDT" "DASHUSDT")
-declare -a arr_symbols=("BTCUSDT" "ETHUSDT")
+#declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT")
+declare -a arr_symbols=("IOTAUSDT")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
-#declare -a arr_timeframes=("3h")
 declare -a arr_timeframes=("3h")
+#declare -a arr_timeframes=("30m" "1h" "3h")
 
 #declare -a backtest_years=("2017" "2018")
 
@@ -63,17 +64,14 @@ do
     do
         for timeframe in "${arr_timeframes[@]}"
         do
-            for (( year=$startyear; year<=$endyear; year++))
-            do
-                fromyear=$startyear
-                toyear=$endyear
-                frommonth=$startmonth
-                tomonth=$endmonth
-                fromday=$startday
-                today=$endday
-                #echo !!! $strategyid $runid $symbol $timeframe $fromyear $toyear $frommonth $tomonth $fromday $today
-                process_backtest $strategyid $runid $symbol $timeframe $fromyear $toyear $frommonth $tomonth $fromday $today
-            done
+            fromyear=$startyear
+            toyear=$endyear
+            frommonth=$startmonth
+            tomonth=$endmonth
+            fromday=$startday
+            today=$endday
+            #echo !!! $strategyid $runid $symbol $timeframe $fromyear $toyear $frommonth $tomonth $fromday $today
+            process_backtest $strategyid $runid $symbol $timeframe $fromyear $toyear $frommonth $tomonth $fromday $today
         done
     done
 done

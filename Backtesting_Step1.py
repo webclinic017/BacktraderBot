@@ -310,7 +310,7 @@ class BacktestingStep1(object):
 
     def generate_results_list(self, stratruns, args, startcash):
         # Generate results list
-        model = BacktestingStep1Model()
+        model = BacktestingStep1Model(args.fromyear, args.frommonth, args.toyear, args.tomonth)
         for run in stratruns:
             for strategy in run:
                 # print the analyzers

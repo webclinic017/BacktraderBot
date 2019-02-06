@@ -71,7 +71,7 @@ class S008_AlexNoroSuperTrendStrategy(AbstractStrategy):
             if self.data.close[0] < self.TUp[-2]:
                 self.Trend.append(-1)
             else:
-                self.Trend.append(self._nz(self.Trend, -1, 1))
+                self.Trend.append(self._nzd(self.Trend, -1, 1))
 
         # Signals
         self.is_up = True if self.Trend[-1] == 1 and self.data.close[0] < self.data.open[0] else False
