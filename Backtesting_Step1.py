@@ -15,7 +15,6 @@ from datetime import timedelta
 from strategies.config import BTStrategyConfig
 from strategies.strategy_enum import BTStrategyEnum
 from model.backtestingstep1 import BacktestingStep1Model
-from model.backtestingstep1 import BacktestingStep1NetProfitsDataModel
 import os
 import csv
 import pandas as pd
@@ -42,6 +41,7 @@ class BacktestingStep1(object):
     _strategy_enum = None
     _params = None
     _is_output_file1_exists = None
+    _is_output_file2_exists = None
     _input_filename = None
     _output_file1_full_name = None
     _output_file2_full_name = None
@@ -284,7 +284,12 @@ class BacktestingStep1(object):
         self._writer1 = csv.writer(self._ofile1, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
         self._output_file2_full_name = self.get_output_filename2(output_path, args)
-        self._ofile2 = open(self._output_file2_full_name, "w")
+        if os.path.exists(self._output_file2_full_name):
+            self._is_output_file2_exists = True
+        else:
+            self._is_output_file2_exists = False
+
+        self._ofile2 = open(self._output_file2_full_name, "a")
         self._writer2 = csv.writer(self._ofile2, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
 
@@ -305,6 +310,9 @@ class BacktestingStep1(object):
             writer.writerow(row)
 
     def printnetprofitsdataheader(self, writer, model):
+        if self._is_output_file2_exists is True:
+            return
+
         # Designate the rows
         h1 = model.get_netprofitsdata_model().get_header_names()
 

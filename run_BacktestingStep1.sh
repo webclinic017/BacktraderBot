@@ -9,15 +9,15 @@ declare -a arr_strategies=("S008_AlexNoroSuperTrendStrategy")
 
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT" "ZECUSDT" "ETPUSDT" "XMRUSDT" "DASHUSDT")
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT")
-declare -a arr_symbols=("BTCUSDT")
+declare -a arr_symbols=("BTCUSDT" "ETHUSDT")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("1h")
+declare -a arr_timeframes=("1h" "3h")
 #declare -a arr_timeframes=("30m" "1h" "3h")
 
 #declare -a backtest_years=("2017" "2018")
 
-declare -a backtest_startdate="2018-02-01"
+declare -a backtest_startdate="2017-02-01"
 declare -a backtest_enddate="2018-08-31"
 
 startyear=${backtest_startdate:0:4}
