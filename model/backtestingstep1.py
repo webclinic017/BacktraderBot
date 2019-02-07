@@ -32,9 +32,9 @@ class BacktestingStep1Model(object):
                 if currdate >= fromdate and currdate <= todate:
                     self._monthly_stats_column_names.append(self.getdaterange_month(year, month, year, month))
 
-    def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, netprofitsdata):
+    def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct, sqn_number, sharpe_ratio, monthlystatsprefix, monthly_stats, netprofitsdata):
         self._monthlystatsprefix = monthlystatsprefix
-        row = BacktestingStep1ReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats)
+        row = BacktestingStep1ReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct, sqn_number, sharpe_ratio, monthly_stats)
         self._report_rows.append(row)
         self._netprofitsdata_model.add_row(strategyid, exchange, currency_pair, timeframe, parameters, daterange, netprofitsdata)
 
@@ -50,7 +50,7 @@ class BacktestingStep1Model(object):
 
     def get_header_names(self):
         result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Date Range', 'Lot Size', 'Total Closed Trades', 'Net Profit',
-                'Net Profit, %', 'Avg Monthly Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length', 'Win Rate, %', 'Winning Months, %', 'Profit Factor', 'Buy & Hold Return, %', 'SQN']
+                'Net Profit, %', 'Avg Monthly Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length', 'Win Rate, %', 'Winning Months, %', 'Profit Factor', 'Buy & Hold Return, %', 'SQN', 'Sharpe Ratio']
 
         column_names = self.get_monthly_stats_column_names()
         result.extend(column_names)
@@ -129,7 +129,7 @@ class BacktestingStep1ReportRow(object):
 
     monthly_stats = None
 
-    def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats):
+    def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size, total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct, sqn_number, sharpe_ratio, monthly_stats):
         self.strategyid = strategyid
         self.exchange = exchange
         self.currency_pair = currency_pair
@@ -148,6 +148,7 @@ class BacktestingStep1ReportRow(object):
         self.profit_factor = profit_factor
         self.buy_and_hold_return_pct = buy_and_hold_return_pct
         self.sqn_number = sqn_number
+        self.sharpe_ratio = sharpe_ratio
         self.monthly_stats = monthly_stats
 
     def get_row_data(self):
@@ -169,7 +170,8 @@ class BacktestingStep1ReportRow(object):
             self.num_winning_months,
             self.profit_factor,
             self.buy_and_hold_return_pct,
-            self.sqn_number
+            self.sqn_number,
+            self.sharpe_ratio
         ]
         return result
 

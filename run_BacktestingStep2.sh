@@ -1,8 +1,5 @@
 #! /bin/sh
 
-strategyid=$1
-runid=$2
+runid=$1
 
-declare exchange="bitfinex"
-
-python Backtesting_Step2.py -y $strategyid -r $runid -e $exchange
+python Backtesting_Step2.py -r $runid

@@ -1,4 +1,4 @@
-from strategies.strategy_enum import BTStrategyEnum
+from config.strategy_enum import BTStrategyEnum
 
 class BTStrategyConfig(object):
 
@@ -295,10 +295,10 @@ class BTStrategyConfig(object):
             "today": 31,
         },
         BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: {
-            "needlong": False,
+            "needlong": True,
             "needshort": True,
             "cloud": 25,
-            "Factor": 6,
+            "Factor": 10,
             "ATR": 7,
             "fromyear": 2018,
             "toyear": 2018,

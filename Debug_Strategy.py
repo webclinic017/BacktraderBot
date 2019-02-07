@@ -7,8 +7,8 @@ from backtrader import TimeFrame
 from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
-from strategies.config import BTStrategyConfig
-from strategies.strategy_enum import BTStrategyEnum
+from config.strategy_config import BTStrategyConfig
+from config.strategy_enum import BTStrategyEnum
 
 tradesopen = {}
 tradesclosed = {}
@@ -64,6 +64,7 @@ class DebugStrategy(object):
         self._cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
         self._cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd", initial_cash=startcash)
         self._cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=startcash)
+        self._cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sr", timeframe=TimeFrame.Months)
 
         # add the sizer
         self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
@@ -141,6 +142,7 @@ class DebugStrategy(object):
         # print the analyzers
         self.printTradeAnalysis(strategy.analyzers.ta.get_analysis())
         self.printSQN(strategy.analyzers.sqn.get_analysis())
+        self.printSharpeRatio(strategy.analyzers.sr.get_analysis())
         self.printDrawDown(strategy.analyzers.dd.get_analysis())
 
         print('\nTotal # trades: {}'.format(len(tradesclosed.items())))
@@ -202,6 +204,10 @@ class DebugStrategy(object):
         print('Max Drawdown: {}'.format(round(analyzer.max.moneydown, 2)))
         print('Max Drawdown, %: {}%'.format(round(analyzer.max.drawdown, 2)))
         print('Max Drawdown Length: {}'.format(round(analyzer.max.len, 2)))
+
+    def printSharpeRatio(self, analyzer):
+        sharperatio = round(analyzer['sharperatio'], 3)
+        print('Sharpe Ratio: {}'.format(sharperatio))
 
     def printDict(self, dict):
         for keys, values in dict.items():

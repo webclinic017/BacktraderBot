@@ -11,8 +11,8 @@ from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
 from common.stfetcher import StFetcher
-from strategies.config import BTStrategyConfig
-from strategies.strategy_enum import BTStrategyEnum
+from config.strategy_config import BTStrategyConfig
+from config.strategy_enum import BTStrategyEnum
 from datetime import datetime
 from datetime import timedelta
 from datetime import date

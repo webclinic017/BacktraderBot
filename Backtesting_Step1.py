@@ -12,8 +12,8 @@ from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
 from datetime import datetime
 from datetime import timedelta
-from strategies.config import BTStrategyConfig
-from strategies.strategy_enum import BTStrategyEnum
+from config.strategy_config import BTStrategyConfig
+from config.strategy_enum import BTStrategyEnum
 from model.backtestingstep1 import BacktestingStep1Model
 import os
 import csv
@@ -173,6 +173,7 @@ class BacktestingStep1(object):
         self._cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
         self._cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd", initial_cash=startcash)
         self._cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=startcash)
+        self._cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sr", timeframe=TimeFrame.Months)
 
         # add the sizer
         self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
@@ -361,6 +362,7 @@ class BacktestingStep1(object):
                 ta_analysis = strategy.analyzers.ta.get_analysis()
                 sqn_analysis = strategy.analyzers.sqn.get_analysis()
                 dd_analysis = strategy.analyzers.dd.get_analysis()
+                sr_analysis = strategy.analyzers.sr.get_analysis()
 
                 strat_key = strategy.strat_id
                 parameters = self.getparametersstr(strategy.params)
@@ -378,13 +380,14 @@ class BacktestingStep1(object):
                 profitfactor = round(ta_analysis.total.profitfactor, 3) if self.exists(ta_analysis, ['total', 'profitfactor']) else 0
                 buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if self.exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
                 sqn_number = round(sqn_analysis.sqn, 2)
+                sharpe_ratio = round(sr_analysis['sharperatio'], 3) if sr_analysis['sharperatio'] else 'None'
                 monthlystatsprefix = args.monthlystatsprefix
                 netprofitsdata = ta_analysis.total.netprofitsdata
 
                 if net_profit > 0 and total_closed > 0:
                     model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters, self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
                                         net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, strike_rate, num_winning_months, profitfactor,
-                                        buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, netprofitsdata)
+                                        buyandhold_return_pct, sqn_number, sharpe_ratio, monthlystatsprefix, monthly_stats, netprofitsdata)
 
         return model
 

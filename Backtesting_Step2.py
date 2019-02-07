@@ -38,6 +38,10 @@ class BacktestingStep2(object):
         dirname = self.whereAmI()
         return '{}/strategyrun_results/{}/{}_Step1.csv'.format(dirname, args.runid, args.runid)
 
+    def filter_and_select_best(self, df):
+
+        return df
+
     def get_output_path(self, base_dir, args):
         return '{}/strategyrun_results/{}'.format(base_dir, args.runid)
 
@@ -125,11 +129,20 @@ class BacktestingStep2(object):
 
         self._input_filename = self.get_input_filename(args)
 
-        step1_df = pd.read_csv(self._input_filename, index_col=[0, 1, 2])
+        step1_df = pd.read_csv(self._input_filename, index_col=[0, 1, 2, 3])
         step1_df = step1_df.sort_index()
+        strat_list = step1_df.index.get_level_values('Strategy ID').unique()
         exc_list = step1_df.index.get_level_values('Exchange').unique()
         sym_list = step1_df.index.get_level_values('Currency Pair').unique()
         tf_list = step1_df.index.get_level_values('Timeframe').unique()
+
+        for strategy in strat_list: # [strat_list[0]]:
+            for exchange in exc_list:  # [exc_list[0]]:
+                for symbol in sym_list:  # [sym_list[0]]:
+                    for timeframe in tf_list:  # [tf_list[0]]:
+                        candidates_data_df = step1_df.loc[(strategy, exchange, symbol, timeframe)]
+
+                        candidates_data_df = self.filter_and_select_best(candidates_data_df)
 
         self.init_output_files(args)
 
