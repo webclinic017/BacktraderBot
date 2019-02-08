@@ -3,12 +3,17 @@ Step 2 of backtesting process
 '''
  
 import argparse
-from model.backtestingstep1 import BacktestingStep1Model
 import os
 import csv
 import pandas as pd
+from config.optimization import StrategyOptimizationFactory
+
 
 class BacktestingStep2(object):
+
+    _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
+
+    _SORT_FINAL_RESULTS_COLUMN_NAME = "Net Profit"
 
     _params = None
     _input_filename = None
@@ -38,9 +43,18 @@ class BacktestingStep2(object):
         dirname = self.whereAmI()
         return '{}/strategyrun_results/{}/{}_Step1.csv'.format(dirname, args.runid, args.runid)
 
-    def filter_and_select_best(self, df):
+    def read_csv_data(self, filename):
+        return pd.read_csv(filename, index_col=self._INDEX_NUMBERS_ARR)
 
-        return df
+    def get_header_names(self, df):
+        return list(df.index.names) + list(df.columns.values)
+
+    def get_unique_index_values(self, df, name):
+        return df.index.get_level_values(name).unique()
+
+    def filter_top_records(self, df):
+        filter = StrategyOptimizationFactory.create_filters()
+        return filter.filter(df)
 
     def get_output_path(self, base_dir, args):
         return '{}/strategyrun_results/{}'.format(base_dir, args.runid)
@@ -58,62 +72,39 @@ class BacktestingStep2(object):
         self._ofile1 = open(self._output_file1_full_name, "w")
         self._writer1 = csv.writer(self._ofile1, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-    def printfinalresultsheader(self, writer, model):
-
-        # Designate the rows
-        h1 = model.get_header_names()
-
+    def printheader(self, writer, arr):
         # Print header
-        print_list = [h1]
+        print_list = [arr]
         for row in print_list:
             writer.writerow(row)
 
-    def generate_results_list(self, args):
-        # Generate results list
-        model = BacktestingStep1Model(args.fromyear, args.frommonth, args.toyear, args.tomonth)
-        for run in stratruns:
-            for strategy in run:
-                # print the analyzers
-                ta_analysis = strategy.analyzers.ta.get_analysis()
-                sqn_analysis = strategy.analyzers.sqn.get_analysis()
-                dd_analysis = strategy.analyzers.dd.get_analysis()
+    def do_filter_input_data(self, df):
+        final_results = []
 
-                strat_key = strategy.strat_id
-                parameters = self.getparametersstr(strategy.params)
-                monthly_stats = ta_analysis.monthly_stats if self.exists(ta_analysis, ['monthly_stats']) else {}
-                num_months = model.get_num_months()
-                total_closed = ta_analysis.total.closed if self.exists(ta_analysis, ['total', 'closed']) else 0
-                net_profit = round(ta_analysis.pnl.netprofit.total, 8) if self.exists(ta_analysis, ['pnl', 'netprofit',
-                                                                                                    'total']) else 0
-                net_profit_pct = round(100 * ta_analysis.pnl.netprofit.total / startcash, 2) if self.exists(ta_analysis,
-                                                                                                            ['pnl',
-                                                                                                             'netprofit',
-                                                                                                             'total']) else 0
-                avg_monthly_net_profit_pct = '{}%'.format(
-                    self.get_avg_monthly_net_profit_pct(monthly_stats, num_months))
-                total_won = ta_analysis.won.total if self.exists(ta_analysis, ['won', 'total']) else 0
-                strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
-                max_drawdown_pct = round(dd_analysis.max.drawdown, 2)
-                max_drawdown_length = round(dd_analysis.max.len, 2)
-                num_winning_months = '{}%'.format(self.get_num_winning_months(monthly_stats, num_months))
-                profitfactor = round(ta_analysis.total.profitfactor, 3) if self.exists(ta_analysis,
-                                                                                       ['total', 'profitfactor']) else 0
-                buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if self.exists(ta_analysis,
-                                                                                                       ['total',
-                                                                                                        'buyandholdreturnpct']) else 0
-                sqn_number = round(sqn_analysis.sqn, 2)
-                monthlystatsprefix = args.monthlystatsprefix
-                netprofitsdata = ta_analysis.total.netprofitsdata
+        strat_list = self.get_unique_index_values(df, 'Strategy ID')
+        exc_list = self.get_unique_index_values(df, 'Exchange')
+        sym_list = self.get_unique_index_values(df, 'Currency Pair')
+        tf_list = self.get_unique_index_values(df, 'Timeframe')
 
-                if net_profit > 0 and total_closed > 0:
-                    model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters,
-                                         self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
-                                         net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
-                                         max_drawdown_length, strike_rate, num_winning_months, profitfactor,
-                                         buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats,
-                                         netprofitsdata)
+        for strategy in strat_list: # [strat_list[0]]:
+            for exchange in exc_list:  # [exc_list[0]]:
+                for symbol in sym_list:  # [sym_list[0]]:
+                    for timeframe in tf_list:  # [tf_list[0]]:
+                        idx = pd.IndexSlice
+                        candidates_data_df = df.loc[idx[strategy, exchange, symbol, timeframe, :], idx[:]]
+                        candidates_data_df = self.filter_top_records(candidates_data_df)
+                        if candidates_data_df is not None and len(candidates_data_df) > 0:
+                            print("Processing: {}/{}/{}/{}:\nNumber of best rows: {}\n".format(strategy, exchange, symbol, timeframe, len(candidates_data_df.values)))
+                            candidates_data_df = candidates_data_df.reset_index()
+                            final_results.extend(candidates_data_df.values.tolist())
+                            #print("candidates_data_df.values={}\n".format(candidates_data_df.values))
 
-        return model
+        print("==========================\nFinal number of rows: {}".format(len(final_results)))
+        return final_results
+
+    def sort_results(self, arr, header_names):
+        sort_by_column_idx = header_names.index(self._SORT_FINAL_RESULTS_COLUMN_NAME)
+        return sorted(arr, key=lambda x: x[sort_by_column_idx], reverse=True)
 
     def printfinalresults(self, writer, arr):
         print_list = []
@@ -129,32 +120,23 @@ class BacktestingStep2(object):
 
         self._input_filename = self.get_input_filename(args)
 
-        step1_df = pd.read_csv(self._input_filename, index_col=[0, 1, 2, 3])
+        step1_df = self.read_csv_data(self._input_filename)
+
+        header_names = self.get_header_names(step1_df)
+
         step1_df = step1_df.sort_index()
-        strat_list = step1_df.index.get_level_values('Strategy ID').unique()
-        exc_list = step1_df.index.get_level_values('Exchange').unique()
-        sym_list = step1_df.index.get_level_values('Currency Pair').unique()
-        tf_list = step1_df.index.get_level_values('Timeframe').unique()
-
-        for strategy in strat_list: # [strat_list[0]]:
-            for exchange in exc_list:  # [exc_list[0]]:
-                for symbol in sym_list:  # [sym_list[0]]:
-                    for timeframe in tf_list:  # [tf_list[0]]:
-                        candidates_data_df = step1_df.loc[(strategy, exchange, symbol, timeframe)]
-
-                        candidates_data_df = self.filter_and_select_best(candidates_data_df)
 
         self.init_output_files(args)
 
+        self.printheader(self._writer1, header_names)
+
+        final_results = self.do_filter_input_data(step1_df)
+
         print("Writing Step2 backtesting run results to: {}".format(self._output_file1_full_name))
 
-        self._step2_model = self.generate_results_list(args)
+        final_results = self.sort_results(final_results, header_names)
 
-        self.printfinalresultsheader(self._writer1, self._step2_model)
-
-        self._step2_model.sort_results()
-
-        self.printfinalresults(self._writer1, self._step2_model.get_model_data_arr())
+        self.printfinalresults(self._writer1, final_results)
 
         self.cleanup()
 

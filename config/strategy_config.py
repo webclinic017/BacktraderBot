@@ -86,7 +86,6 @@ class BTStrategyConfig(object):
             "Factor": range(1, 11),
             "ATR": 7,
         },
-
     }
 
     _STEP3_STRATEGY_DEFAULT_PARAMS_DICT = {

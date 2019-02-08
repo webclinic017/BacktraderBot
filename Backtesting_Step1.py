@@ -376,7 +376,7 @@ class BacktestingStep1(object):
                 strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
                 max_drawdown_pct = round(dd_analysis.max.drawdown, 2)
                 max_drawdown_length = round(dd_analysis.max.len, 2)
-                num_winning_months = '{}%'.format(self.get_num_winning_months(monthly_stats, num_months))
+                num_winning_months = '{}'.format(self.get_num_winning_months(monthly_stats, num_months))
                 profitfactor = round(ta_analysis.total.profitfactor, 3) if self.exists(ta_analysis, ['total', 'profitfactor']) else 0
                 buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if self.exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
                 sqn_number = round(sqn_analysis.sqn, 2)
