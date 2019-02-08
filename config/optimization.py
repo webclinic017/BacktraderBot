@@ -18,10 +18,10 @@ class StrategyOptimizationFactory(object):
         TopNPercentFilter("Net Profit, %", 10, False),
         TopNPercentFilter("Max Drawdown, %", 10, False),
         TopNPercentFilter("Max Drawdown Length", 10, True),
-        #TopNPercentFilter("Winning Months, %", 10, False),
+        TopNPercentFilter("Winning Months, %", 10, False),
         TopNPercentFilter("Profit Factor", 10, False),
         TopNPercentFilter("SQN", 10, False),
-        #TopNPercentFilter("Sharpe Ratio", 10, False)
+        TopNPercentFilter("Sharpe Ratio", 10, False)
     ])
 
     _TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("Total Closed Trades", 100, False)
