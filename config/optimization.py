@@ -14,6 +14,14 @@ class StrategyOptimizationEnum(Enum):
 
 class StrategyOptimizationFactory(object):
 
+    _TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("Total Closed Trades", 100, False)
+
+    _MAX_DRAWDOWN_PCT_VALUE_FILTER = ValueFilter("Max Drawdown, %", -50, False)
+
+    _NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 20, False)
+
+    _SQN_VALUE_FILTER = ValueFilter("SQN", 0.5, False)
+
     _COMBINED_RESULTS_MERGING_FILTER = CombinedResultsMergingFilter([
         TopNPercentFilter("Net Profit, %", 10, False),
         TopNPercentFilter("Max Drawdown, %", 10, False),
@@ -24,13 +32,9 @@ class StrategyOptimizationFactory(object):
         TopNPercentFilter("Sharpe Ratio", 10, False)
     ])
 
-    _TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("Total Closed Trades", 100, False)
+    _NET_PROFIT_TOPNPERCENT_VALUE_FILTER = TopNPercentFilter("Net Profit, %", 30, False)
 
-    _NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 20, False)
-
-    _SQN_VALUE_FILTER = ValueFilter("SQN", 0.5, False)
-
-    _ALL_FILTERS = FilterSequence([_TOTAL_CLOSED_TRADES_VALUE_FILTER, _NET_PROFIT_VALUE_FILTER, _SQN_VALUE_FILTER, _COMBINED_RESULTS_MERGING_FILTER])
+    _ALL_FILTERS = FilterSequence([_TOTAL_CLOSED_TRADES_VALUE_FILTER, _MAX_DRAWDOWN_PCT_VALUE_FILTER, _NET_PROFIT_VALUE_FILTER, _SQN_VALUE_FILTER, _COMBINED_RESULTS_MERGING_FILTER, _NET_PROFIT_TOPNPERCENT_VALUE_FILTER])
 
     @classmethod
     def create_filters(cls):
