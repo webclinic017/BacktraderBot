@@ -3,26 +3,15 @@ from config.strategy_enum import BTStrategyEnum
 class BTStrategyConfig(object):
 
     _STEP1_STRATEGY_PARAMS_DICT = {
-        #BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: {
-        #   "needlong": (False, True),
-        #    "needshort": (False, True),
-          #    "needstops": False,
-          #    "stoppercent": 5,
-          #    "usefastsma": True,
-          #    "fastlen": range(3, 6),
-          #    "slowlen": range(10, 27),
-          #    "bars": range(0, 3),
-          #    "needex": False
-        #},
         BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: {
-            "needlong": True,
-            "needshort": True,
+           "needlong": (False, True),
+            "needshort": (False, True),
             "needstops": False,
             "stoppercent": 5,
             "usefastsma": True,
-            "fastlen": 4,
-            "slowlen": 21,
-            "bars": 2,
+            "fastlen": range(3, 6),
+            "slowlen": range(10, 27),
+            "bars": range(0, 3),
             "needex": False
         },
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {

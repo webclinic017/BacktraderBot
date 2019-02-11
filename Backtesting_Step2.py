@@ -7,9 +7,16 @@ import os
 import csv
 import pandas as pd
 from config.optimization import StrategyOptimizationFactory
+from bokeh.layouts import column
+from bokeh.models import ColumnDataSource, Span, Label
+from bokeh.plotting import figure
+from bokeh.io import export_png
+import json
 
 
 class BacktestingStep2(object):
+
+    _EQUITY_CURVE_IMAGE_WIDTH = 1500
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
@@ -17,6 +24,7 @@ class BacktestingStep2(object):
 
     _params = None
     _input_filename = None
+    _equity_curve_input_filename = None
     _output_file1_full_name = None
     _ofile1 = None
     _writer1 = None
@@ -43,6 +51,10 @@ class BacktestingStep2(object):
         dirname = self.whereAmI()
         return '{}/strategyrun_results/{}/{}_Step1.csv'.format(dirname, args.runid, args.runid)
 
+    def get_equity_curve_input_filename(self, args):
+        dirname = self.whereAmI()
+        return '{}/strategyrun_results/{}/{}_Step1_NetProfitsData.csv'.format(dirname, args.runid, args.runid)
+
     def read_csv_data(self, filename):
         return pd.read_csv(filename, index_col=self._INDEX_NUMBERS_ARR)
 
@@ -59,15 +71,21 @@ class BacktestingStep2(object):
     def get_output_path(self, base_dir, args):
         return '{}/strategyrun_results/{}'.format(base_dir, args.runid)
 
-    def get_output_filename1(self, base_path, args):
+    def get_output_images_path(self, base_dir, args):
+        return '{}/strategyrun_results/{}/equity_curve_images'.format(base_dir, args.runid)
+
+    def get_output_filename(self, base_path, args):
         return '{}/{}_Step2.csv'.format(base_path, args.runid)
+
+    def get_output_image_filename(self, base_path, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, image_counter):
+        return "{}/{}-{}-{}-{}-{:04d}.png".format(base_path, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, image_counter)
 
     def init_output_files(self, args):
         base_dir = self.whereAmI()
         output_path = self.get_output_path(base_dir, args)
         os.makedirs(output_path, exist_ok=True)
 
-        self._output_file1_full_name = self.get_output_filename1(output_path, args)
+        self._output_file1_full_name = self.get_output_filename(output_path, args)
 
         self._ofile1 = open(self._output_file1_full_name, "w")
         self._writer1 = csv.writer(self._ofile1, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
@@ -112,6 +130,77 @@ class BacktestingStep2(object):
         for item in print_list:
             writer.writerow(item)
 
+    def get_equity_curve_data(self, netprofit_data_arr):
+        result = []
+        equity = 0
+        for netprofit_val in netprofit_data_arr:
+            equity += netprofit_val
+            result.append(equity)
+        return result
+
+    def get_net_profits_data(self, step1_equity_curve_df, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str):
+        net_profits_data = step1_equity_curve_df.loc[(strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str), "Net Profits Data"]
+        return net_profits_data
+
+    def draw_plot(self, date_range_str, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str, net_profits_data_str):
+        labels = figure(tools="", toolbar_location=None, plot_height=150, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH,
+                        x_axis_location="above")
+        label1 = Label(x=10, y=110, x_units='screen', y_units='screen', text=date_range_str, text_font_size="10pt",
+                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label2 = Label(x=10, y=90, x_units='screen', y_units='screen', text=strategy_id_data_str, text_font_size="10pt",
+                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label3 = Label(x=10, y=70, x_units='screen', y_units='screen', text=exchange_str, text_font_size="10pt",
+                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label4 = Label(x=10, y=50, x_units='screen', y_units='screen', text=symbol_str, text_font_size="10pt",
+                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label5 = Label(x=10, y=30, x_units='screen', y_units='screen', text=timeframe_str, text_font_size="10pt",
+                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label6 = Label(x=10, y=10, x_units='screen', y_units='screen', text=parameters_str, text_font_size="10pt",
+                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        labels.add_layout(label1)
+        labels.add_layout(label2)
+        labels.add_layout(label3)
+        labels.add_layout(label4)
+        labels.add_layout(label5)
+        labels.add_layout(label6)
+
+        net_profits_data_dict = json.loads(net_profits_data_str)
+        x_axis_data = [int(x) for x in net_profits_data_dict.keys()]
+        y_axis_data = self.get_equity_curve_data(net_profits_data_dict.values())
+        x_max_value = len(x_axis_data)
+        source = ColumnDataSource(data=dict(id=x_axis_data, netprofit=y_axis_data))
+        equity_curve_plot = figure(plot_height=300, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="",
+                                   toolbar_location=None,
+                                   x_axis_type="linear", x_axis_label="Trade Number", x_axis_location="below",
+                                   y_axis_label="Equity",
+                                   background_fill_color="#efefef", x_range=(1, x_max_value))
+        equity_curve_plot.title.text_font_style = "normal"
+        y_axis_zero_line = Span(location=0, dimension='width', line_color='blue', line_dash='dashed', line_width=1,
+                                line_alpha=0.8)
+        equity_curve_plot.add_layout(y_axis_zero_line)
+        equity_curve_plot.line('id', 'netprofit', source=source, line_width=2, alpha=0.7)
+        return column(labels, equity_curve_plot)
+
+    def generate_equity_curve_images(self, step2_results, step1_equity_curve_df, args):
+        image_counter = 0
+        base_dir = self.whereAmI()
+        output_path = self.get_output_images_path(base_dir, args)
+        os.makedirs(output_path, exist_ok=True)
+        for row in step2_results:
+            date_range_str = row[5]
+            strategy_id_data_str = row[0]
+            exchange_str = row[1]
+            symbol_str = row[2]
+            timeframe_str = row[3]
+            parameters_str = row[4]
+            net_profits_data_str = self.get_net_profits_data(step1_equity_curve_df, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str)
+            draw_column = self.draw_plot(date_range_str, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str, net_profits_data_str)
+
+            image_counter += 1
+            image_filename = self.get_output_image_filename(output_path, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, image_counter)
+            export_png(draw_column, filename=image_filename)
+            #show(draw_column)
+
     def cleanup(self):
         self._ofile1.close()
 
@@ -130,13 +219,19 @@ class BacktestingStep2(object):
 
         self.printheader(self._writer1, header_names)
 
-        final_results = self.do_filter_input_data(step1_df)
+        step2_results = self.do_filter_input_data(step1_df)
 
         print("Writing Step2 backtesting run results to: {}".format(self._output_file1_full_name))
 
-        final_results = self.sort_results(final_results, header_names)
+        step2_results = self.sort_results(step2_results, header_names)
 
-        self.printfinalresults(self._writer1, final_results)
+        self.printfinalresults(self._writer1, step2_results)
+
+        self._equity_curve_input_filename = self.get_equity_curve_input_filename(args)
+
+        step1_equity_curve_df = self.read_csv_data(self._equity_curve_input_filename)
+
+        self.generate_equity_curve_images(step2_results, step1_equity_curve_df, args)
 
         self.cleanup()
 
