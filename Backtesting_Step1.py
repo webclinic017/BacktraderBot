@@ -338,6 +338,14 @@ class BacktestingStep1(object):
         del coll["debug"]
         return "{}".format(coll)
 
+    def update_monthly_stats(self, stats, num_months):
+        if len(stats) > 0:
+            # Workaround: delete the last element of stats array - do not need to see last month of the whole calculation
+            if len(stats) == num_months + 1:
+                stats.popitem()
+
+        return stats
+
     def get_avg_monthly_net_profit_pct(self, monthly_stats, num_months):
         sum_netprofits = 0
         for key, val in monthly_stats.items():
@@ -368,6 +376,7 @@ class BacktestingStep1(object):
                 parameters = self.getparametersstr(strategy.params)
                 monthly_stats = ta_analysis.monthly_stats if self.exists(ta_analysis, ['monthly_stats']) else {}
                 num_months = model.get_num_months()
+                monthly_stats = self.update_monthly_stats(monthly_stats, num_months)
                 total_closed = ta_analysis.total.closed if self.exists(ta_analysis, ['total', 'closed']) else 0
                 net_profit = round(ta_analysis.pnl.netprofit.total, 8) if self.exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
                 net_profit_pct = round(100 * ta_analysis.pnl.netprofit.total / startcash, 2) if self.exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0

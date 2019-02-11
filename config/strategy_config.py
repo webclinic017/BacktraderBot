@@ -3,15 +3,26 @@ from config.strategy_enum import BTStrategyEnum
 class BTStrategyConfig(object):
 
     _STEP1_STRATEGY_PARAMS_DICT = {
+        #BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: {
+        #   "needlong": (False, True),
+        #    "needshort": (False, True),
+          #    "needstops": False,
+          #    "stoppercent": 5,
+          #    "usefastsma": True,
+          #    "fastlen": range(3, 6),
+          #    "slowlen": range(10, 27),
+          #    "bars": range(0, 3),
+          #    "needex": False
+        #},
         BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: {
-            "needlong": (False, True),
-            "needshort": (False, True),
+            "needlong": True,
+            "needshort": True,
             "needstops": False,
             "stoppercent": 5,
             "usefastsma": True,
-            "fastlen": range(3, 6),
-            "slowlen": range(10, 27),
-            "bars": range(0, 3),
+            "fastlen": 4,
+            "slowlen": 21,
+            "bars": 2,
             "needex": False
         },
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
@@ -177,18 +188,18 @@ class BTStrategyConfig(object):
     _DEBUG_STRATEGY_PARAMS_DICT = {
         BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: {
             "needlong": True,
-            "needshort": True,
+            "needshort": False,
             "needstops": False,
             "stoppercent": 5,
             "usefastsma": True,
-            "fastlen": 3,
+            "fastlen": 5,
             "slowlen": 17,
             "bars": 2,
             "needex": False,
-            "fromyear": 2018,
+            "fromyear": 2017,
             "toyear": 2018,
-            "frommonth": 11,
-            "tomonth": 11,
+            "frommonth": 1,
+            "tomonth": 6,
             "fromday": 1,
             "today": 30,
         },

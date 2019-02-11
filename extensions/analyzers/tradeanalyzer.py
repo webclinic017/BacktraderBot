@@ -100,9 +100,6 @@ class TVTradeAnalyzer(Analyzer):
                 curr_month_daterange_str = self.get_month_daterange(curr_equity_date)
                 curr_month_arr = self.get_monthly_stats_entry(curr_month_daterange_str)
                 curr_month_arr.pnl.netprofit.total = monthly_pnl_pct
-        # Workaround: delete last element of self.rets.monthly_stats array - do not need to see last month of the whole calculation
-        if len(self.rets.monthly_stats) > 0:
-            self.rets.monthly_stats.popitem()
 
     def update_netprofits_data(self):
         trades = self.rets
