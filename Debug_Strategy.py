@@ -7,6 +7,7 @@ from backtrader import TimeFrame
 from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
+from extensions.sizers.cashsizer import FixedCashSizer
 from config.strategy_config import BTStrategyConfig
 from config.strategy_enum import BTStrategyEnum
 
@@ -17,7 +18,7 @@ tradesclosed = {}
 class DebugStrategy(object):
 
     START_CASH_VALUE = 100000
-    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/30m/bitfinex-BTCUSDT-30m.csv'
+    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/3h/bitfinex-BTCUSDT-3h.csv'
 
     _cerebro = None
     _strategy_enum = None
@@ -36,6 +37,17 @@ class DebugStrategy(object):
                             type=str,
                             choices=["Percentage", "Fixed"],
                             help='The type of commission to apply to a trade')
+
+        parser.add_argument('-l', '--lottype',
+                            type=str,
+                            default="Fixed",
+                            choices=["Percentage", "Fixed"],
+                            help='Lot type')
+
+        parser.add_argument('-z', '--lotsize',
+                            type=int,
+                            default=10000,
+                            help='Lot size: either percentage or number of units - depending on lottype parameter')
 
         parser.add_argument('--commission',
                             default=0.0015,
@@ -67,7 +79,10 @@ class DebugStrategy(object):
         self._cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sr", timeframe=TimeFrame.Months)
 
         # add the sizer
-        self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
+        if args.lottype != "" and args.lottype == "Percentage":
+            self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
+        else:
+            self._cerebro.addsizer(FixedCashSizer, cash=args.lotsize)
 
         if args.commtype.lower() == 'percentage':
             self._cerebro.broker.setcommission(args.commission)

@@ -10,6 +10,7 @@ from backtrader import TimeFrame
 from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
+from extensions.sizers.cashsizer import FixedCashSizer
 from datetime import datetime
 from datetime import timedelta
 from config.strategy_config import BTStrategyConfig
@@ -18,6 +19,8 @@ from model.backtestingstep1 import BacktestingStep1Model
 import os
 import csv
 import pandas as pd
+#from scipy import stats
+#import numpy as np
 
 class CerebroRunner(object):
     _batch_number = 0
@@ -88,14 +91,14 @@ class BacktestingStep1(object):
 
         parser.add_argument('-l', '--lottype',
                             type=str,
-                            default="Percentage",
+                            default="Fixed",
                             required=True,
                             choices=["Percentage", "Fixed"],
                             help='Lot type')
 
         parser.add_argument('-z', '--lotsize',
                             type=int,
-                            default=98,
+                            default=10000,
                             required=True,
                             help='Lot size: either percentage or number of units - depending on lottype parameter')
 
@@ -176,7 +179,10 @@ class BacktestingStep1(object):
         self._cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sr", timeframe=TimeFrame.Months)
 
         # add the sizer
-        self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
+        if args.lottype != "" and args.lottype == "Percentage":
+            self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
+        else:
+            self._cerebro.addsizer(FixedCashSizer, cash=args.lotsize)
 
         if args.commtype.lower() == 'percentage':
             self._cerebro.broker.setcommission(args.commission)
@@ -389,17 +395,17 @@ class BacktestingStep1(object):
                 profitfactor = round(ta_analysis.total.profitfactor, 3) if self.exists(ta_analysis, ['total', 'profitfactor']) else 0
                 buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if self.exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
                 sqn_number = round(sqn_analysis.sqn, 2)
-                sharpe_ratio = round(sr_analysis['sharperatio'], 3) if sr_analysis['sharperatio'] else 'None'
+                sharpe_ratio = round(sr_analysis['sharperatio'], 3) if sr_analysis['sharperatio'] else 0
                 monthlystatsprefix = args.monthlystatsprefix
                 netprofitsdata = ta_analysis.total.netprofitsdata
 
-                if net_profit > 0 and total_closed > 0:
-                    model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters,
-                                         self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
-                                         net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
-                                         max_drawdown_length, strike_rate, num_winning_months, profitfactor,
-                                         buyandhold_return_pct, sqn_number, sharpe_ratio, monthlystatsprefix,
-                                         monthly_stats, netprofitsdata)
+                #if net_profit > 0 and total_closed > 0:
+                model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters,
+                                     self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
+                                     net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
+                                     max_drawdown_length, strike_rate, num_winning_months, profitfactor,
+                                     buyandhold_return_pct, sqn_number, sharpe_ratio, monthlystatsprefix,
+                                     monthly_stats, netprofitsdata)
 
         return model
 
