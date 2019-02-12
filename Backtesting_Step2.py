@@ -11,12 +11,16 @@ from bokeh.layouts import column
 from bokeh.models import ColumnDataSource, Span, Label
 from bokeh.plotting import figure
 from bokeh.io import export_png
+from datetime import datetime
+from bokeh.models import DatetimeTickFormatter
+from bokeh.models import NumeralTickFormatter
 import json
 
 
 class BacktestingStep2(object):
 
     _EQUITY_CURVE_IMAGE_WIDTH = 1500
+    _EQUITY_CURVE_IMAGE_HEIGHT = 800
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
@@ -71,8 +75,8 @@ class BacktestingStep2(object):
     def get_output_path(self, base_dir, args):
         return '{}/strategyrun_results/{}'.format(base_dir, args.runid)
 
-    def get_output_images_path(self, base_dir, args):
-        return '{}/strategyrun_results/{}/equity_curve_images'.format(base_dir, args.runid)
+    def get_output_equity_curve_images_path(self, base_dir, args):
+        return '{}/strategyrun_results/{}/Step2_EquityCurveImages'.format(base_dir, args.runid)
 
     def get_output_filename(self, base_path, args):
         return '{}/{}_Step2.csv'.format(base_path, args.runid)
@@ -104,10 +108,10 @@ class BacktestingStep2(object):
         sym_list = self.get_unique_index_values(df, 'Currency Pair')
         tf_list = self.get_unique_index_values(df, 'Timeframe')
 
-        for strategy in strat_list: # [strat_list[0]]:
-            for exchange in exc_list:  # [exc_list[0]]:
-                for symbol in sym_list:  # [sym_list[0]]:
-                    for timeframe in tf_list:  # [tf_list[0]]:
+        for strategy in strat_list:
+            for exchange in exc_list:
+                for symbol in sym_list:
+                    for timeframe in tf_list:
                         idx = pd.IndexSlice
                         candidates_data_df = df.loc[idx[strategy, exchange, symbol, timeframe, :], idx[:]]
                         candidates_data_df = self.filter_top_records(candidates_data_df)
@@ -130,9 +134,21 @@ class BacktestingStep2(object):
         for item in print_list:
             writer.writerow(item)
 
+    def get_equity_curve_dates(self, dates_arr, date_range_str):
+        counter = 1
+        range_splitted = date_range_str.split('-')
+        start_date = range_splitted[0]
+        result = [datetime.strptime(start_date, '%Y%m%d')]
+        for eq_date_str in dates_arr:
+            eq_date = datetime.strptime(eq_date_str, '%y%m%d')
+            eq_date = pd.to_datetime(eq_date)
+            result.append(eq_date)
+            counter += 1
+        return result
+
     def get_equity_curve_data(self, netprofit_data_arr):
-        result = []
         equity = 0
+        result = [equity]
         for netprofit_val in netprofit_data_arr:
             equity += netprofit_val
             result.append(equity)
@@ -165,26 +181,30 @@ class BacktestingStep2(object):
         labels.add_layout(label6)
 
         net_profits_data_dict = json.loads(net_profits_data_str)
-        x_axis_data = [int(x) for x in net_profits_data_dict.keys()]
+        x_axis_data = self.get_equity_curve_dates(net_profits_data_dict.keys(), date_range_str)
         y_axis_data = self.get_equity_curve_data(net_profits_data_dict.values())
-        x_max_value = len(x_axis_data)
         source = ColumnDataSource(data=dict(id=x_axis_data, netprofit=y_axis_data))
-        equity_curve_plot = figure(plot_height=300, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="",
-                                   toolbar_location=None,
-                                   x_axis_type="linear", x_axis_label="Trade Number", x_axis_location="below",
-                                   y_axis_label="Equity",
-                                   background_fill_color="#efefef", x_range=(1, x_max_value))
+        equity_curve_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="datetime",
+                                   toolbar_location=None, x_axis_label="Trade Number", x_axis_location="below",
+                                   y_axis_label="Equity", background_fill_color="#efefef")
+        equity_curve_plot.xaxis.formatter = DatetimeTickFormatter(
+            days=["%Y-%m-%d"],
+            months=["%Y-%m-%d"],
+            hours=["%Y-%m-%d"],
+            minutes=["%Y-%m-%d"]
+        )
+        equity_curve_plot.yaxis.formatter = NumeralTickFormatter(format="0")
         equity_curve_plot.title.text_font_style = "normal"
-        y_axis_zero_line = Span(location=0, dimension='width', line_color='blue', line_dash='dashed', line_width=1,
-                                line_alpha=0.8)
+        y_axis_zero_line = Span(location=0, dimension='width', line_color='blue', line_dash='dashed', line_width=1, line_alpha=0.8)
         equity_curve_plot.add_layout(y_axis_zero_line)
         equity_curve_plot.line('id', 'netprofit', source=source, line_width=2, alpha=0.7)
+
         return column(labels, equity_curve_plot)
 
     def generate_equity_curve_images(self, step2_results, step1_equity_curve_df, args):
         image_counter = 0
         base_dir = self.whereAmI()
-        output_path = self.get_output_images_path(base_dir, args)
+        output_path = self.get_output_equity_curve_images_path(base_dir, args)
         os.makedirs(output_path, exist_ok=True)
         for row in step2_results:
             date_range_str = row[5]

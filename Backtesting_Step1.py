@@ -394,9 +394,12 @@ class BacktestingStep1(object):
                 netprofitsdata = ta_analysis.total.netprofitsdata
 
                 if net_profit > 0 and total_closed > 0:
-                    model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters, self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
-                                        net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, strike_rate, num_winning_months, profitfactor,
-                                        buyandhold_return_pct, sqn_number, sharpe_ratio, monthlystatsprefix, monthly_stats, netprofitsdata)
+                    model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters,
+                                         self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
+                                         net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
+                                         max_drawdown_length, strike_rate, num_winning_months, profitfactor,
+                                         buyandhold_return_pct, sqn_number, sharpe_ratio, monthlystatsprefix,
+                                         monthly_stats, netprofitsdata)
 
         return model
 
