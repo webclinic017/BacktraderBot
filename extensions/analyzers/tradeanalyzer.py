@@ -39,7 +39,7 @@ class TVTradeAnalyzer(Analyzer):
     def get_netprofits_data(self):
         result = {}
         for date, netprofit in self.netprofits_data.items():
-            date_key = int(date.strftime('%y%m%d'))
+            date_key = int(date.strftime('%y%m%d%H%M'))
             result[date_key] = round(netprofit)
         return json.dumps(result)
 

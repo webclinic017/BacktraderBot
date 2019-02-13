@@ -24,8 +24,6 @@ class BacktestingStep2(object):
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
-    _SORT_FINAL_RESULTS_COLUMN_NAME = "Net Profit"
-
     _params = None
     _input_filename = None
     _equity_curve_input_filename = None
@@ -82,7 +80,7 @@ class BacktestingStep2(object):
         return '{}/{}_Step2.csv'.format(base_path, args.runid)
 
     def get_output_image_filename(self, base_path, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, image_counter):
-        return "{}/{}-{}-{}-{}-{:04d}.png".format(base_path, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, image_counter)
+        return "{}/{:04d}-{}-{}-{}-{}.png".format(base_path, image_counter, strategy_id_data_str, exchange_str, symbol_str, timeframe_str)
 
     def init_output_files(self, args):
         base_dir = self.whereAmI()
@@ -100,7 +98,7 @@ class BacktestingStep2(object):
         for row in print_list:
             writer.writerow(row)
 
-    def do_filter_input_data(self, df):
+    def filter_input_data(self, df):
         final_results = []
 
         strat_list = self.get_unique_index_values(df, 'Strategy ID')
@@ -124,9 +122,8 @@ class BacktestingStep2(object):
         print("==========================\nFinal number of rows: {}".format(len(final_results)))
         return final_results
 
-    def sort_results(self, arr, header_names):
-        sort_by_column_idx = header_names.index(self._SORT_FINAL_RESULTS_COLUMN_NAME)
-        return sorted(arr, key=lambda x: x[sort_by_column_idx], reverse=True)
+    def sort_results(self, arr):
+        return sorted(arr, key=lambda x: (x[0], x[1], x[2], x[3], x[4]), reverse=False)
 
     def printfinalresults(self, writer, arr):
         print_list = []
@@ -140,7 +137,7 @@ class BacktestingStep2(object):
         start_date = range_splitted[0]
         result = [datetime.strptime(start_date, '%Y%m%d')]
         for eq_date_str in dates_arr:
-            eq_date = datetime.strptime(eq_date_str, '%y%m%d')
+            eq_date = datetime.strptime(eq_date_str, '%y%m%d%H%M')
             eq_date = pd.to_datetime(eq_date)
             result.append(eq_date)
             counter += 1
@@ -158,20 +155,40 @@ class BacktestingStep2(object):
         net_profits_data = step1_equity_curve_df.loc[(strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str), "Net Profits Data"]
         return net_profits_data
 
-    def draw_plot(self, date_range_str, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str, net_profits_data_str):
+    def draw_plot(self, row, net_profits_data_str):
+        strategy_id_data_str = row[0]
+        exchange_str = row[1]
+        symbol_str = row[2]
+        timeframe_str = row[3]
+        date_range_str = row[5]
+        parameters_str = row[4]
+        total_closed_trades = row[7]
+        net_profit_pct = row[9]
+        max_drawdown_pct = row[11]
+        max_drawdown_length = row[12]
+        win_rate_pct = row[13]
+        winning_months_pct = row[14]
+        profit_factor = row[15]
+        sqn = row[17]
+        sharpe_ratio = row[18]
         labels = figure(tools="", toolbar_location=None, plot_height=150, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH,
                         x_axis_location="above")
-        label1 = Label(x=10, y=110, x_units='screen', y_units='screen', text=date_range_str, text_font_size="10pt",
+        text1 = "{}, {}, {}, {}, {}".format(strategy_id_data_str, exchange_str, symbol_str, timeframe_str, date_range_str)
+        text2 = "Params: {}".format(parameters_str)
+        text3 = "Total Closed Trades: {}, Net Profit,%: {}%, Max Drawdown,%: {}%, Max Drawdown Length: {}, Win Rate,%: {}".format(total_closed_trades, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct)
+        text4 = "Winning Months,%: {}%, Profit Factor: {}, SQN: {}, Sharpe Ratio: {}".format(winning_months_pct, profit_factor, sqn, sharpe_ratio)
+
+        label1 = Label(x=10, y=110, x_units='screen', y_units='screen', text=text1, text_font_size="10pt",
                        render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label2 = Label(x=10, y=90, x_units='screen', y_units='screen', text=strategy_id_data_str, text_font_size="10pt",
+        label2 = Label(x=10, y=90, x_units='screen', y_units='screen', text=text2, text_font_size="10pt",
                        render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label3 = Label(x=10, y=70, x_units='screen', y_units='screen', text=exchange_str, text_font_size="10pt",
+        label3 = Label(x=10, y=70, x_units='screen', y_units='screen', text=text3, text_font_size="10pt",
                        render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label4 = Label(x=10, y=50, x_units='screen', y_units='screen', text=symbol_str, text_font_size="10pt",
+        label4 = Label(x=10, y=50, x_units='screen', y_units='screen', text=text4, text_font_size="10pt",
                        render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label5 = Label(x=10, y=30, x_units='screen', y_units='screen', text=timeframe_str, text_font_size="10pt",
+        label5 = Label(x=10, y=30, x_units='screen', y_units='screen', text="", text_font_size="10pt",
                        render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label6 = Label(x=10, y=10, x_units='screen', y_units='screen', text=parameters_str, text_font_size="10pt",
+        label6 = Label(x=10, y=10, x_units='screen', y_units='screen', text="", text_font_size="10pt",
                        render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
         labels.add_layout(label1)
         labels.add_layout(label2)
@@ -206,17 +223,18 @@ class BacktestingStep2(object):
         base_dir = self.whereAmI()
         output_path = self.get_output_equity_curve_images_path(base_dir, args)
         os.makedirs(output_path, exist_ok=True)
+        print("Rendering {} equity curve images into {}".format(len(step2_results), output_path))
         for row in step2_results:
-            date_range_str = row[5]
             strategy_id_data_str = row[0]
             exchange_str = row[1]
             symbol_str = row[2]
             timeframe_str = row[3]
             parameters_str = row[4]
             net_profits_data_str = self.get_net_profits_data(step1_equity_curve_df, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str)
-            draw_column = self.draw_plot(date_range_str, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str, net_profits_data_str)
-
+            draw_column = self.draw_plot(row, net_profits_data_str)
             image_counter += 1
+            if image_counter % 10 == 0:
+                print("Rendered {} equity curve images...".format(image_counter))
             image_filename = self.get_output_image_filename(output_path, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, image_counter)
             export_png(draw_column, filename=image_filename)
             #show(draw_column)
@@ -239,11 +257,11 @@ class BacktestingStep2(object):
 
         self.printheader(self._writer1, header_names)
 
-        step2_results = self.do_filter_input_data(step1_df)
+        step2_results = self.filter_input_data(step1_df)
 
         print("Writing Step2 backtesting run results to: {}".format(self._output_file1_full_name))
 
-        step2_results = self.sort_results(step2_results, header_names)
+        step2_results = self.sort_results(step2_results)
 
         self.printfinalresults(self._writer1, step2_results)
 

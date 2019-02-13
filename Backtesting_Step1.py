@@ -98,7 +98,7 @@ class BacktestingStep1(object):
 
         parser.add_argument('-z', '--lotsize',
                             type=int,
-                            default=10000,
+                            default=98000,
                             required=True,
                             help='Lot size: either percentage or number of units - depending on lottype parameter')
 
@@ -399,8 +399,8 @@ class BacktestingStep1(object):
                 monthlystatsprefix = args.monthlystatsprefix
                 netprofitsdata = ta_analysis.total.netprofitsdata
 
-                #if net_profit > 0 and total_closed > 0:
-                model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters,
+                if net_profit > 0 and total_closed > 0:
+                    model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters,
                                      self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
                                      net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                                      max_drawdown_length, strike_rate, num_winning_months, profitfactor,
