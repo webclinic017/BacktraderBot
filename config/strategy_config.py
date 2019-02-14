@@ -212,8 +212,8 @@ class BTStrategyConfig(object):
             "today": 30,
         },
         BTStrategyEnum.S003_ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
-            "needlong": True,
-            "needshort": False,
+            "needlong": False,
+            "needshort": True,
             "rsiperiod": 7,
             "rsibars": 1,
             "rsilong": 30,

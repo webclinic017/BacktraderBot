@@ -46,7 +46,7 @@ class DebugStrategy(object):
 
         parser.add_argument('-z', '--lotsize',
                             type=int,
-                            default=98000,
+                            default=10000,
                             help='Lot size: either percentage or number of units - depending on lottype parameter')
 
         parser.add_argument('--commission',
@@ -204,8 +204,8 @@ class DebugStrategy(object):
         equitycurvedata = analyzer.total.equity.equitycurvedata
         #print("equitycurvedata={}".format(equitycurvedata))
 
-        print("analyzer.total.equity.stats.angle = {}".format(analyzer.total.equity.stats.angle))
-        print("analyzer.total.equity.stats.slope = {}".format(analyzer.total.equity.stats.slope))
+        #print("analyzer.total.equity.stats.angle = {}".format(analyzer.total.equity.stats.angle))
+        #print("analyzer.total.equity.stats.slope = {}".format(analyzer.total.equity.stats.slope))
         #print("analyzer.total.equity.stats.intercept = {}".format(analyzer.total.equity.stats.intercept))
         #print("analyzer.total.equity.stats.r_value = {}".format(analyzer.total.equity.stats.r_value))
         #print("analyzer.total.equity.stats.p_value = {}".format(analyzer.total.equity.stats.p_value))

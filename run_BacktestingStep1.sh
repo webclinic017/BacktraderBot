@@ -45,7 +45,7 @@ process_backtest() {
     echo "Running backtesting Step 1 for $_strategyid/$exchange/$symbol/$timeframe/$daterange"
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
 
-    echo "--- Lot Size: 98% ---"
+    echo "--- Lot Size: 98000 ---"
     echo "********** Started: $current_date_time"
     python Backtesting_Step1.py -y $_strategyid -r $_runid -e $exchange -s $symbol -t $timeframe -l Fixed -z 98000 --fromyear $_fromyear --toyear $_toyear --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today --monthlystatsprefix $monthlystatsprefix
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
