@@ -21,11 +21,12 @@ import json
 
 class BacktestingStep2(object):
 
-    _ENABLE_FILTERING = True
+    _ENABLE_FILTERING = False
 
     _EQUITY_CURVE_IMAGE_WIDTH = 1500
     _EQUITY_CURVE_IMAGE_HEIGHT = 800
-    _EQUITY_CURVE_SMA_LENGTH = 30
+    _EQUITY_CURVE_SMA1_LENGTH = 20
+    _EQUITY_CURVE_SMA2_LENGTH = 40
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
@@ -143,7 +144,7 @@ class BacktestingStep2(object):
     def build_y_axis_zero_line(self):
         return Span(location=0, dimension='width', line_color='blue', line_dash='dashed', line_width=1, line_alpha=0.8)
 
-    def build_equity_curve_figure(self, x_axis_data, y_axis_data):
+    def build_equity_curve_plot_figure(self):
         equity_curve_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="datetime",
                                    toolbar_location=None, x_axis_label="Trade Number", x_axis_location="below",
                                    y_axis_label="Equity", background_fill_color="#efefef")
@@ -211,11 +212,11 @@ class BacktestingStep2(object):
         sqn = row[17]
         sharpe_ratio = row[18]
         equitycurveangle = row[19]
-        equitycurveslope = row[20]
-        equitycurveintercept = row[21]
-        equitycurvervalue = row[22]
-        equitycurvepvalue = row[23]
-        equitycurvestderr = row[24]
+        equitycurveslope = round(row[20], 3)
+        equitycurveintercept = round(row[21], 3)
+        equitycurvervalue = round(row[22], 3)
+        equitycurvepvalue = round(row[23], 3)
+        equitycurvestderr = round(row[24], 3)
         labels = figure(tools="", toolbar_location=None, plot_height=150, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, x_axis_location="above")
         text1 = "{}, {}, {}, {}, {}".format(strategy_id_data_str, exchange_str, symbol_str, timeframe_str, date_range_str)
         text2 = "Params: {}".format(parameters_str)
@@ -233,14 +234,17 @@ class BacktestingStep2(object):
         equity_curve_data_points_dict = json.loads(equity_curve_data_points_str)
         x_axis_data = self.get_equity_curve_dates(equity_curve_data_points_dict.keys())
         y_axis_data = self.get_equity_data(equity_curve_data_points_dict.values())
-        equity_curve_plot = self.build_equity_curve_figure(x_axis_data, y_axis_data)
+        equity_curve_plot = self.build_equity_curve_plot_figure()
         equity_curve_plot.line(x_axis_data, y_axis_data, line_width=3, alpha=0.7, legend='Equity curve')
 
         lr_points = self.get_linear_regression_points(x_axis_data, equitycurveslope, equitycurveintercept)
-        equity_curve_plot.line(lr_points[0], lr_points[1], line_width=1, line_color="red", legend='Linear regression')
+        equity_curve_plot.line(lr_points[0], lr_points[1], line_width=1, line_color="red", alpha=0.5, legend='Linear regression')
 
-        equity_curve_avg = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA_LENGTH, y_axis_data)
-        equity_curve_plot.line(x_axis_data, equity_curve_avg, color='green', line_width=2, legend='Equity curve SMA({})'.format(self._EQUITY_CURVE_SMA_LENGTH))
+        equity_curve_sma1 = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA1_LENGTH, y_axis_data)
+        equity_curve_plot.line(x_axis_data, equity_curve_sma1, color='orange', line_width=1, alpha=0.7, legend='Equity curve SMA1({})'.format(self._EQUITY_CURVE_SMA1_LENGTH))
+        equity_curve_sma2 = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA2_LENGTH, y_axis_data)
+        equity_curve_plot.line(x_axis_data, equity_curve_sma2, color='green', line_width=1, alpha=0.7, legend='Equity curve SMA2({})'.format(self._EQUITY_CURVE_SMA2_LENGTH))
+        equity_curve_plot.legend.location = "bottom_right"
 
         return column(labels, equity_curve_plot)
 
