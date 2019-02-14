@@ -21,7 +21,7 @@ import json
 
 class BacktestingStep2(object):
 
-    _ENABLE_FILTERING = False
+    _ENABLE_FILTERING = True
 
     _EQUITY_CURVE_IMAGE_WIDTH = 1500
     _EQUITY_CURVE_IMAGE_HEIGHT = 800
