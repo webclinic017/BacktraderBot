@@ -25,6 +25,7 @@ class BacktestingStep2(object):
 
     _EQUITY_CURVE_IMAGE_WIDTH = 1500
     _EQUITY_CURVE_IMAGE_HEIGHT = 800
+    _EQUITY_CURVE_SMA_LENGTH = 30
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
@@ -136,6 +137,27 @@ class BacktestingStep2(object):
         for item in print_list:
             writer.writerow(item)
 
+    def build_plot_label(self, y_coord, txt):
+        return Label(x=10, y=y_coord, x_units='screen', y_units='screen', text=txt, text_font_size="10pt", render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+
+    def build_y_axis_zero_line(self):
+        return Span(location=0, dimension='width', line_color='blue', line_dash='dashed', line_width=1, line_alpha=0.8)
+
+    def build_equity_curve_figure(self, x_axis_data, y_axis_data):
+        equity_curve_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="datetime",
+                                   toolbar_location=None, x_axis_label="Trade Number", x_axis_location="below",
+                                   y_axis_label="Equity", background_fill_color="#efefef")
+        equity_curve_plot.xaxis.formatter = DatetimeTickFormatter(
+            days=["%Y-%m-%d"],
+            months=["%Y-%m-%d"],
+            hours=["%Y-%m-%d"],
+            minutes=["%Y-%m-%d"]
+        )
+        equity_curve_plot.yaxis.formatter = NumeralTickFormatter(format="0")
+        equity_curve_plot.title.text_font_style = "normal"
+        equity_curve_plot.add_layout(self.build_y_axis_zero_line())
+        return equity_curve_plot
+
     def get_equity_curve_dates(self, dates_arr):
         counter = 1
         dates_arr = list(dates_arr)
@@ -158,6 +180,19 @@ class BacktestingStep2(object):
     def get_equity_curve_data_points(self, step1_equity_curve_df, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str):
         equity_curve_data_points = step1_equity_curve_df.loc[(strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str), "Equity Curve Data Points"]
         return equity_curve_data_points
+
+    def get_linear_regression_points(self, x_axis_data, equitycurveslope, equitycurveintercept):
+        x1 = x_axis_data[0]
+        y1 = equitycurveintercept
+        xn = x_axis_data[-1]
+        yn = equitycurveintercept + len(x_axis_data) * equitycurveslope
+        return [[x1, xn], [y1, yn]]
+
+    def get_equity_curve_sma_points(self, sma_length, equity_curve_y_axis_data):
+        equity_curve_avg = [float('nan')] * (sma_length - 1)
+        calc_avg_data = np.convolve(equity_curve_y_axis_data, np.ones((sma_length,)) / sma_length, mode='valid')
+        equity_curve_avg.extend(calc_avg_data)
+        return equity_curve_avg
 
     def draw_plot(self, row, equity_curve_data_points_str):
         strategy_id_data_str = row[0]
@@ -186,49 +221,26 @@ class BacktestingStep2(object):
         text2 = "Params: {}".format(parameters_str)
         text3 = "Total Closed Trades: {}, Net Profit,%: {}%, Max Drawdown,%: {}%, Max Drawdown Length: {}, Win Rate,%: {}".format(total_closed_trades, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct)
         text4 = "Winning Months,%: {}%, Profit Factor: {}, SQN: {}, Sharpe Ratio: {}".format(winning_months_pct, profit_factor, sqn, sharpe_ratio)
-        text5 = "Equity Curve Angle={}, Equity Curve Slope={}, Equity Curve Intercept={}, Equity Curve R-value={}, Equity Curve P-value={}, Equity Curve Stderr={}".format(equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)
+        text5 = "Equity Curve Angle={}°, Equity Curve Slope={}, Equity Curve Intercept={}, Equity Curve R-value={}, Equity Curve P-value={}, Equity Curve Stderr={}".format(equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)
 
-        label1 = Label(x=10, y=110, x_units='screen', y_units='screen', text=text1, text_font_size="10pt", render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label2 = Label(x=10, y=90, x_units='screen', y_units='screen', text=text2, text_font_size="10pt",  render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label3 = Label(x=10, y=70, x_units='screen', y_units='screen', text=text3, text_font_size="10pt",  render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label4 = Label(x=10, y=50, x_units='screen', y_units='screen', text=text4, text_font_size="10pt",  render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label5 = Label(x=10, y=30, x_units='screen', y_units='screen', text=text5, text_font_size="10pt",  render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label6 = Label(x=10, y=10, x_units='screen', y_units='screen', text="", text_font_size="10pt",     render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        labels.add_layout(label1)
-        labels.add_layout(label2)
-        labels.add_layout(label3)
-        labels.add_layout(label4)
-        labels.add_layout(label5)
-        labels.add_layout(label6)
+        labels.add_layout(self.build_plot_label(110, text1))
+        labels.add_layout(self.build_plot_label(90, text2))
+        labels.add_layout(self.build_plot_label(70, text3))
+        labels.add_layout(self.build_plot_label(50, text4))
+        labels.add_layout(self.build_plot_label(30, text5))
+        labels.add_layout(self.build_plot_label(10, ""))
 
         equity_curve_data_points_dict = json.loads(equity_curve_data_points_str)
         x_axis_data = self.get_equity_curve_dates(equity_curve_data_points_dict.keys())
         y_axis_data = self.get_equity_data(equity_curve_data_points_dict.values())
-        equity_curve_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="datetime",
-                                   toolbar_location=None, x_axis_label="Trade Number", x_axis_location="below",
-                                   y_axis_label="Equity", background_fill_color="#efefef")
-        equity_curve_plot.xaxis.formatter = DatetimeTickFormatter(
-            days=["%Y-%m-%d"],
-            months=["%Y-%m-%d"],
-            hours=["%Y-%m-%d"],
-            minutes=["%Y-%m-%d"]
-        )
-        equity_curve_plot.yaxis.formatter = NumeralTickFormatter(format="0")
-        equity_curve_plot.title.text_font_style = "normal"
-        y_axis_zero_line = Span(location=0, dimension='width', line_color='blue', line_dash='dashed', line_width=1, line_alpha=0.8)
-        equity_curve_plot.add_layout(y_axis_zero_line)
+        equity_curve_plot = self.build_equity_curve_figure(x_axis_data, y_axis_data)
         equity_curve_plot.line(x_axis_data, y_axis_data, line_width=3, alpha=0.7, legend='Equity curve')
 
-        x1 = x_axis_data[0]
-        y1 = equitycurveintercept
-        xn = x_axis_data[-1]
-        yn = equitycurveintercept + len(x_axis_data) * equitycurveslope
-        equity_curve_plot.line([x1, xn], [y1, yn], line_width=2, line_color="red", legend='Linear regression')
+        lr_points = self.get_linear_regression_points(x_axis_data, equitycurveslope, equitycurveintercept)
+        equity_curve_plot.line(lr_points[0], lr_points[1], line_width=1, line_color="red", legend='Linear regression')
 
-        window_size = 30
-        window = np.ones(window_size)/float(window_size)
-        equity_curve_avg = np.convolve(y_axis_data, window, 'same')
-        equity_curve_plot.line(x_axis_data, equity_curve_avg, color='green', line_width=2, legend='Equity curve SMA')
+        equity_curve_avg = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA_LENGTH, y_axis_data)
+        equity_curve_plot.line(x_axis_data, equity_curve_avg, color='green', line_width=2, legend='Equity curve SMA({})'.format(self._EQUITY_CURVE_SMA_LENGTH))
 
         return column(labels, equity_curve_plot)
 
