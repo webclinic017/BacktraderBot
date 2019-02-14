@@ -8,11 +8,11 @@ declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" 
 declare -a arr_strategies=("S008_AlexNoroSuperTrendStrategy")
 
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT" "ZECUSDT" "ETPUSDT" "XMRUSDT" "DASHUSDT")
-declare -a arr_symbols=("BTCUSDT" "ETHUSDT")
+declare -a arr_symbols=("XRPUSDT")
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("30m" "1h")
+declare -a arr_timeframes=("3h")
 
 declare -a backtest_startdate="2017-01-01"
 declare -a backtest_enddate="2018-06-30"

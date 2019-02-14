@@ -10,7 +10,6 @@ from extensions.sizers.percentsizer import VariablePercentSizer
 from extensions.sizers.cashsizer import FixedCashSizer
 from config.strategy_config import BTStrategyConfig
 from config.strategy_enum import BTStrategyEnum
-import json
 
 tradesopen = {}
 tradesclosed = {}
@@ -19,7 +18,7 @@ tradesclosed = {}
 class DebugStrategy(object):
 
     START_CASH_VALUE = 100000
-    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/30m/bitfinex-BTCUSDT-30m.csv'
+    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/3h/bitfinex-BTCUSDT-3h.csv'
 
     _cerebro = None
     _strategy_enum = None
@@ -202,11 +201,15 @@ class DebugStrategy(object):
         strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
         buyandhold_return = round(analyzer.total.buyandholdreturn, 8) if self.exists(analyzer, ['total', 'buyandholdreturn']) else 0
         buyandhold_return_pct = round(analyzer.total.buyandholdreturnpct, 2) if self.exists(analyzer, ['total', 'buyandholdreturnpct']) else 0
-        netprofitsdata = analyzer.total.netprofitsdata
-        print("netprofitsdata={}".format(netprofitsdata))
-        net_profits_data_dict = json.loads(netprofitsdata)
-        arr = self.get_equity_curve_data(net_profits_data_dict.values())
-        print("final value={}".format(arr[-1]))
+        equitycurvedata = analyzer.total.equity.equitycurvedata
+        #print("equitycurvedata={}".format(equitycurvedata))
+
+        print("analyzer.total.equity.stats.angle = {}".format(analyzer.total.equity.stats.angle))
+        print("analyzer.total.equity.stats.slope = {}".format(analyzer.total.equity.stats.slope))
+        #print("analyzer.total.equity.stats.intercept = {}".format(analyzer.total.equity.stats.intercept))
+        #print("analyzer.total.equity.stats.r_value = {}".format(analyzer.total.equity.stats.r_value))
+        #print("analyzer.total.equity.stats.p_value = {}".format(analyzer.total.equity.stats.p_value))
+        #print("analyzer.total.equity.stats.std_err = {}".format(analyzer.total.equity.stats.std_err))
 
         # Designate the rows
         h1 = ['Total Open', 'Total Closed', 'Total Won', 'Total Lost']

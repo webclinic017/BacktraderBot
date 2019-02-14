@@ -13,9 +13,30 @@ from backtrader import Analyzer
 from backtrader.utils import AutoOrderedDict, AutoDict
 from backtrader.utils.py3 import MAXINT
 from calendar import monthrange
+from scipy import stats
+from sklearn import preprocessing
+import math
 import json
 
 __all__ = ['TVTradeAnalyzer']
+
+
+class LinearRegressionStats(object):
+    angle = None
+    slope = None
+    intercept = None
+    r_value = None
+    p_value = None
+    std_err = None
+
+    def __init__(self, angle, slope, intercept, r_value, p_value, std_err):
+        self.angle = angle
+        self.slope = slope
+        self.intercept = intercept
+        self.r_value = r_value
+        self.p_value = p_value
+        self.std_err = std_err
+
 
 class TVTradeAnalyzer(Analyzer):
     '''
@@ -36,12 +57,38 @@ class TVTradeAnalyzer(Analyzer):
     def set_netprofit_value(self, value):
         self.netprofits_data[self.get_currentdate()] = value
 
-    def get_netprofits_data(self):
+    def get_equitycurve_data(self):
+        equity = 0
         result = {}
         for date, netprofit in self.netprofits_data.items():
             date_key = int(date.strftime('%y%m%d%H%M'))
-            result[date_key] = round(netprofit)
+            equity += netprofit
+            result[date_key] = round(equity)
         return json.dumps(result)
+
+    def calculate_linear_regression_stats(self, netprofits_data):
+        counter = 1
+        equity = 0
+        equity_curve_data_points = {}
+        for date, netprofit in netprofits_data.items():
+            equity += netprofit
+            equity_curve_data_points[counter] = round(equity)
+            counter += 1
+
+        x_arr = list(equity_curve_data_points.keys())
+        y_arr = list(equity_curve_data_points.values())
+        if len(x_arr) > 1:
+            #print("!!! netprofits_data={}".format(netprofits_data))
+            #print("!!! y_arr={}".format(y_arr))
+            slope, intercept, r_value, p_value, std_err = stats.linregress(x_arr, y_arr)
+            x_arr_norm = preprocessing.normalize([x_arr])[0]
+            y_arr_norm = preprocessing.normalize([y_arr])[0]
+            slope_norm, intercept_norm, r_value_norm, p_value_norm, std_err_norm = stats.linregress(x_arr_norm, y_arr_norm)
+            angle = math.degrees(math.atan(slope_norm))
+            #print("angle={}, slope={}, intercept={}, r_value={}, p_value={}, std_err={}".format(angle, slope, intercept, r_value, p_value, std_err))
+            return LinearRegressionStats(angle, slope, intercept, r_value, p_value, std_err)
+        else:
+            return LinearRegressionStats(0, 0, 0, 0, 0, 0)
 
     def get_currentdate(self):
         return bt.num2date(self.data.datetime[0])
@@ -100,9 +147,16 @@ class TVTradeAnalyzer(Analyzer):
                 curr_month_arr = self.get_monthly_stats_entry(curr_month_daterange_str)
                 curr_month_arr.pnl.netprofit.total = monthly_pnl_pct
 
-    def update_netprofits_data(self):
+    def update_equitycurve_data(self):
         trades = self.rets
-        trades.total.netprofitsdata = self.get_netprofits_data()
+        trades.total.equity.equitycurvedata = self.get_equitycurve_data()
+        lr_stats = self.calculate_linear_regression_stats(self.netprofits_data)
+        trades.total.equity.stats.angle = lr_stats.angle
+        trades.total.equity.stats.slope = lr_stats.slope
+        trades.total.equity.stats.intercept = lr_stats.intercept
+        trades.total.equity.stats.r_value = lr_stats.r_value
+        trades.total.equity.stats.p_value = lr_stats.p_value
+        trades.total.equity.stats.std_err = lr_stats.std_err
 
     def print_debug_info(self):
         print("!!!!! self.netprofits_data={}\n".format(self.netprofits_data))
@@ -116,6 +170,7 @@ class TVTradeAnalyzer(Analyzer):
             pnl_pct = ((curr_equity_val - prev_equity_val) * 100 / prev_equity_val) if prev_equity_val != 0 else 0
             print("Trade closed. Date = {}, Net Profit = {}, curr_equity_val = {}, Net Profit(Pnl %) = {}".format(curr_equity_date, npd[1], curr_equity_val, pnl_pct))
             prev_equity_val = curr_equity_val
+        print("Data in total.equity={}".format(vars(self.rets.total.equity)))
 
         print("\n!!!!! self.rets.monthly_stats={}\n".format(self.rets.monthly_stats))
         for key, val in self.rets.monthly_stats.items():
@@ -123,7 +178,7 @@ class TVTradeAnalyzer(Analyzer):
 
     def stop(self):
         self.update_netprofit_monthly_stats()
-        self.update_netprofits_data()
+        self.update_equitycurve_data()
         #self.print_debug_info()
         super(TVTradeAnalyzer, self).stop()
         self.rets._close()

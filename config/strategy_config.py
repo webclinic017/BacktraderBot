@@ -194,7 +194,7 @@ class BTStrategyConfig(object):
         },
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
             "sensup": 0,
-            "sensdn": 0,
+            "sensdn": 7,
             "usewow": True,
             "usebma": True,
             "usebc": True,
@@ -206,10 +206,10 @@ class BTStrategyConfig(object):
             "uselocoentry": False,
             "fromyear": 2018,
             "toyear": 2018,
-            "frommonth": 6,
-            "tomonth": 12,
+            "frommonth": 5,
+            "tomonth": 6,
             "fromday": 1,
-            "today": 31,
+            "today": 30,
         },
         BTStrategyEnum.S003_ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
             "needlong": True,

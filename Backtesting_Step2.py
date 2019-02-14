@@ -6,18 +6,22 @@ import argparse
 import os
 import csv
 import pandas as pd
+import numpy as np
 from config.optimization import StrategyOptimizationFactory
 from bokeh.layouts import column
-from bokeh.models import ColumnDataSource, Span, Label
+from bokeh.models import Span, Label
 from bokeh.plotting import figure
 from bokeh.io import export_png
 from datetime import datetime
 from bokeh.models import DatetimeTickFormatter
 from bokeh.models import NumeralTickFormatter
+from datetime import timedelta
 import json
 
 
 class BacktestingStep2(object):
+
+    _ENABLE_FILTERING = True
 
     _EQUITY_CURVE_IMAGE_WIDTH = 1500
     _EQUITY_CURVE_IMAGE_HEIGHT = 800
@@ -55,7 +59,7 @@ class BacktestingStep2(object):
 
     def get_equity_curve_input_filename(self, args):
         dirname = self.whereAmI()
-        return '{}/strategyrun_results/{}/{}_Step1_NetProfitsData.csv'.format(dirname, args.runid, args.runid)
+        return '{}/strategyrun_results/{}/{}_Step1_EquityCurveData.csv'.format(dirname, args.runid, args.runid)
 
     def read_csv_data(self, filename):
         return pd.read_csv(filename, index_col=self._INDEX_NUMBERS_ARR)
@@ -112,7 +116,8 @@ class BacktestingStep2(object):
                     for timeframe in tf_list:
                         idx = pd.IndexSlice
                         candidates_data_df = df.loc[idx[strategy, exchange, symbol, timeframe, :], idx[:]]
-                        candidates_data_df = self.filter_top_records(candidates_data_df)
+                        if self._ENABLE_FILTERING is True:
+                            candidates_data_df = self.filter_top_records(candidates_data_df)
                         if candidates_data_df is not None and len(candidates_data_df) > 0:
                             print("Processing: {}/{}/{}/{}:\nNumber of best rows: {}\n".format(strategy, exchange, symbol, timeframe, len(candidates_data_df.values)))
                             candidates_data_df = candidates_data_df.reset_index()
@@ -131,11 +136,13 @@ class BacktestingStep2(object):
         for item in print_list:
             writer.writerow(item)
 
-    def get_equity_curve_dates(self, dates_arr, date_range_str):
+    def get_equity_curve_dates(self, dates_arr):
         counter = 1
-        range_splitted = date_range_str.split('-')
-        start_date = range_splitted[0]
-        result = [datetime.strptime(start_date, '%Y%m%d')]
+        dates_arr = list(dates_arr)
+        first_date = datetime.strptime(dates_arr[0], '%y%m%d%H%M')
+        first_date = pd.to_datetime(first_date)
+        start_date = first_date - timedelta(days=1)
+        result = [start_date]
         for eq_date_str in dates_arr:
             eq_date = datetime.strptime(eq_date_str, '%y%m%d%H%M')
             eq_date = pd.to_datetime(eq_date)
@@ -143,19 +150,16 @@ class BacktestingStep2(object):
             counter += 1
         return result
 
-    def get_equity_curve_data(self, netprofit_data_arr):
-        equity = 0
-        result = [equity]
-        for netprofit_val in netprofit_data_arr:
-            equity += netprofit_val
-            result.append(equity)
+    def get_equity_data(self, equity_data_arr):
+        result = [0]
+        result.extend(list(equity_data_arr))
         return result
 
-    def get_net_profits_data(self, step1_equity_curve_df, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str):
-        net_profits_data = step1_equity_curve_df.loc[(strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str), "Net Profits Data"]
-        return net_profits_data
+    def get_equity_curve_data_points(self, step1_equity_curve_df, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str):
+        equity_curve_data_points = step1_equity_curve_df.loc[(strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str), "Equity Curve Data Points"]
+        return equity_curve_data_points
 
-    def draw_plot(self, row, net_profits_data_str):
+    def draw_plot(self, row, equity_curve_data_points_str):
         strategy_id_data_str = row[0]
         exchange_str = row[1]
         symbol_str = row[2]
@@ -171,25 +175,25 @@ class BacktestingStep2(object):
         profit_factor = row[15]
         sqn = row[17]
         sharpe_ratio = row[18]
-        labels = figure(tools="", toolbar_location=None, plot_height=150, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH,
-                        x_axis_location="above")
+        equitycurveangle = row[19]
+        equitycurveslope = row[20]
+        equitycurveintercept = row[21]
+        equitycurvervalue = row[22]
+        equitycurvepvalue = row[23]
+        equitycurvestderr = row[24]
+        labels = figure(tools="", toolbar_location=None, plot_height=150, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, x_axis_location="above")
         text1 = "{}, {}, {}, {}, {}".format(strategy_id_data_str, exchange_str, symbol_str, timeframe_str, date_range_str)
         text2 = "Params: {}".format(parameters_str)
         text3 = "Total Closed Trades: {}, Net Profit,%: {}%, Max Drawdown,%: {}%, Max Drawdown Length: {}, Win Rate,%: {}".format(total_closed_trades, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct)
         text4 = "Winning Months,%: {}%, Profit Factor: {}, SQN: {}, Sharpe Ratio: {}".format(winning_months_pct, profit_factor, sqn, sharpe_ratio)
+        text5 = "Equity Curve Angle={}, Equity Curve Slope={}, Equity Curve Intercept={}, Equity Curve R-value={}, Equity Curve P-value={}, Equity Curve Stderr={}".format(equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)
 
-        label1 = Label(x=10, y=110, x_units='screen', y_units='screen', text=text1, text_font_size="10pt",
-                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label2 = Label(x=10, y=90, x_units='screen', y_units='screen', text=text2, text_font_size="10pt",
-                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label3 = Label(x=10, y=70, x_units='screen', y_units='screen', text=text3, text_font_size="10pt",
-                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label4 = Label(x=10, y=50, x_units='screen', y_units='screen', text=text4, text_font_size="10pt",
-                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label5 = Label(x=10, y=30, x_units='screen', y_units='screen', text="", text_font_size="10pt",
-                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
-        label6 = Label(x=10, y=10, x_units='screen', y_units='screen', text="", text_font_size="10pt",
-                       render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label1 = Label(x=10, y=110, x_units='screen', y_units='screen', text=text1, text_font_size="10pt", render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label2 = Label(x=10, y=90, x_units='screen', y_units='screen', text=text2, text_font_size="10pt",  render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label3 = Label(x=10, y=70, x_units='screen', y_units='screen', text=text3, text_font_size="10pt",  render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label4 = Label(x=10, y=50, x_units='screen', y_units='screen', text=text4, text_font_size="10pt",  render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label5 = Label(x=10, y=30, x_units='screen', y_units='screen', text=text5, text_font_size="10pt",  render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
+        label6 = Label(x=10, y=10, x_units='screen', y_units='screen', text="", text_font_size="10pt",     render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
         labels.add_layout(label1)
         labels.add_layout(label2)
         labels.add_layout(label3)
@@ -197,10 +201,9 @@ class BacktestingStep2(object):
         labels.add_layout(label5)
         labels.add_layout(label6)
 
-        net_profits_data_dict = json.loads(net_profits_data_str)
-        x_axis_data = self.get_equity_curve_dates(net_profits_data_dict.keys(), date_range_str)
-        y_axis_data = self.get_equity_curve_data(net_profits_data_dict.values())
-        source = ColumnDataSource(data=dict(id=x_axis_data, netprofit=y_axis_data))
+        equity_curve_data_points_dict = json.loads(equity_curve_data_points_str)
+        x_axis_data = self.get_equity_curve_dates(equity_curve_data_points_dict.keys())
+        y_axis_data = self.get_equity_data(equity_curve_data_points_dict.values())
         equity_curve_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="datetime",
                                    toolbar_location=None, x_axis_label="Trade Number", x_axis_location="below",
                                    y_axis_label="Equity", background_fill_color="#efefef")
@@ -214,7 +217,18 @@ class BacktestingStep2(object):
         equity_curve_plot.title.text_font_style = "normal"
         y_axis_zero_line = Span(location=0, dimension='width', line_color='blue', line_dash='dashed', line_width=1, line_alpha=0.8)
         equity_curve_plot.add_layout(y_axis_zero_line)
-        equity_curve_plot.line('id', 'netprofit', source=source, line_width=2, alpha=0.7)
+        equity_curve_plot.line(x_axis_data, y_axis_data, line_width=3, alpha=0.7, legend='Equity curve')
+
+        x1 = x_axis_data[0]
+        y1 = equitycurveintercept
+        xn = x_axis_data[-1]
+        yn = equitycurveintercept + len(x_axis_data) * equitycurveslope
+        equity_curve_plot.line([x1, xn], [y1, yn], line_width=2, line_color="red", legend='Linear regression')
+
+        window_size = 30
+        window = np.ones(window_size)/float(window_size)
+        equity_curve_avg = np.convolve(y_axis_data, window, 'same')
+        equity_curve_plot.line(x_axis_data, equity_curve_avg, color='green', line_width=2, legend='Equity curve SMA')
 
         return column(labels, equity_curve_plot)
 
@@ -230,8 +244,8 @@ class BacktestingStep2(object):
             symbol_str = row[2]
             timeframe_str = row[3]
             parameters_str = row[4]
-            net_profits_data_str = self.get_net_profits_data(step1_equity_curve_df, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str)
-            draw_column = self.draw_plot(row, net_profits_data_str)
+            equity_curve_data_points_str = self.get_equity_curve_data_points(step1_equity_curve_df, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, parameters_str)
+            draw_column = self.draw_plot(row, equity_curve_data_points_str)
             image_counter += 1
             if image_counter % 10 == 0:
                 print("Rendered {} equity curve images...".format(image_counter))

@@ -19,8 +19,7 @@ from model.backtestingstep1 import BacktestingStep1Model
 import os
 import csv
 import pandas as pd
-#from scipy import stats
-#import numpy as np
+
 
 class CerebroRunner(object):
     _batch_number = 0
@@ -37,6 +36,8 @@ class CerebroRunner(object):
 
 
 class BacktestingStep1(object):
+
+    _ENABLE_FILTERING = True
 
     START_CASH_VALUE = 100000
 
@@ -227,7 +228,7 @@ class BacktestingStep1(object):
         return '{}/{}_Step1.csv'.format(base_path, args.runid)
 
     def get_output_filename2(self, base_path, args):
-        return '{}/{}_Step1_NetProfitsData.csv'.format(base_path, args.runid)
+        return '{}/{}_Step1_EquityCurveData.csv'.format(base_path, args.runid)
 
     def get_fromdate(self, arr):
         fromyear = arr["fromyear"]
@@ -316,12 +317,12 @@ class BacktestingStep1(object):
         for row in print_list:
             writer.writerow(row)
 
-    def printnetprofitsdataheader(self, writer, model):
+    def printequitycurvedataheader(self, writer, model):
         if self._is_output_file2_exists is True:
             return
 
         # Designate the rows
-        h1 = model.get_netprofitsdata_model().get_header_names()
+        h1 = model.get_equitycurvedata_model().get_header_names()
 
         # Print header
         print_list = [h1]
@@ -337,7 +338,7 @@ class BacktestingStep1(object):
         return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(args.fromyear, args.frommonth, args.fromday, args.toyear, args.tomonth, args.today)
 
     def getlotsize(self, args):
-        return "Lot{}{}".format(args.lotsize, "Pct" if args.lottype == "Percentage" else "Unit")
+        return "Lot{}{}".format(args.lotsize, "Pct" if args.lottype == "Percentage" else "")
 
     def getparametersstr(self, params):
         coll = vars(params).copy()
@@ -390,22 +391,29 @@ class BacktestingStep1(object):
                 total_won = ta_analysis.won.total if self.exists(ta_analysis, ['won', 'total']) else 0
                 strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
                 max_drawdown_pct = round(dd_analysis.max.drawdown, 2)
-                max_drawdown_length = round(dd_analysis.max.len, 2)
+                max_drawdown_length = round(dd_analysis.max.len)
                 num_winning_months = '{}'.format(self.get_num_winning_months(monthly_stats, num_months))
                 profitfactor = round(ta_analysis.total.profitfactor, 3) if self.exists(ta_analysis, ['total', 'profitfactor']) else 0
                 buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if self.exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
                 sqn_number = round(sqn_analysis.sqn, 2)
                 sharpe_ratio = round(sr_analysis['sharperatio'], 3) if sr_analysis['sharperatio'] else 0
                 monthlystatsprefix = args.monthlystatsprefix
-                netprofitsdata = ta_analysis.total.netprofitsdata
+                equitycurvedata = ta_analysis.total.equity.equitycurvedata if self.exists(ta_analysis, ['total', 'equity', 'equitycurvedata']) else {}
+                equitycurveangle = round(ta_analysis.total.equity.stats.angle) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'angle']) else 0
+                equitycurveslope = round(ta_analysis.total.equity.stats.slope, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'slope']) else 0
+                equitycurveintercept = round(ta_analysis.total.equity.stats.intercept, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'intercept']) else 0
+                equitycurvervalue = round(ta_analysis.total.equity.stats.r_value, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'r_value']) else 0
+                equitycurvepvalue = round(ta_analysis.total.equity.stats.p_value, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'p_value']) else 0
+                equitycurvestderr = round(ta_analysis.total.equity.stats.std_err, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'std_err']) else 0
 
-                if net_profit > 0 and total_closed > 0:
+                if self._ENABLE_FILTERING is False or self._ENABLE_FILTERING is True and net_profit > 0 and total_closed > 0:
                     model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters,
                                      self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
                                      net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                                      max_drawdown_length, strike_rate, num_winning_months, profitfactor,
                                      buyandhold_return_pct, sqn_number, sharpe_ratio, monthlystatsprefix,
-                                     monthly_stats, netprofitsdata)
+                                     monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope, equitycurveintercept,
+                                     equitycurvervalue, equitycurvepvalue, equitycurvestderr)
 
         return model
 
@@ -415,7 +423,7 @@ class BacktestingStep1(object):
         for item in print_list:
             writer.writerow(item)
 
-    def printnetprofitsdataresults(self, writer, arr):
+    def printequitycurvedataresults(self, writer, arr):
         print_list = []
         print_list.extend(arr)
         for item in print_list:
@@ -454,13 +462,13 @@ class BacktestingStep1(object):
 
         self.printfinalresultsheader(self._writer1, self._step1_model)
 
-        self.printnetprofitsdataheader(self._writer2, self._step1_model)
+        self.printequitycurvedataheader(self._writer2, self._step1_model)
 
         self._step1_model.sort_results()
 
         self.printfinalresults(self._writer1, self._step1_model.get_model_data_arr())
 
-        self.printnetprofitsdataresults(self._writer2, self._step1_model.get_netprofitsdata_model().get_model_data_arr())
+        self.printequitycurvedataresults(self._writer2, self._step1_model.get_equitycurvedata_model().get_model_data_arr())
 
         self.cleanup()
 
