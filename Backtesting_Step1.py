@@ -16,6 +16,9 @@ from datetime import timedelta
 from config.strategy_config import BTStrategyConfig
 from config.strategy_enum import BTStrategyEnum
 from model.backtestingstep1 import BacktestingStep1Model
+from common.stfetcher import StFetcher
+import itertools
+import collections
 import os
 import csv
 import pandas as pd
@@ -28,7 +31,7 @@ from collections import deque
 
 zero_depth_bases = (str, bytes, Number, range, bytearray)
 iteritems = 'items'
-
+string_types = str
 
 class CerebroRunner(object):
     _DEBUG_MEMORY_STATS = False
@@ -85,7 +88,7 @@ class BacktestingStep1(object):
     _ENABLE_FILTERING = False
 
     START_CASH_VALUE = 100000
-    DEFAULT_LOT_SIZE = 10000
+    DEFAULT_LOT_SIZE = 98000
 
     _cerebro = None
     _strategy_enum = None
@@ -246,9 +249,44 @@ class BacktestingStep1(object):
                              ("fromday", args.fromday),
                              ("today", args.today)})
 
+    @staticmethod
+    def iterize(iterable):
+        niterable = list()
+        for elem in iterable:
+            if isinstance(elem, string_types):
+                elem = (elem,)
+            elif not isinstance(elem, collections.Iterable):
+                elem = (elem,)
+
+            niterable.append(elem)
+
+        return niterable
+
+    def check_params_to_add_strategy(self, params_dict):
+        if params_dict is not None and len(params_dict) > 0:
+            if "needlong" in params_dict.keys() and params_dict["needlong"] == False and \
+               "needshort" in params_dict.keys() and params_dict["needshort"] == False:
+                return False
+        return True
+
     def enqueue_strategies(self):
         strategy_class = self._strategy_enum.value.clazz
-        self._cerebro.optstrategy(strategy_class, **self._params)
+
+        kwargz = self._params
+        optkeys = list(self._params)
+        vals = self.iterize(kwargz.values())
+        optvals = itertools.product(*vals)
+        okwargs1 = map(zip, itertools.repeat(optkeys), optvals)
+        optkwargs = map(dict, okwargs1)
+        list_strat_params = list(optkwargs)
+
+        for params in list_strat_params:
+            if self.check_params_to_add_strategy(params) is True:
+                StFetcher.register(strategy_class, **params)
+
+        print("Number of strategies: {}".format(len(StFetcher.COUNT())))
+        self._cerebro.optstrategy(StFetcher, idx=StFetcher.COUNT())
+
 
     def check_csv_has_data_for_datarange(self, filename):
         df = pd.read_csv(filename)

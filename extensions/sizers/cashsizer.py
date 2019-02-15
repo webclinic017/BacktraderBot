@@ -18,6 +18,8 @@ class FixedCashSizer(bt.Sizer):
       - ``debug`` (default: ``False``)
     '''
 
+    _PREMARGIN_ADJUSTMENT_RATIO = 0.98
+
     params = (
         ('cash', 10000),
         ('debug', False),
@@ -30,7 +32,7 @@ class FixedCashSizer(bt.Sizer):
 
     def get_capital_value(self):
         if self.broker.get_value() < self.params.cash:
-            return self.broker.get_value()
+            return round(self.broker.get_value() * self._PREMARGIN_ADJUSTMENT_RATIO)
         else:
             return self.params.cash
 
