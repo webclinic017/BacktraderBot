@@ -19,16 +19,61 @@ from model.backtestingstep1 import BacktestingStep1Model
 import os
 import csv
 import pandas as pd
+import objgraph
+import inspect
+import sys
+from numbers import Number
+from collections.abc import Set, Mapping
+from collections import deque
+
+zero_depth_bases = (str, bytes, Number, range, bytearray)
+iteritems = 'items'
 
 
 class CerebroRunner(object):
+    _DEBUG_MEMORY_STATS = False
+
     _batch_number = 0
+
+    def getsize(self, obj_0):
+        """Recursively iterate to sum size of object & members."""
+        _seen_ids = set()
+
+        def inner(obj):
+            obj_id = id(obj)
+            if obj_id in _seen_ids:
+                return 0
+            _seen_ids.add(obj_id)
+            size = sys.getsizeof(obj)
+            if isinstance(obj, zero_depth_bases):
+                pass  # bypass remaining control flow and return
+            elif isinstance(obj, (tuple, list, Set, deque)):
+                size += sum(inner(i) for i in obj)
+            elif isinstance(obj, Mapping) or hasattr(obj, iteritems):
+                size += sum(inner(k) + inner(v) for k, v in getattr(obj, iteritems)())
+            # Check for custom object instances - may subclass above too
+            if hasattr(obj, '__dict__'):
+                size += inner(vars(obj))
+            if hasattr(obj, '__slots__'):  # can have __slots__ with __dict__
+                size += sum(inner(getattr(obj, s)) for s in obj.__slots__ if hasattr(obj, s))
+            return size
+
+        return inner(obj_0)
+
+    def print_debug_memory_stats(self):
+        if self._DEBUG_MEMORY_STATS is True:
+            obj = objgraph.by_type('Cerebro')
+            print("!!! len(obj)={}".format(len(obj)))
+            print("!!! obj={}".format(obj))
+            print("!!! self.getsize(obj)={}".format(self.getsize(obj)))
+            objgraph.show_refs(obj[0], max_depth=8, filename='memory_chain{:03d}.png'.format(self._batch_number), filter=lambda x: not inspect.isclass(x), refcounts=True)
 
     def optimization_step(self, strat):
         self._batch_number += 1
         st = strat[0]
         st.strat_id = self._batch_number
         print('!! Finished Batch Run={}'.format(self._batch_number))
+        self.print_debug_memory_stats()
 
     def run_strategies(self, cerebro):
         # Run over everything
@@ -37,9 +82,10 @@ class CerebroRunner(object):
 
 class BacktestingStep1(object):
 
-    _ENABLE_FILTERING = True
+    _ENABLE_FILTERING = False
 
     START_CASH_VALUE = 100000
+    DEFAULT_LOT_SIZE = 10000
 
     _cerebro = None
     _strategy_enum = None
@@ -80,7 +126,7 @@ class BacktestingStep1(object):
 
         parser.add_argument('-x', '--maxcpus',
                             type=int,
-                            default=8,
+                            default=1,
                             choices=[1, 2, 3, 4, 5, 7, 8],
                             help='The max number of CPUs to use for processing')
 
@@ -99,8 +145,7 @@ class BacktestingStep1(object):
 
         parser.add_argument('-z', '--lotsize',
                             type=int,
-                            default=98000,
-                            required=True,
+                            default=self.DEFAULT_LOT_SIZE,
                             help='Lot size: either percentage or number of units - depending on lottype parameter')
 
         parser.add_argument('--commsizer',

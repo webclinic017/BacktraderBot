@@ -58,12 +58,6 @@ class S005_AlexNoroTripleRSIStrategy(AbstractStrategy):
         # To alternate amongst different tradeids
         self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    def start(self):
-        # Check whether to skip this testing round
-        # print("start(): id(self)={}".format(id(self)))
-        if self.p.needlong is False and self.p.needshort is False:
-            self.env.runstop()
-
     def next(self):
         # print("next(): id(self)={}".format(id(self)))
 

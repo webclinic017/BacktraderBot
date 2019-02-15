@@ -46,7 +46,7 @@ class DebugStrategy(object):
 
         parser.add_argument('-z', '--lotsize',
                             type=int,
-                            default=10000,
+                            default=98000,
                             help='Lot size: either percentage or number of units - depending on lottype parameter')
 
         parser.add_argument('--commission',

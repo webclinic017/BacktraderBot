@@ -5,17 +5,18 @@ declare -a arr_months=("1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12")
 declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" "31")
 
 #declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S003_AlexNoroRobotBitMEXFastRSIStrategy" "S004_AlexNoroBandsScalperStrategy" "S005_AlexNoroTripleRSIStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy")
+#declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S003_AlexNoroRobotBitMEXFastRSIStrategy" "S004_AlexNoroBandsScalperStrategy" "S005_AlexNoroTripleRSIStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy")
 declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy")
 
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT" "ZECUSDT" "ETPUSDT" "XMRUSDT" "DASHUSDT")
-declare -a arr_symbols=("BTCUSDT")
+declare -a arr_symbols=("BTCUSDT" "LTCUSDT")
 #declare -a arr_symbols=("BTCUSDT"  "ETHUSDT")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("3h")
+declare -a arr_timeframes=("15m" "30m")
 
-declare -a backtest_startdate="2017-01-01"
-declare -a backtest_enddate="2018-06-30"
+declare -a backtest_startdate="2014-01-01"
+declare -a backtest_enddate="2017-06-30"
 
 startyear=${backtest_startdate:0:4}
 startmonth=${backtest_startdate:5:2}
@@ -45,9 +46,8 @@ process_backtest() {
     echo "Running backtesting Step 1 for $_strategyid/$exchange/$symbol/$timeframe/$daterange"
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
 
-    echo "--- Lot Size: 98000 ---"
     echo "********** Started: $current_date_time"
-    python Backtesting_Step1.py -y $_strategyid -r $_runid -e $exchange -s $symbol -t $timeframe -l Fixed -z 98000 --fromyear $_fromyear --toyear $_toyear --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today --monthlystatsprefix $monthlystatsprefix
+    python Backtesting_Step1.py -y $_strategyid -r $_runid -e $exchange -s $symbol -t $timeframe -l Fixed --fromyear $_fromyear --toyear $_toyear --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today --monthlystatsprefix $monthlystatsprefix
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
     echo "********** Finished: $current_date_time"
 }
@@ -61,6 +61,9 @@ do
     do
         for timeframe in "${arr_timeframes[@]}"
         do
+            pkill python
+            pkill python
+
             fromyear=$startyear
             toyear=$endyear
             frommonth=$startmonth

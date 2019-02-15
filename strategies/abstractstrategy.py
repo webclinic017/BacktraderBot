@@ -40,6 +40,15 @@ class AbstractStrategy(bt.Strategy):
         self.tradesopen = {}
         self.tradesclosed = {}
 
+    def start(self):
+        #print("Start !!!")
+        # Check whether to skip this testing round
+        # print("start(): id(self)={}".format(id(self)))
+        if self.p.needlong is False and self.p.needshort is False:
+            if self.cerebro.p.maxcpus != 1:
+                print("Stopping !!!")
+                self.env.runstop()
+
     @abstractmethod
     def next(self):
         pass

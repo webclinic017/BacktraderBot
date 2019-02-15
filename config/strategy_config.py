@@ -295,16 +295,16 @@ class BTStrategyConfig(object):
         },
         BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: {
             "needlong": True,
-            "needshort": True,
+            "needshort": False,
             "cloud": 25,
-            "Factor": 10,
+            "Factor": 1,
             "ATR": 7,
-            "fromyear": 2018,
-            "toyear": 2018,
-            "frommonth": 2,
-            "tomonth": 8,
+            "fromyear": 2014,
+            "toyear": 2017,
+            "frommonth": 1,
+            "tomonth": 6,
             "fromday": 1,
-            "today": 31,
+            "today": 30,
         },
     }
 
