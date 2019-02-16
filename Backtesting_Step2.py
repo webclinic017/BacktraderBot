@@ -210,18 +210,17 @@ class BacktestingStep2(object):
         winning_months_pct = row[14]
         profit_factor = row[15]
         sqn = row[17]
-        sharpe_ratio = row[18]
-        equitycurveangle = row[19]
-        equitycurveslope = round(row[20], 3)
-        equitycurveintercept = round(row[21], 3)
-        equitycurvervalue = round(row[22], 3)
-        equitycurvepvalue = round(row[23], 3)
-        equitycurvestderr = round(row[24], 3)
+        equitycurveangle = row[18]
+        equitycurveslope = round(row[19], 3)
+        equitycurveintercept = round(row[20], 3)
+        equitycurvervalue = round(row[21], 3)
+        equitycurvepvalue = round(row[22], 3)
+        equitycurvestderr = round(row[23], 3)
         labels = figure(tools="", toolbar_location=None, plot_height=150, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, x_axis_location="above")
         text1 = "{}, {}, {}, {}, {}".format(strategy_id_data_str, exchange_str, symbol_str, timeframe_str, date_range_str)
         text2 = "Params: {}".format(parameters_str)
         text3 = "Total Closed Trades: {}, Net Profit,%: {}%, Max Drawdown,%: {}%, Max Drawdown Length: {}, Win Rate,%: {}".format(total_closed_trades, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct)
-        text4 = "Winning Months,%: {}%, Profit Factor: {}, SQN: {}, Sharpe Ratio: {}".format(winning_months_pct, profit_factor, sqn, sharpe_ratio)
+        text4 = "Winning Months,%: {}%, Profit Factor: {}, SQN: {}: {}".format(winning_months_pct, profit_factor, sqn)
         text5 = "Equity Curve Angle={}°, Equity Curve Slope={}, Equity Curve Intercept={}, Equity Curve R-value={}, Equity Curve P-value={}, Equity Curve Stderr={}".format(equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)
 
         labels.add_layout(self.build_plot_label(110, text1))

@@ -35,13 +35,13 @@ class BacktestingStep1Model(object):
     def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size,
                        total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                        max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
-                       sqn_number, sharpe_ratio, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope,
+                       sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope,
                        equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr):
         self._monthlystatsprefix = monthlystatsprefix
         row = BacktestingStep1ReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size,
                                         total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct,
                                         max_drawdown_pct, max_drawdown_length, win_rate_pct, num_winning_months,
-                                        profit_factor, buy_and_hold_return_pct, sqn_number, sharpe_ratio, monthly_stats,
+                                        profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats,
                                         equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue,
                                         equitycurvestderr)
         self._report_rows.append(row)
@@ -62,7 +62,7 @@ class BacktestingStep1Model(object):
         result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Date Range', 'Lot Size',
                   'Total Closed Trades', 'Net Profit',
                   'Net Profit, %', 'Avg Monthly Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length', 'Win Rate, %',
-                  'Winning Months, %', 'Profit Factor', 'Buy & Hold Return, %', 'SQN', 'Sharpe Ratio', 'Equity Curve Angle',
+                  'Winning Months, %', 'Profit Factor', 'Buy & Hold Return, %', 'SQN', 'Equity Curve Angle',
                   'Equity Curve Slope', 'Equity Curve Intercept', 'Equity Curve R-value', 'Equity Curve P-value',
                   'Equity Curve Stderr']
 
@@ -158,7 +158,7 @@ class BacktestingStep1ReportRow(object):
     def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size,
                  total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                  max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
-                 sqn_number, sharpe_ratio, monthly_stats, equitycurveangle, equitycurveslope, equitycurveintercept,
+                 sqn_number, monthly_stats, equitycurveangle, equitycurveslope, equitycurveintercept,
                  equitycurvervalue, equitycurvepvalue, equitycurvestderr):
         self.strategyid = strategyid
         self.exchange = exchange
@@ -178,7 +178,6 @@ class BacktestingStep1ReportRow(object):
         self.profit_factor = profit_factor
         self.buy_and_hold_return_pct = buy_and_hold_return_pct
         self.sqn_number = sqn_number
-        self.sharpe_ratio = sharpe_ratio
         self.monthly_stats = monthly_stats
         self.equitycurveangle = equitycurveangle
         self.equitycurveslope = equitycurveslope
@@ -207,7 +206,6 @@ class BacktestingStep1ReportRow(object):
             self.profit_factor,
             self.buy_and_hold_return_pct,
             self.sqn_number,
-            self.sharpe_ratio,
             self.equitycurveangle,
             self.equitycurveslope,
             self.equitycurveintercept,

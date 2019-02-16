@@ -34,6 +34,9 @@ iteritems = 'items'
 string_types = str
 
 class CerebroRunner(object):
+
+    cerebro = None
+
     _DEBUG_MEMORY_STATS = False
 
     _batch_number = 0
@@ -66,10 +69,15 @@ class CerebroRunner(object):
     def print_debug_memory_stats(self):
         if self._DEBUG_MEMORY_STATS is True:
             obj = objgraph.by_type('Cerebro')
+            print ("Current cerebro={}, size={}, len(cerebro.runstrats)={}, self.getsize(self.cerebro.runstrats[-1])={}".format(hex(id(self.cerebro)), self.getsize(self.cerebro), len(self.cerebro.runstrats), self.getsize(self.cerebro.runstrats[-1])))
             print("!!! len(obj)={}".format(len(obj)))
             print("!!! obj={}".format(obj))
-            print("!!! self.getsize(obj)={}".format(self.getsize(obj)))
-            objgraph.show_refs(obj[0], max_depth=8, filename='memory_chain{:03d}.png'.format(self._batch_number), filter=lambda x: not inspect.isclass(x), refcounts=True)
+            print("!!! getsize(obj)={}".format(self.getsize(obj)))
+            for ob in obj:
+                print("ob={}, self.getsize(ob)={}".format(hex(id(ob)), self.getsize(ob)))
+            #objgraph.show_backrefs(obj, max_depth=8, filename='backref-graph.png', filter=lambda x: not inspect.isclass(x), refcounts=True)
+            #gc.collect()
+            #objgraph.show_refs(self.cerebro.runstrats[-1], max_depth=8, filename='memory_chain{:03d}.png'.format(self._batch_number), filter=lambda x: not inspect.isclass(x), refcounts=True)
 
     def optimization_step(self, strat):
         self._batch_number += 1
@@ -78,9 +86,9 @@ class CerebroRunner(object):
         print('!! Finished Batch Run={}'.format(self._batch_number))
         self.print_debug_memory_stats()
 
-    def run_strategies(self, cerebro):
+    def run_strategies(self):
         # Run over everything
-        return cerebro.run()
+        return self.cerebro.run()
 
 
 class BacktestingStep1(object):
@@ -129,7 +137,7 @@ class BacktestingStep1(object):
 
         parser.add_argument('-x', '--maxcpus',
                             type=int,
-                            default=1,
+                            default=8,
                             choices=[1, 2, 3, 4, 5, 7, 8],
                             help='The max number of CPUs to use for processing')
 
@@ -214,9 +222,10 @@ class BacktestingStep1(object):
 
     def init_cerebro(self, runner, args, startcash):
         # Create an instance of cerebro
-        self._cerebro = bt.Cerebro(optreturn=True, maxcpus=args.maxcpus)
+        self._cerebro = bt.Cerebro(optreturn=True, maxcpus=args.maxcpus, preload=True)
 
         self._cerebro.optcallback(runner.optimization_step)
+        runner.cerebro = self._cerebro
 
         # Set our desired cash start
         self._cerebro.broker.setcash(startcash)
@@ -225,13 +234,12 @@ class BacktestingStep1(object):
         self._cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
         self._cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd", initial_cash=startcash)
         self._cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=startcash)
-        self._cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sr", timeframe=TimeFrame.Months)
 
         # add the sizer
         if args.lottype != "" and args.lottype == "Percentage":
             self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
         else:
-            self._cerebro.addsizer(FixedCashSizer, cash=args.lotsize)
+            self._cerebro.addsizer(FixedCashSizer, cashamount=args.lotsize)
 
         if args.commtype.lower() == 'percentage':
             self._cerebro.broker.setcommission(args.commission)
@@ -255,7 +263,7 @@ class BacktestingStep1(object):
         for elem in iterable:
             if isinstance(elem, string_types):
                 elem = (elem,)
-            elif not isinstance(elem, collections.Iterable):
+            elif not isinstance(elem, collections.abc.Iterable):
                 elem = (elem,)
 
             niterable.append(elem)
@@ -384,9 +392,9 @@ class BacktestingStep1(object):
         self._writer2 = csv.writer(self._ofile2, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
 
-    def run_strategies(self):
+    def run_strategies(self, runner):
         # Run over everything
-        return self._cerebro.run()
+        return runner.run_strategies()
 
     def printfinalresultsheader(self, writer, model):
         if self._is_output_file1_exists is True:
@@ -460,7 +468,6 @@ class BacktestingStep1(object):
                 ta_analysis = strategy.analyzers.ta.get_analysis()
                 sqn_analysis = strategy.analyzers.sqn.get_analysis()
                 dd_analysis = strategy.analyzers.dd.get_analysis()
-                sr_analysis = strategy.analyzers.sr.get_analysis()
 
                 strat_key = strategy.strat_id
                 parameters = self.getparametersstr(strategy.params)
@@ -479,7 +486,6 @@ class BacktestingStep1(object):
                 profitfactor = round(ta_analysis.total.profitfactor, 3) if self.exists(ta_analysis, ['total', 'profitfactor']) else 0
                 buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if self.exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
                 sqn_number = round(sqn_analysis.sqn, 2)
-                sharpe_ratio = round(sr_analysis['sharperatio'], 3) if sr_analysis['sharperatio'] else 0
                 monthlystatsprefix = args.monthlystatsprefix
                 equitycurvedata = ta_analysis.total.equity.equitycurvedata if self.exists(ta_analysis, ['total', 'equity', 'equitycurvedata']) else {}
                 equitycurveangle = round(ta_analysis.total.equity.stats.angle) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'angle']) else 0
@@ -494,7 +500,7 @@ class BacktestingStep1(object):
                                      self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
                                      net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                                      max_drawdown_length, strike_rate, num_winning_months, profitfactor,
-                                     buyandhold_return_pct, sqn_number, sharpe_ratio, monthlystatsprefix,
+                                     buyandhold_return_pct, sqn_number, monthlystatsprefix,
                                      monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope, equitycurveintercept,
                                      equitycurvervalue, equitycurvepvalue, equitycurvestderr)
 
@@ -539,7 +545,7 @@ class BacktestingStep1(object):
 
         print("Writing Step1 backtesting run results to: {}".format(self._output_file1_full_name))
 
-        run_results = self.run_strategies()
+        run_results = self.run_strategies(runner)
 
         self._step1_model = self.generate_results_list(run_results, args, startcash)
 

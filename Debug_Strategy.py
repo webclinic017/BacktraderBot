@@ -18,7 +18,7 @@ tradesclosed = {}
 class DebugStrategy(object):
 
     START_CASH_VALUE = 100000
-    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/3h/bitfinex-BTCUSDT-3h.csv'
+    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/15m/bitfinex-BTCUSDT-15m.csv'
 
     _cerebro = None
     _strategy_enum = None
@@ -82,7 +82,7 @@ class DebugStrategy(object):
         if args.lottype != "" and args.lottype == "Percentage":
             self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
         else:
-            self._cerebro.addsizer(FixedCashSizer, cash=args.lotsize)
+            self._cerebro.addsizer(FixedCashSizer, cashamount=args.lotsize, commission=args.commission)
 
         if args.commtype.lower() == 'percentage':
             self._cerebro.broker.setcommission(args.commission)

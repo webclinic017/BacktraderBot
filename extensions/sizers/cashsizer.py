@@ -14,27 +14,32 @@ class FixedCashSizer(bt.Sizer):
     '''This sizer returns a number of contracts that can be acquired for fixed cash amount (e.g. USD, BTC..)
 
     Params:
-      - ``cash`` (default: ``10000``)
+      - ``cashamount`` (default: ``10000``)
       - ``debug`` (default: ``False``)
     '''
 
-    _PREMARGIN_ADJUSTMENT_RATIO = 0.98
+    _PREMARGINCALL_THRESHOLD = 0.02
+    _PREMARGINCALL_ADJUSTMENT_RATIO = 0.9
 
     params = (
-        ('cash', 10000),
+        ('cashamount', 10000),
+        ('commission', 0.0015),
         ('debug', False),
     )
 
     def __init__(self):
         if self.p.debug:
-            print('FixedCashSizer.__init__(): self.params.cash={}'.format(self.params.cash))
+            print('FixedCashSizer.__init__(): self.params.cashamount={}'.format(self.p.cashamount))
         pass
 
+    def is_pre_margin_call_condition(self):
+        return self.broker.get_value() <= self.p.cashamount * (1 + self.p.commission) * (1 + self._PREMARGINCALL_THRESHOLD)
+
     def get_capital_value(self):
-        if self.broker.get_value() < self.params.cash:
-            return round(self.broker.get_value() * self._PREMARGIN_ADJUSTMENT_RATIO)
+        if self.is_pre_margin_call_condition():
+            return round(self.broker.get_value() * self._PREMARGINCALL_ADJUSTMENT_RATIO)
         else:
-            return self.params.cash
+            return self.p.cashamount
 
     def _getsizing(self, comminfo, cash, data, isbuy):
         value = self.get_capital_value()
@@ -43,6 +48,6 @@ class FixedCashSizer(bt.Sizer):
 
         if self.p.debug:
             print(
-                'FixedCashSizer._getsizing(): self.broker.get_value()={}, data.close[0]={}, price={}, size={}'.format(
+                'FixedCashSizer._getsizing(): self.get_capital_value()={}, data.close[0]={}, price={}, size={}'.format(
                     value, data.close[0], price, size))
         return size
