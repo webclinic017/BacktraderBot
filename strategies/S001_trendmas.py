@@ -223,11 +223,13 @@ class S001_AlexNoroTrendMAsStrategy(AbstractStrategy):
             self.stoploss_order = None
 
     def notify_order(self, order):
-        self.log('notify_order() - Order Ref={}, Status={}, Broker Cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], self.broker.getcash(), self.position.size))
+        self.log('notify_order() - Order Ref={}, Status={}, Size={}, Broker Cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], order.size, self.broker.getcash(), self.position.size))
         if order.status == order.Margin:
             self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********')
             self.curr_position = 0
             self.cancel_stoploss_orders()
+            #self.env.runstop()
+            return
 
         if order.status in [bt.Order.Submitted]:
             return

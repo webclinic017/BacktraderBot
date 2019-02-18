@@ -222,7 +222,7 @@ class BacktestingStep1(object):
 
     def init_cerebro(self, runner, args, startcash):
         # Create an instance of cerebro
-        self._cerebro = bt.Cerebro(optreturn=True, maxcpus=args.maxcpus, preload=True)
+        self._cerebro = bt.Cerebro(optreturn=True, maxcpus=args.maxcpus, preload=True, cheat_on_open=True)
 
         self._cerebro.optcallback(runner.optimization_step)
         runner.cerebro = self._cerebro

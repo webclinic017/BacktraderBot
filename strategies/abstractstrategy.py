@@ -48,8 +48,10 @@ class AbstractStrategy(bt.Strategy):
         if order.status == order.Margin:
             self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********')
             self.curr_position = 0
+            #self.env.runstop()
+            return
 
-        self.log('notify_order() - Order Ref={}, Status={}, Broker Cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], self.broker.getcash(), self.position.size))
+        self.log('notify_order() - Order Ref={}, Status={}, order.size={}, Broker Cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], order.size, self.broker.getcash(), self.position.size))
 
         if order.status in [bt.Order.Submitted]:
             return

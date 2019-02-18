@@ -220,7 +220,7 @@ class BacktestingStep2(object):
         text1 = "{}, {}, {}, {}, {}".format(strategy_id_data_str, exchange_str, symbol_str, timeframe_str, date_range_str)
         text2 = "Params: {}".format(parameters_str)
         text3 = "Total Closed Trades: {}, Net Profit,%: {}%, Max Drawdown,%: {}%, Max Drawdown Length: {}, Win Rate,%: {}".format(total_closed_trades, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct)
-        text4 = "Winning Months,%: {}%, Profit Factor: {}, SQN: {}: {}".format(winning_months_pct, profit_factor, sqn)
+        text4 = "Winning Months,%: {}%, Profit Factor: {}, SQN: {}".format(winning_months_pct, profit_factor, sqn)
         text5 = "Equity Curve Angle={}°, Equity Curve Slope={}, Equity Curve Intercept={}, Equity Curve R-value={}, Equity Curve P-value={}, Equity Curve Stderr={}".format(equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)
 
         labels.add_layout(self.build_plot_label(110, text1))

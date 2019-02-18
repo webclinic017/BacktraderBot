@@ -10,15 +10,14 @@ from __future__ import (absolute_import, division, print_function,
 
 import backtrader as bt
 
+
 class FixedCashSizer(bt.Sizer):
     '''This sizer returns a number of contracts that can be acquired for fixed cash amount (e.g. USD, BTC..)
-
     Params:
       - ``cashamount`` (default: ``10000``)
       - ``debug`` (default: ``False``)
     '''
 
-    _PREMARGINCALL_THRESHOLD = 0.02
     _PREMARGINCALL_ADJUSTMENT_RATIO = 0.9
 
     params = (
@@ -33,7 +32,7 @@ class FixedCashSizer(bt.Sizer):
         pass
 
     def is_pre_margin_call_condition(self):
-        return self.broker.get_value() <= self.p.cashamount * (1 + self.p.commission) * (1 + self._PREMARGINCALL_THRESHOLD)
+        return self.broker.get_value() <= self.p.cashamount * (1 + self.p.commission)
 
     def get_capital_value(self):
         if self.is_pre_margin_call_condition():
@@ -43,11 +42,11 @@ class FixedCashSizer(bt.Sizer):
 
     def _getsizing(self, comminfo, cash, data, isbuy):
         value = self.get_capital_value()
-        price = data.close[0]
-        size = value / (1.0 * price)
+        price = data.open[1]
+        size = round(value / (1.0 * price), 6)
 
         if self.p.debug:
             print(
-                'FixedCashSizer._getsizing(): self.get_capital_value()={}, data.close[0]={}, price={}, size={}'.format(
-                    value, data.close[0], price, size))
+                'FixedCashSizer._getsizing(): self.get_capital_value()={}, data.close[0]={}, data.open[1]={}, price={}, size={}'.format(
+                    value, data.close[0], data.open[1], price, size))
         return size

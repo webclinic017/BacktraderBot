@@ -18,7 +18,7 @@ tradesclosed = {}
 class DebugStrategy(object):
 
     START_CASH_VALUE = 100000
-    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/15m/bitfinex-BTCUSDT-15m.csv'
+    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/1h/bitfinex-BTCUSDT-1h.csv'
 
     _cerebro = None
     _strategy_enum = None
@@ -67,7 +67,7 @@ class DebugStrategy(object):
 
     def init_cerebro(self, args, startcash):
         # Create an instance of cerebro
-        self._cerebro = bt.Cerebro()
+        self._cerebro = bt.Cerebro(cheat_on_open=True)
 
         # Set our desired cash start
         self._cerebro.broker.setcash(startcash)
@@ -76,7 +76,6 @@ class DebugStrategy(object):
         self._cerebro.addanalyzer(bt.analyzers.SQN, _name="sqn")
         self._cerebro.addanalyzer(TVNetProfitDrawDown, _name="dd", initial_cash=startcash)
         self._cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=startcash)
-        self._cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sr", timeframe=TimeFrame.Months)
 
         # add the sizer
         if args.lottype != "" and args.lottype == "Percentage":
@@ -157,7 +156,6 @@ class DebugStrategy(object):
         # print the analyzers
         self.printTradeAnalysis(strategy.analyzers.ta.get_analysis())
         self.printSQN(strategy.analyzers.sqn.get_analysis())
-        self.printSharpeRatio(strategy.analyzers.sr.get_analysis())
         self.printDrawDown(strategy.analyzers.dd.get_analysis())
 
         print('\nTotal # trades: {}'.format(len(tradesclosed.items())))
@@ -236,10 +234,6 @@ class DebugStrategy(object):
         print('Max Drawdown: {}'.format(round(analyzer.max.moneydown, 2)))
         print('Max Drawdown, %: {}%'.format(round(analyzer.max.drawdown, 2)))
         print('Max Drawdown Length: {}'.format(round(analyzer.max.len, 2)))
-
-    def printSharpeRatio(self, analyzer):
-        sharperatio = round(analyzer['sharperatio'], 3)
-        print('Sharpe Ratio: {}'.format(sharperatio))
 
     def printDict(self, dict):
         for keys, values in dict.items():

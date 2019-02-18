@@ -9,7 +9,6 @@ class StrategyOptimizationEnum(Enum):
     STRATEGY_OPT_PARAMETER_WINNING_MONTHS_PCT = "Winning Months Pct"
     STRATEGY_OPT_PARAMETER_PROFIT_FACTOR = "Profit Factor"
     STRATEGY_OPT_PARAMETER_SQN = "SQN"
-    STRATEGY_OPT_PARAMETER_SHARPE_RATIO = "Sharpe Ratio"
 
 
 class StrategyOptimizationFactory(object):
@@ -29,7 +28,6 @@ class StrategyOptimizationFactory(object):
         TopNPercentFilter("Winning Months, %", 10, False),
         TopNPercentFilter("Profit Factor", 10, False),
         TopNPercentFilter("SQN", 10, False),
-        TopNPercentFilter("Sharpe Ratio", 10, False)
     ])
 
     _NET_PROFIT_TOPNPERCENT_VALUE_FILTER = TopNPercentFilter("Net Profit, %", 50, False)
