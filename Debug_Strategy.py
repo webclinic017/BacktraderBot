@@ -17,7 +17,7 @@ tradesclosed = {}
 
 class DebugStrategy(object):
 
-    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/3h/bitfinex-BTCUSDT-3h.csv'
+    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/1h/bitfinex-BTCUSDT-1h.csv'
 
     _cerebro = None
     _strategy_enum = None

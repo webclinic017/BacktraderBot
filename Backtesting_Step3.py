@@ -49,7 +49,7 @@ class BacktestingStep3(object):
     _INDEX_STEP2_NUMBERS_ARR = [0, 1, 2, 3]
     _INDEX_ALL_KEYS_ARR = ["Strategy ID", "Exchange", "Currency Pair", "Timeframe", "Parameters"]
 
-    _ENABLE_FILTERING = False
+    _ENABLE_FILTERING = True
 
     DEFAULT_STARTCASH_VALUE = 100000
     DEFAULT_LOT_SIZE = 98000

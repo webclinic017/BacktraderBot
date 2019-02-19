@@ -223,11 +223,11 @@ class BTStrategyConfig(object):
             "today": 31,
         },
         BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: {
-            "startcash": 367942.3473,
+            "startcash": 306773.82066803,
             "needlong": True,
             "needshort": False,
             "cloud": 25,
-            "Factor": 4,
+            "Factor": 10,
             "ATR": 7,
             "fromyear": 2017,
             "toyear": 2018,
