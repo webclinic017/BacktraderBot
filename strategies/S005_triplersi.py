@@ -12,6 +12,7 @@ class S005_AlexNoroTripleRSIStrategy(AbstractStrategy):
 
     params = (
         ("debug", False),
+        ("startcash", 100000),
         ("needlong", True),
         ("needshort", True),
         ("leverage", 1),

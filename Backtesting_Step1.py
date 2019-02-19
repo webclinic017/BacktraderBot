@@ -15,7 +15,7 @@ from datetime import datetime
 from datetime import timedelta
 from config.strategy_config import BTStrategyConfig
 from config.strategy_enum import BTStrategyEnum
-from model.backtestingstep1 import BacktestingStep1Model
+from model.backtestmodel import BacktestModel
 from common.stfetcher import StFetcher
 import itertools
 import collections
@@ -93,7 +93,7 @@ class CerebroRunner(object):
 
 class BacktestingStep1(object):
 
-    _ENABLE_FILTERING = False
+    _ENABLE_FILTERING = True
 
     START_CASH_VALUE = 100000
     DEFAULT_LOT_SIZE = 98000
@@ -103,14 +103,14 @@ class BacktestingStep1(object):
     _params = None
     _is_output_file1_exists = None
     _is_output_file2_exists = None
-    _input_filename = None
+    _market_data_input_filename = None
     _output_file1_full_name = None
     _output_file2_full_name = None
     _ofile1 = None
     _ofile2 = None
     _writer1 = None
     _writer2 = None
-    _step1_model = None
+    _backtest_model = None
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Backtesting Step 1')
@@ -296,7 +296,7 @@ class BacktestingStep1(object):
         self._cerebro.optstrategy(StFetcher, idx=StFetcher.COUNT())
 
 
-    def check_csv_has_data_for_datarange(self, filename):
+    def check_market_data_csv_has_data(self, filename):
         df = pd.read_csv(filename)
         startdate = self.get_fromdate(self._params)
         enddate = self.get_todate(self._params)
@@ -461,7 +461,7 @@ class BacktestingStep1(object):
 
     def generate_results_list(self, stratruns, args, startcash):
         # Generate results list
-        model = BacktestingStep1Model(args.fromyear, args.frommonth, args.toyear, args.tomonth)
+        model = BacktestModel(args.fromyear, args.frommonth, args.toyear, args.tomonth)
         for run in stratruns:
             for strategy in run:
                 # print the analyzers
@@ -533,11 +533,11 @@ class BacktestingStep1(object):
         runner = CerebroRunner()
         self.init_cerebro(runner, args, startcash)
 
-        self._input_filename = self.get_input_filename(args)
+        self._market_data_input_filename = self.get_input_filename(args)
 
-        self.check_csv_has_data_for_datarange(self._input_filename)
+        self.check_market_data_csv_has_data(self._market_data_input_filename)
 
-        self.add_data_to_cerebro(self._input_filename)
+        self.add_data_to_cerebro(self._market_data_input_filename)
 
         self.init_output_files(args)
 
@@ -547,17 +547,17 @@ class BacktestingStep1(object):
 
         run_results = self.run_strategies(runner)
 
-        self._step1_model = self.generate_results_list(run_results, args, startcash)
+        self._backtest_model = self.generate_results_list(run_results, args, startcash)
 
-        self.printfinalresultsheader(self._writer1, self._step1_model)
+        self.printfinalresultsheader(self._writer1, self._backtest_model)
 
-        self.printequitycurvedataheader(self._writer2, self._step1_model)
+        self.printequitycurvedataheader(self._writer2, self._backtest_model)
 
-        self._step1_model.sort_results()
+        self._backtest_model.sort_results()
 
-        self.printfinalresults(self._writer1, self._step1_model.get_model_data_arr())
+        self.printfinalresults(self._writer1, self._backtest_model.get_model_data_arr())
 
-        self.printequitycurvedataresults(self._writer2, self._step1_model.get_equitycurvedata_model().get_model_data_arr())
+        self.printequitycurvedataresults(self._writer2, self._backtest_model.get_equitycurvedata_model().get_model_data_arr())
 
         self.cleanup()
 

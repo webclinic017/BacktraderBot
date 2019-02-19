@@ -11,6 +11,7 @@ class S008_AlexNoroSuperTrendStrategy(AbstractStrategy):
 
     params = (
         ("debug", False),
+        ("startcash", 100000),
         ("needlong", True),
         ("needshort", True),
         ("cloud", 25),

@@ -1,12 +1,12 @@
 #! /bin/sh
 
-strategyid=$1
-runid=$2
-testdaterange=20180901-20181130
+runid=$1
+testdaterange=20170701-20180630
+columnnameprefix=FwTest
 
 declare exchange=bitfinex
 
 pkill python
 pkill python
 
-python Backtesting_Step3.py -y $strategyid -r $runid -e $exchange -l Percentage -d $testdaterange
+python Backtesting_Step3.py -r $runid -l Fixed -d $testdaterange -p $columnnameprefix

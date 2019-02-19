@@ -12,6 +12,7 @@ class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
 
     params = (
         ("debug", False),
+        ("startcash", 100000),
         ("needlong", True),
         ("needshort", True),
         ("takepercent", 0),

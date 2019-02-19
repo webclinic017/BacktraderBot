@@ -54,7 +54,7 @@ class TVNetProfitDrawDown(bt.Analyzer):
         self.rets.max.moneydown = 0.0
 
         self._currvalue = 0
-        self._maxportfoliovalue = self.p.initial_cash
+        self.maxportfoliovalue = self.p.initial_cash
 
     def stop(self):
         self.rets._close()  # . notation cannot create more keys
@@ -70,13 +70,13 @@ class TVNetProfitDrawDown(bt.Analyzer):
         if trade.isclosed:
             r = self.rets
             tradeclosevalue = self._currvalue
-            #print('!! INSIDE notify_trade CLOSED tradeclosevalue={}, self._maxportfoliovalue={}'.format(tradeclosevalue, self._maxportfoliovalue))
-            if tradeclosevalue < self._maxportfoliovalue:
-                r.moneydown = moneydown = tradeclosevalue - self._maxportfoliovalue
-                r.drawdown = drawdown = 100.0 * moneydown / self._maxportfoliovalue
+            #print('!! INSIDE notify_trade CLOSED tradeclosevalue={}, self.maxportfoliovalue={}'.format(tradeclosevalue, self.maxportfoliovalue))
+            if tradeclosevalue < self.maxportfoliovalue:
+                r.moneydown = moneydown = tradeclosevalue - self.maxportfoliovalue
+                r.drawdown = drawdown = 100.0 * moneydown / self.maxportfoliovalue
                 r.len = r.len + 1 if drawdown else 0
             else:
-                self._maxportfoliovalue = tradeclosevalue
+                self.maxportfoliovalue = tradeclosevalue
                 r.moneydown = moneydown = 0
                 r.drawdown = drawdown = 0
                 r.len = 0
@@ -86,7 +86,7 @@ class TVNetProfitDrawDown(bt.Analyzer):
             r.max.drawdown  = min(r.max.drawdown, drawdown)
             r.max.len = max(r.max.len, r.len)
 
-            #print('!! INSIDE notify_trade CLOSED self._maxportfoliovalue={}'.format(self._maxportfoliovalue))
+            #print('!! INSIDE notify_trade CLOSED self.maxportfoliovalue={}'.format(self.maxportfoliovalue))
             #print('!! INSIDE notify_trade CLOSED r.moneydown={}'.format(r.moneydown))
             #print('!! INSIDE notify_trade CLOSED r.drawdown={}'.format(r.drawdown))
             #print('!! INSIDE notify_trade CLOSED r.len={}'.format(r.len))

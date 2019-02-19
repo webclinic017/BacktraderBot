@@ -12,6 +12,7 @@ class S007_AlexNoroMultimaStrategy(AbstractStrategy):
 
     params = (
         ("debug", False),
+        ("startcash", 100000),
         ("needlong", True),
         ("needshort", True),
         ("usema1", True),

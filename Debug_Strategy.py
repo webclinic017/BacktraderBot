@@ -17,8 +17,7 @@ tradesclosed = {}
 
 class DebugStrategy(object):
 
-    START_CASH_VALUE = 100000
-    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/1h/bitfinex-BTCUSDT-1h.csv'
+    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/3h/bitfinex-BTCUSDT-3h.csv'
 
     _cerebro = None
     _strategy_enum = None
@@ -252,7 +251,7 @@ class DebugStrategy(object):
         self._strategy_enum = self.get_strategy_enum(args)
         self.init_debug_params(self._strategy_enum, args)
 
-        startcash = self.START_CASH_VALUE
+        startcash = self._debug_params["startcash"]
 
         self.init_cerebro(args, startcash)
 
@@ -264,7 +263,7 @@ class DebugStrategy(object):
         strategies = self._cerebro.run()
         executed_strat = strategies[0]
 
-        self.print_all_results(executed_strat, self.START_CASH_VALUE)
+        self.print_all_results(executed_strat, startcash)
 
         self.plot_results()
 

@@ -40,6 +40,16 @@ class AbstractStrategy(bt.Strategy):
         self.tradesopen = {}
         self.tradesclosed = {}
 
+    def set_startcash(self, startcash):
+        self.broker.setcash(startcash)
+        # TODO: Workaround
+        self.analyzers.dd.p.initial_cash = startcash
+        self.analyzers.dd.maxportfoliovalue = startcash
+        self.analyzers.ta.p.cash = startcash
+
+    def start(self):
+        self.set_startcash(self.p.startcash)
+
     @abstractmethod
     def next(self):
         pass

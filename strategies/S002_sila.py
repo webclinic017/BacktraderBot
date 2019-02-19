@@ -13,6 +13,7 @@ class S002_AlexNoroSILAStrategy(AbstractStrategy):
 
     params = (
         ("debug", False),
+        ("startcash", 100000),
         ("sensup", 5),
         ("sensdn", 5),
         ("usewow", True),

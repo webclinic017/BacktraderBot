@@ -3,7 +3,7 @@ from datetime import date
 from calendar import monthrange
 
 
-class BacktestingStep1Model(object):
+class BacktestModel(object):
 
     _monthlystatsprefix = None
 
@@ -15,7 +15,7 @@ class BacktestingStep1Model(object):
 
     def __init__(self, fromyear, frommonth, toyear, tomonth):
         self.populate_monthly_stats_column_names(fromyear, frommonth, toyear, tomonth)
-        self._equitycurvedata_model = BacktestingStep1EquityCurveDataModel()
+        self._equitycurvedata_model = BacktestEquityCurveDataModel()
 
     def get_month_num_days(self, year, month):
         return monthrange(year, month)[1]
@@ -38,18 +38,22 @@ class BacktestingStep1Model(object):
                        sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope,
                        equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr):
         self._monthlystatsprefix = monthlystatsprefix
-        row = BacktestingStep1ReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size,
-                                        total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct,
-                                        max_drawdown_pct, max_drawdown_length, win_rate_pct, num_winning_months,
-                                        profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats,
-                                        equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue,
-                                        equitycurvestderr)
+        row = BacktestReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, lot_size,
+                                total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct,
+                                max_drawdown_pct, max_drawdown_length, win_rate_pct, num_winning_months,
+                                profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats,
+                                equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue,
+                                equitycurvestderr)
         self._report_rows.append(row)
         self._equitycurvedata_model.add_row(strategyid, exchange, currency_pair, timeframe, parameters, daterange,
                                             equitycurvedata)
 
     def get_monthly_stats_column_names(self):
         result = []
+
+        if self._monthlystatsprefix == "":
+            return self._monthly_stats_column_names
+
         for column_name in self._monthly_stats_column_names:
             result.append("{}: {}".format(self._monthlystatsprefix, column_name))
 
@@ -104,7 +108,7 @@ class BacktestingStep1Model(object):
         return self._equitycurvedata_model
 
 
-class BacktestingStep1ReportRow(object):
+class BacktestReportRow(object):
     strategyid = None
 
     exchange = None
@@ -216,12 +220,12 @@ class BacktestingStep1ReportRow(object):
         return result
 
 
-class BacktestingStep1EquityCurveDataModel(object):
+class BacktestEquityCurveDataModel(object):
 
     _report_rows = []
 
     def add_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, equitycurvedata):
-        row = BacktestingStep1EquityCurveDataRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, equitycurvedata)
+        row = BacktestEquityCurveDataRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, equitycurvedata)
         self._report_rows.append(row)
 
     def get_header_names(self):
@@ -235,7 +239,7 @@ class BacktestingStep1EquityCurveDataModel(object):
         return result
 
 
-class BacktestingStep1EquityCurveDataRow(object):
+class BacktestEquityCurveDataRow(object):
 
     strategyid = None
 

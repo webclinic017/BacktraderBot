@@ -12,6 +12,7 @@ class S001_AlexNoroTrendMAsStrategy(AbstractStrategy):
 
     params = (
         ("debug", False),
+        ("startcash", 100000),
         ("needlong", True),
         ("needshort", True),
         ("needstops", True),

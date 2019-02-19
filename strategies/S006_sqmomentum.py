@@ -13,6 +13,7 @@ class S006_AlexNoroSqueezeMomentumStrategy(AbstractStrategy):
 
     params = (
         ("debug", False),
+        ("startcash", 100000),
         ("needlong", True),
         ("needshort", True),
         ("length", 20),

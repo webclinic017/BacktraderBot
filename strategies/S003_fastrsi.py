@@ -12,6 +12,7 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
 
     params = (
         ("debug", False),
+        ("startcash", 100000),
         ("needlong", True),
         ("needshort", True),
         ("rsiperiod", 7),
