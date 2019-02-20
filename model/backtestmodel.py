@@ -51,7 +51,7 @@ class BacktestModel(object):
     def get_monthly_stats_column_names(self):
         result = []
 
-        if self._monthlystatsprefix == "":
+        if self._monthlystatsprefix is None or self._monthlystatsprefix == "":
             return self._monthly_stats_column_names
 
         for column_name in self._monthly_stats_column_names:
