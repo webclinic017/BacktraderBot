@@ -1,4 +1,5 @@
 import numpy as np
+import talib as ta
 from bokeh.layouts import column
 from bokeh.models import Span, Label
 from bokeh.plotting import figure
@@ -83,11 +84,13 @@ class EquityCurvePlotter(object):
         yn = startcash + equitycurveintercept + len(x_axis_data) * equitycurveslope
         return [[x1, xn], [y1, yn]]
 
-    def get_equity_curve_sma_points(self, sma_length, equity_curve_y_axis_data):
-        equity_curve_avg = [float('nan')] * (sma_length - 1)
-        calc_avg_data = np.convolve(equity_curve_y_axis_data, np.ones((sma_length,)) / sma_length, mode='valid')
-        equity_curve_avg.extend(calc_avg_data)
-        return equity_curve_avg
+    def get_equity_curve_sma_points(self, period, equity_curve_y_axis_data):
+        result = []
+        arr = np.array([float(x) for x in equity_curve_y_axis_data])
+        calc_sma_data = list(ta.SMA(arr, period))
+        calc_sma_data = [float(x) for x in calc_sma_data]
+        result.extend(calc_sma_data)
+        return result
 
     def is_possible_to_draw_sma(self, x_data_arr, sma_length):
         return len(x_data_arr) > sma_length
@@ -156,11 +159,11 @@ class EquityCurvePlotter(object):
 
         if self.is_possible_to_draw_sma(x_data, self._EQUITY_CURVE_SMA1_LENGTH):
             equity_curve_sma1_y_data = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA1_LENGTH, y_data)
-            equity_curve_plot.line(x_data, equity_curve_sma1_y_data, color='orange', line_width=1, alpha=0.7, legend='{} equity curve SMA1({})'.format(plot_name_prefix, self._EQUITY_CURVE_SMA1_LENGTH))
+            equity_curve_plot.line(x_data, equity_curve_sma1_y_data, color='orange', line_width=1, alpha=0.7, legend='{} equity curve SMA({})'.format(plot_name_prefix, self._EQUITY_CURVE_SMA1_LENGTH))
 
         if self.is_possible_to_draw_sma(x_data, self._EQUITY_CURVE_SMA2_LENGTH):
             equity_curve_sma2_y_data = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA2_LENGTH, y_data)
-            equity_curve_plot.line(x_data, equity_curve_sma2_y_data, color='green', line_width=1, alpha=0.7, legend='{} equity curve SMA2({})'.format(plot_name_prefix, self._EQUITY_CURVE_SMA2_LENGTH))
+            equity_curve_plot.line(x_data, equity_curve_sma2_y_data, color='magenta', line_width=1, alpha=0.5, legend='{} equity curve SMA({})'.format(plot_name_prefix, self._EQUITY_CURVE_SMA2_LENGTH))
         equity_curve_plot.legend.location = "bottom_right"
 
         return column(description, equity_curve_plot)
@@ -199,11 +202,11 @@ class EquityCurvePlotter(object):
         combined_y_data.extend(fwtest_y_data[:-1])
         if self.is_possible_to_draw_sma(combined_x_data, self._EQUITY_CURVE_SMA1_LENGTH):
             equity_curve_sma1_y_data = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA1_LENGTH, combined_y_data)
-            equity_curve_plot.line(combined_x_data, equity_curve_sma1_y_data, color='orange', line_width=1, alpha=0.7, legend='Combined equity curve SMA1({})'.format(self._EQUITY_CURVE_SMA1_LENGTH))
+            equity_curve_plot.line(combined_x_data, equity_curve_sma1_y_data, color='orange', line_width=1, alpha=0.7, legend='Combined equity curve SMA({})'.format(self._EQUITY_CURVE_SMA1_LENGTH))
 
         if self.is_possible_to_draw_sma(combined_x_data, self._EQUITY_CURVE_SMA2_LENGTH):
             equity_curve_sma2_y_data = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA2_LENGTH, combined_y_data)
-            equity_curve_plot.line(combined_x_data, equity_curve_sma2_y_data, color='green', line_width=1, alpha=0.7, legend='Combined equity curve SMA2({})'.format(self._EQUITY_CURVE_SMA2_LENGTH))
+            equity_curve_plot.line(combined_x_data, equity_curve_sma2_y_data, color='magenta', line_width=1, alpha=0.5, legend='Combined equity curve SMA({})'.format(self._EQUITY_CURVE_SMA2_LENGTH))
 
         equity_curve_plot.legend.location = "bottom_right"
 
