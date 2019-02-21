@@ -4,8 +4,6 @@ from abc import abstractmethod
 
 class AbstractStrategy(bt.Strategy):
 
-    strat_id = -1
-
     def log(self, txt, dt=None):
         if self.p.debug:
             dt = dt or self.data.datetime.datetime()

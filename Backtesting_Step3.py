@@ -47,9 +47,6 @@ class CerebroRunner(object):
 class BacktestingStep3(object):
 
     _INDEX_STEP2_NUMBERS_ARR = [0, 1, 2, 3]
-    _INDEX_ALL_KEYS_ARR = ["Strategy ID", "Exchange", "Currency Pair", "Timeframe", "Parameters"]
-
-    _ENABLE_FILTERING = True
 
     DEFAULT_STARTCASH_VALUE = 100000
     DEFAULT_LOT_SIZE = 98000
@@ -334,6 +331,13 @@ class BacktestingStep3(object):
     def getparametersstr(self, params):
         coll = vars(params).copy()
         del coll["debug"]
+        del coll["startcash"]
+        del coll["fromyear"]
+        del coll["frommonth"]
+        del coll["fromday"]
+        del coll["toyear"]
+        del coll["tomonth"]
+        del coll["today"]
         return "{}".format(coll)
 
     def get_avg_monthly_net_profit_pct(self, monthly_stats, num_months):
@@ -394,11 +398,10 @@ class BacktestingStep3(object):
                 equitycurvepvalue = round(ta_analysis.total.equity.stats.p_value, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'p_value']) else 0
                 equitycurvestderr = round(ta_analysis.total.equity.stats.std_err, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'std_err']) else 0
 
-                if self._ENABLE_FILTERING is False or self._ENABLE_FILTERING is True and net_profit > 0 and total_closed > 0:
-                    model.get_backtest_model().add_result_row(strategy_id, exchange, symbol, timeframe, parameters, self.getdaterange(proc_daterange), self.getlotsize(args), total_closed,
-                                         net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, strike_rate, num_winning_months,
-                                         profitfactor, buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope,
-                                         equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)
+                model.get_backtest_model().add_result_row(strategy_id, exchange, symbol, timeframe, parameters, self.getdaterange(proc_daterange), startcash, self.getlotsize(args), total_closed,
+                                     net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, strike_rate, num_winning_months,
+                                     profitfactor, buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope,
+                                     equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)
         return model
 
     def run_backtest_process(self, input_df, args):
@@ -409,7 +412,7 @@ class BacktestingStep3(object):
             for exchange in exc_list:  # [exc_list[0]]:
                 for symbol in sym_list:  # [sym_list[0]]:
                     for timeframe in tf_list:  # [tf_list[0]]:
-                        candidates_data_df = input_df.loc[(strategy, exchange, symbol, timeframe)]
+                        candidates_data_df = input_df.loc[[(strategy, exchange, symbol, timeframe)]]
 
                         # Get list of candidates from Step2 for strategy/exchange/symbol/timeframe/date range
                         print("\n******** Processing {} rows for: {}, {}, {}, {}, {} ********".format(len(candidates_data_df), strategy, exchange, symbol, timeframe, args.testdaterange))

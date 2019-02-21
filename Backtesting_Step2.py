@@ -12,14 +12,14 @@ from plotting.equity_curve import EquityCurvePlotter
 
 class BacktestingStep2(object):
 
-    _ENABLE_FILTERING = True
+    _ENABLE_FILTERING = False
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
     _equity_curve_plotter = EquityCurvePlotter("Step2")
     _params = None
     _input_filename = None
-    _equity_curve_input_filename = None
+    _bktest_equity_curve_filename = None
     _output_file1_full_name = None
     _ofile1 = None
     _writer1 = None
@@ -46,7 +46,7 @@ class BacktestingStep2(object):
         dirname = self.whereAmI()
         return '{}/strategyrun_results/{}/{}_Step1.csv'.format(dirname, args.runid, args.runid)
 
-    def get_equity_curve_input_filename(self, args):
+    def get_bktest_equity_curve_input_filename(self, args):
         dirname = self.whereAmI()
         return '{}/strategyrun_results/{}/{}_Step1_EquityCurveData.csv'.format(dirname, args.runid, args.runid)
 
@@ -85,7 +85,15 @@ class BacktestingStep2(object):
         for row in print_list:
             writer.writerow(row)
 
+    def get_all_column_names(self, df):
+        result = []
+        df_copy = df.copy()
+        df_copy = df_copy.reset_index()
+        result.extend(list(df_copy.columns.values))
+        return result
+
     def filter_input_data(self, df):
+        column_names = self.get_all_column_names(df)
         final_results = []
 
         strat_list = self.get_unique_index_values(df, 'Strategy ID')
@@ -108,12 +116,15 @@ class BacktestingStep2(object):
                             #print("candidates_data_df.values={}\n".format(candidates_data_df.values))
 
         print("==========================\nFinal number of rows: {}".format(len(final_results)))
-        return final_results
+        return pd.DataFrame(final_results, columns=column_names)
 
-    def sort_results(self, arr):
-        return sorted(arr, key=lambda x: (x[0], x[1], x[2], x[3], x[4]), reverse=False)
+    def sort_results(self, df):
+        df_sorted = df.sort_values(by=["Strategy ID", "Exchange", "Currency Pair", "Timeframe"])
 
-    def printfinalresults(self, writer, arr):
+        return df_sorted
+
+    def printfinalresults(self, writer, df):
+        arr = df.values
         print_list = []
         print_list.extend(arr)
         for item in print_list:
@@ -137,19 +148,19 @@ class BacktestingStep2(object):
 
         self.printheader(self._writer1, header_names)
 
-        step2_results = self.filter_input_data(step1_df)
+        step2_results_df = self.filter_input_data(step1_df)
 
         print("Writing Step 2 backtesting run results to: {}".format(self._output_file1_full_name))
 
-        step2_results = self.sort_results(step2_results)
+        step2_results_df = self.sort_results(step2_results_df)
 
-        self.printfinalresults(self._writer1, step2_results)
+        self.printfinalresults(self._writer1, step2_results_df)
 
-        self._equity_curve_input_filename = self.get_equity_curve_input_filename(args)
+        self._bktest_equity_curve_filename = self.get_bktest_equity_curve_input_filename(args)
 
-        equity_curve_df = self.read_csv_data(self._equity_curve_input_filename)
+        bktest_equity_curve_df = self.read_csv_data(self._bktest_equity_curve_filename)
 
-        self._equity_curve_plotter.generate_equity_curve_images(step2_results, equity_curve_df, args)
+        self._equity_curve_plotter.generate_equity_curve_images(step2_results_df, bktest_equity_curve_df, args)
 
         self.cleanup()
 

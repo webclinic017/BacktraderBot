@@ -434,6 +434,13 @@ class BacktestingStep1(object):
     def getparametersstr(self, params):
         coll = vars(params).copy()
         del coll["debug"]
+        del coll["startcash"]
+        del coll["fromyear"]
+        del coll["frommonth"]
+        del coll["fromday"]
+        del coll["toyear"]
+        del coll["tomonth"]
+        del coll["today"]
         return "{}".format(coll)
 
     def update_monthly_stats(self, stats, num_months):
@@ -469,7 +476,6 @@ class BacktestingStep1(object):
                 sqn_analysis = strategy.analyzers.sqn.get_analysis()
                 dd_analysis = strategy.analyzers.dd.get_analysis()
 
-                strat_key = strategy.strat_id
                 parameters = self.getparametersstr(strategy.params)
                 monthly_stats = ta_analysis.monthly_stats if self.exists(ta_analysis, ['monthly_stats']) else {}
                 num_months = model.get_num_months()
@@ -497,7 +503,7 @@ class BacktestingStep1(object):
 
                 if self._ENABLE_FILTERING is False or self._ENABLE_FILTERING is True and net_profit > 0 and total_closed > 0:
                     model.add_result_row(args.strategy, args.exchange, args.symbol, args.timeframe, parameters,
-                                     self.getdaterange(args), self.getlotsize(args), total_closed, net_profit,
+                                     self.getdaterange(args), startcash, self.getlotsize(args), total_closed, net_profit,
                                      net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                                      max_drawdown_length, strike_rate, num_winning_months, profitfactor,
                                      buyandhold_return_pct, sqn_number, monthlystatsprefix,
