@@ -1,5 +1,5 @@
 from enum import Enum
-from optimization.filters import ValueFilter, TopNPercentFilter, CombinedResultsMergingFilter, FilterSequence
+from optimization.filters import ValueFilter, TopNFilter, TopNPercentFilter, FilterSequence
 
 
 class StrategyOptimizationEnum(Enum):
@@ -13,28 +13,37 @@ class StrategyOptimizationEnum(Enum):
 
 class StrategyOptimizationFactory(object):
 
-    _TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("Total Closed Trades", 50, False)
+    # Back testing configuration
+    _BKTEST_TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("Total Closed Trades", 200, False)
 
-    _MAX_DRAWDOWN_PCT_VALUE_FILTER = ValueFilter("Max Drawdown, %", -50, False)
+    _BKTEST_MAX_DRAWDOWN_PCT_VALUE_FILTER = ValueFilter("Max Drawdown, %", -50, False)
 
-    _NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 20, False)
+    _BKTEST_NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 50, False)
 
-    _SQN_VALUE_FILTER = ValueFilter("SQN", 0.5, False)
+    _BKTEST_EQUITY_CURVE_ANGLE_VALUE_FILTER = ValueFilter("Equity Curve Angle", 5, False)
 
-    _COMBINED_RESULTS_MERGING_FILTER = CombinedResultsMergingFilter([
-        TopNPercentFilter("Net Profit, %", 10, False),
-        TopNPercentFilter("Max Drawdown, %", 10, False),
-        TopNPercentFilter("Max Drawdown Length", 10, True),
-        TopNPercentFilter("Winning Months, %", 10, False),
-        TopNPercentFilter("Profit Factor", 10, False),
-        TopNPercentFilter("SQN", 10, False),
-    ])
+    _BKTEST_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("Equity Curve R-value", 0.85, False)
 
-    _NET_PROFIT_TOPNPERCENT_VALUE_FILTER = TopNPercentFilter("Net Profit, %", 50, False)
+    _BKTEST_MAX_DRAWDOWN_PCT_TOP_N_PCT_VALUE_FILTER = TopNPercentFilter("Max Drawdown, %", 25, False)
 
-    _ALL_FILTERS = FilterSequence([_TOTAL_CLOSED_TRADES_VALUE_FILTER, _MAX_DRAWDOWN_PCT_VALUE_FILTER, _NET_PROFIT_VALUE_FILTER, _SQN_VALUE_FILTER, _COMBINED_RESULTS_MERGING_FILTER, _NET_PROFIT_TOPNPERCENT_VALUE_FILTER])
+    _BKTEST_FILTERS = FilterSequence([_BKTEST_TOTAL_CLOSED_TRADES_VALUE_FILTER, _BKTEST_NET_PROFIT_VALUE_FILTER, _BKTEST_EQUITY_CURVE_ANGLE_VALUE_FILTER, _BKTEST_EQUITY_CURVE_R_VALUE_FILTER, _BKTEST_MAX_DRAWDOWN_PCT_TOP_N_PCT_VALUE_FILTER])
+
+
+    # Forward testing configuration
+    _FWTEST_TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("FwTest: Total Closed Trades", 50, False)
+
+    _FWTEST_EQUITY_CURVE_ANGLE_VALUE_FILTER = ValueFilter("FwTest: Equity Curve Angle", 5, False)
+
+    _FWTEST_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("FwTest: Equity Curve R-value", 0.8, False)
+
+    _FWTEST_NET_PROFIT_TOP_N_VALUE_FILTER = TopNFilter("FwTest: Equity Curve R-value", 1, False)
+
+    _FWTEST_FILTERS = FilterSequence([_FWTEST_TOTAL_CLOSED_TRADES_VALUE_FILTER, _FWTEST_EQUITY_CURVE_ANGLE_VALUE_FILTER, _FWTEST_EQUITY_CURVE_R_VALUE_FILTER, _FWTEST_NET_PROFIT_TOP_N_VALUE_FILTER])
 
     @classmethod
-    def create_filters(cls):
-        return cls._ALL_FILTERS
+    def create_filters_step2(cls):
+        return cls._BKTEST_FILTERS
 
+    @classmethod
+    def create_filters_step4(cls):
+        return cls._FWTEST_FILTERS

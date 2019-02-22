@@ -14,7 +14,6 @@ from extensions.sizers.cashsizer import FixedCashSizer
 from datetime import datetime
 from datetime import timedelta
 from config.strategy_enum import BTStrategyEnum
-from model.backtestmodel import BacktestModel
 from model.step3model import Step3Model
 from common.stfetcher import StFetcher
 import os
@@ -404,6 +403,13 @@ class BacktestingStep3(object):
                                      equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)
         return model
 
+    def find_rows(self, df, strategy, exchange, symbol, timeframe):
+        try:
+            result = df.loc[[(strategy, exchange, symbol, timeframe)]]
+        except KeyError:
+            result = None
+        return result
+
     def run_backtest_process(self, input_df, args):
         proc_daterange = self.get_processing_daterange(args.testdaterange)
         step3_model = Step3Model(input_df.reset_index(), proc_daterange["fromyear"], proc_daterange["frommonth"], proc_daterange["toyear"], proc_daterange["tomonth"], args.columnnameprefix)
@@ -412,25 +418,25 @@ class BacktestingStep3(object):
             for exchange in exc_list:  # [exc_list[0]]:
                 for symbol in sym_list:  # [sym_list[0]]:
                     for timeframe in tf_list:  # [tf_list[0]]:
-                        candidates_data_df = input_df.loc[[(strategy, exchange, symbol, timeframe)]]
+                        candidates_data_df = self.find_rows(input_df, strategy, exchange, symbol, timeframe)
+                        if candidates_data_df is not None:
+                            # Get list of candidates from Step2 for strategy/exchange/symbol/timeframe/date range
+                            print("\n******** Processing {} rows for: {}, {}, {}, {}, {} ********".format(len(candidates_data_df), strategy, exchange, symbol, timeframe, args.testdaterange))
 
-                        # Get list of candidates from Step2 for strategy/exchange/symbol/timeframe/date range
-                        print("\n******** Processing {} rows for: {}, {}, {}, {}, {} ********".format(len(candidates_data_df), strategy, exchange, symbol, timeframe, args.testdaterange))
+                            startcash = self.DEFAULT_STARTCASH_VALUE
+                            runner = CerebroRunner()
+                            self.init_cerebro(runner, args, startcash)
 
-                        startcash = self.DEFAULT_STARTCASH_VALUE
-                        runner = CerebroRunner()
-                        self.init_cerebro(runner, args, startcash)
+                            self._market_data_input_filename = self.get_marketdata_filename(exchange, symbol, timeframe)
+                            self.check_market_data_csv_has_data(self._market_data_input_filename, proc_daterange)
+                            self.add_data_to_cerebro(self._market_data_input_filename, proc_daterange)
 
-                        self._market_data_input_filename = self.get_marketdata_filename(exchange, symbol, timeframe)
-                        self.check_market_data_csv_has_data(self._market_data_input_filename, proc_daterange)
-                        self.add_data_to_cerebro(self._market_data_input_filename, proc_daterange)
+                            strategy_enum = BTStrategyEnum.get_strategy_enum_by_str(strategy)
+                            self.enqueue_strategies(candidates_data_df, strategy_enum, proc_daterange, args)
 
-                        strategy_enum = BTStrategyEnum.get_strategy_enum_by_str(strategy)
-                        self.enqueue_strategies(candidates_data_df, strategy_enum, proc_daterange, args)
+                            run_results = self.run_strategies(runner)
 
-                        run_results = self.run_strategies(runner)
-
-                        step3_model = self.append_model(step3_model, strategy, exchange, symbol, timeframe, run_results, args, proc_daterange)
+                            step3_model = self.append_model(step3_model, strategy, exchange, symbol, timeframe, run_results, args, proc_daterange)
         return step3_model
 
     def printfinalresultsheader(self, writer, step3_model):
@@ -474,9 +480,13 @@ class BacktestingStep3(object):
 
         self.init_output_files(args)
 
+        print("Writing Step 3 backtesting run results to: {}".format(self._output_file1_full_name))
+
         self._step3_model = self.run_backtest_process(self._step2_df, args)
 
         self.printfinalresultsheader(self._writer1, self._step3_model)
+
+        print("Writing Step 3 backtesting equity curve data to: {}".format(self._output_file2_full_name))
 
         self.printequitycurvedataheader(self._writer2, self._step3_model)
 

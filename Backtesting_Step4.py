@@ -11,7 +11,7 @@ from plotting.equity_curve import EquityCurvePlotter
 
 
 class BacktestingStep4(object):
-    _ENABLE_FILTERING = False
+    _ENABLE_FILTERING = True
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
@@ -57,7 +57,7 @@ class BacktestingStep4(object):
         return df.index.get_level_values(name).unique()
 
     def filter_top_records(self, df):
-        filter = StrategyOptimizationFactory.create_filters()
+        filter = StrategyOptimizationFactory.create_filters_step4()
         return filter.filter(df)
 
     def get_output_path(self, base_dir, args):
@@ -89,6 +89,14 @@ class BacktestingStep4(object):
         result.extend(list(df_copy.columns.values))
         return result
 
+    def find_rows(self, df, strategy, exchange, symbol, timeframe):
+        try:
+            idx = pd.IndexSlice
+            result = df.loc[idx[strategy, exchange, symbol, timeframe, :], idx[:]]
+        except KeyError:
+            result = None
+        return result
+
     def filter_input_data(self, df):
         column_names = self.get_all_column_names(df)
         final_results = []
@@ -102,14 +110,14 @@ class BacktestingStep4(object):
             for exchange in exc_list:
                 for symbol in sym_list:
                     for timeframe in tf_list:
-                        idx = pd.IndexSlice
-                        candidates_data_df = df.loc[idx[strategy, exchange, symbol, timeframe, :], idx[:]]
-                        if self._ENABLE_FILTERING is True:
-                            candidates_data_df = self.filter_top_records(candidates_data_df)
-                        if candidates_data_df is not None and len(candidates_data_df) > 0:
-                            print("Processing: {}/{}/{}/{}:\nNumber of best rows: {}\n".format(strategy, exchange, symbol, timeframe, len(candidates_data_df.values)))
-                            candidates_data_df = candidates_data_df.reset_index()
-                            final_results.extend(candidates_data_df.values.tolist())  # print("candidates_data_df.values={}\n".format(candidates_data_df.values))
+                        candidates_data_df = self.find_rows(df, strategy, exchange, symbol, timeframe)
+                        if candidates_data_df is not None:
+                            if self._ENABLE_FILTERING is True:
+                                candidates_data_df = self.filter_top_records(candidates_data_df)
+                            if candidates_data_df is not None and len(candidates_data_df) > 0:
+                                print("Processing: {}/{}/{}/{}:\nNumber of best rows: {}\n".format(strategy, exchange, symbol, timeframe, len(candidates_data_df.values)))
+                                candidates_data_df = candidates_data_df.reset_index()
+                                final_results.extend(candidates_data_df.values.tolist())  # print("candidates_data_df.values={}\n".format(candidates_data_df.values))
 
         print("==========================\nFinal number of rows: {}".format(len(final_results)))
         return pd.DataFrame(final_results, columns=column_names)

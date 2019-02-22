@@ -549,7 +549,7 @@ class BacktestingStep1(object):
 
         self.enqueue_strategies()
 
-        print("Writing Step1 backtesting run results to: {}".format(self._output_file1_full_name))
+        print("Writing Step 1 backtesting run results to: {}".format(self._output_file1_full_name))
 
         run_results = self.run_strategies(runner)
 

@@ -12,7 +12,7 @@ from plotting.equity_curve import EquityCurvePlotter
 
 class BacktestingStep2(object):
 
-    _ENABLE_FILTERING = False
+    _ENABLE_FILTERING = True
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
@@ -60,7 +60,7 @@ class BacktestingStep2(object):
         return df.index.get_level_values(name).unique()
 
     def filter_top_records(self, df):
-        filter = StrategyOptimizationFactory.create_filters()
+        filter = StrategyOptimizationFactory.create_filters_step2()
         return filter.filter(df)
 
     def get_output_path(self, base_dir, args):

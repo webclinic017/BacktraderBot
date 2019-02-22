@@ -19,8 +19,8 @@ class EquityCurvePlotter(object):
 
     _EQUITY_CURVE_IMAGE_WIDTH = 1500
     _EQUITY_CURVE_IMAGE_HEIGHT = 800
-    _EQUITY_CURVE_SMA1_LENGTH = 7
-    _EQUITY_CURVE_SMA2_LENGTH = 14
+    _EQUITY_CURVE_SMA1_LENGTH = 20
+    _EQUITY_CURVE_SMA2_LENGTH = 40
 
     def __init__(self, step_name):
         self._step_name = step_name

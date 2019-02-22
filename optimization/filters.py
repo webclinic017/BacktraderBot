@@ -27,6 +27,30 @@ class ValueFilter(Filter):
         return result
 
 
+class TopNFilter(Filter):
+    field_name = None
+    number = None
+    ascending = None
+
+    def __init__(self, field_name, number, ascending):
+        super().__init__()
+        self.field_name = field_name
+        self.number = number
+        self.ascending = ascending
+
+    def sort(self, df, fname, asc):
+        return df.sort_values(by=fname, ascending=asc)
+
+    def filter(self, df):
+        result = None
+        if df is not None and len(df.index) > 0:
+            df = self.sort(df, self.field_name, self.ascending)
+
+            result = df.head(self.number)
+
+        return result
+
+
 class TopNPercentFilter(Filter):
     field_name = None
     percent = None
@@ -64,43 +88,6 @@ class TopNPercentFilter(Filter):
                 result = df[df[self.field_name] <= filter_criterion]
 
         return result
-
-
-class CombinedResultsMergingFilter(Filter):
-
-    _filters = []
-
-    def __init__(self, filters):
-        super().__init__()
-        self._filters = filters
-
-    def get_value_by_idx(self, df, idx):
-        try:
-            result = df.loc[[idx]]
-        except KeyError:
-            result = None
-        return result
-
-    def merge_dataframes(self, target_df, src_df):
-        result = None
-        if src_df is not None:
-            if target_df is None:
-                result = src_df.copy()
-            else:
-                for src_idx, src_row in src_df.iterrows():
-                    row = self.get_value_by_idx(target_df, src_idx)
-                    if row is None or len(row) == 0:
-                        target_df.loc[src_idx] = src_row
-                result = target_df
-
-        return result
-
-    def filter(self, df):
-        results_df = None
-        for f in self._filters:
-            data_filtered = f.filter(df)
-            results_df = self.merge_dataframes(results_df, data_filtered)
-        return results_df
 
 
 class FilterSequence(Filter):
