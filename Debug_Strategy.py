@@ -38,7 +38,7 @@ class DebugStrategy(object):
 
         parser.add_argument('-r', '--runid',
                             type=str,
-                            default="Debug",
+                            default="TTTDebug",
                             help='Run ID')
 
         parser.add_argument('-y', '--strategy',
