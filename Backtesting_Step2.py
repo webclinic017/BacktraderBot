@@ -16,14 +16,15 @@ class BacktestingStep2(object):
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
-    _equity_curve_plotter = EquityCurvePlotter("Step2")
-    _params = None
-    _input_filename = None
-    _bktest_equity_curve_filename = None
-    _output_file1_full_name = None
-    _ofile1 = None
-    _writer1 = None
-    _step2_model = None
+    def __init__(self):
+        self._equity_curve_plotter = EquityCurvePlotter("Step2")
+        self._params = None
+        self._input_filename = None
+        self._bktest_equity_curve_filename = None
+        self._output_file1_full_name = None
+        self._ofile1 = None
+        self. _writer1 = None
+        self._step2_model = None
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Backtesting Step 2')
@@ -60,7 +61,7 @@ class BacktestingStep2(object):
         return df.index.get_level_values(name).unique()
 
     def filter_top_records(self, df):
-        filter = StrategyOptimizationFactory.create_filters_step2()
+        filter = StrategyOptimizationFactory.get_filters_step2()
         return filter.filter(df)
 
     def get_output_path(self, base_dir, args):
@@ -127,8 +128,10 @@ class BacktestingStep2(object):
         arr = df.values
         print_list = []
         print_list.extend(arr)
+        print("Writing {} rows...".format(len(print_list)))
         for item in print_list:
             writer.writerow(item)
+        self._ofile1.flush()
 
     def cleanup(self):
         self._ofile1.close()

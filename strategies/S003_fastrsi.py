@@ -73,6 +73,10 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
         self.closegbarok = [0] * 2
         self.closerbarok = [0] * 2
 
+        self.up = False
+        self.dn = False
+        self.exit = False
+
         # To alternate amongst different tradeids
         self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
@@ -150,11 +154,10 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
             self.closerbarok.append(0)
 
         # Signals
-        self.up = self.openrbarok[-1] == 1 and self.rsidnok[-1] == 1 and self.openbodyok[-1] == 1 and (self.curr_position == 0 or self.data.close[0] < self.position_avg_price)
-        self.dn = self.opengbarok[-1] == 1 and self.rsiupok[-1] == 1 and self.openbodyok[-1] == 1 and (self.curr_position == 0 or self.data.close[0] > self.position_avg_price)
+        self.up = self.openrbarok[-1] == 1 and self.rsidnok[-1] == 1 and self.openbodyok[-1] == 1 and self.curr_position == 0
+        self.dn = self.opengbarok[-1] == 1 and self.rsiupok[-1] == 1 and self.openbodyok[-1] == 1 and self.curr_position == 0
         self.exit = ((self.curr_position > 0 and self.closegbarok[-1] == 1 and self.rsi[0] > self.p.rsilong) or
-                     (self.curr_position < 0 and self.closerbarok[-1] == 1 and self.rsi[0] < self.p.rsishort)) and \
-                      self.closebodyok[-1] == 1
+                     (self.curr_position < 0 and self.closerbarok[-1] == 1 and self.rsi[0] < self.p.rsishort)) and self.closebodyok[-1] == 1
 
         # Trading
         self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
@@ -173,7 +176,6 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
                 self.log('!!! BEFORE CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
                 self.close(tradeid=self.curtradeid)
                 self.curr_position = 0
-                self.position_avg_price = 0
                 ddanalyzer = self.analyzers.dd
                 ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
                 self.log('!!! AFTER CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
@@ -183,14 +185,12 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
                 self.curtradeid = next(self.tradeid)
                 self.buy(tradeid=self.curtradeid)
                 self.curr_position = 1
-                self.position_avg_price = self.data.close[0]
                 self.log('!!! AFTER OPEN LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
             if self.curr_position > 0 and (self.dn or self.exit):
                 self.log('!!! BEFORE CLOSE LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
                 self.close(tradeid=self.curtradeid)
                 self.curr_position = 0
-                self.position_avg_price = 0
                 ddanalyzer = self.analyzers.dd
                 ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
                 self.log('!!! AFTER CLOSE LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
@@ -200,7 +200,6 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
                 self.curtradeid = next(self.tradeid)
                 self.sell(tradeid=self.curtradeid)
                 self.curr_position = -1
-                self.position_avg_price = self.data.close[0]
                 self.log('!!! AFTER OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
         if self.currdt > self.todt:
@@ -209,7 +208,6 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
                 self.log('!!! Closing trade prematurely')
                 self.close(tradeid=self.curtradeid)
             self.curr_position = 0
-            self.position_avg_price = 0
 
     def printdebuginfonextinner(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
@@ -246,4 +244,7 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
         self.log('self.openrbarok = {}'.format(self.openrbarok[-1]))
         self.log('self.closegbarok = {}'.format(self.closegbarok[-1]))
         self.log('self.closerbarok = {}'.format(self.closerbarok[-1]))
+        self.log('self.up = {}'.format(self.up))
+        self.log('self.dn = {}'.format(self.dn))
+        self.log('self.exit = {}'.format(self.exit))
         self.log('-------------------------------------------------------------------')

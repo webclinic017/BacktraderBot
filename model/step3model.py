@@ -5,10 +5,6 @@ class Step3Model(object):
 
     _INDEX_ALL_KEYS_ARR = ["Strategy ID", "Exchange", "Currency Pair", "Timeframe", "Parameters"]
 
-    _step2_df = None
-    _step3_backtest_model = None
-    _columnnameprefix = None
-
     def __init__(self, step2_df, fromyear, frommonth, toyear, tomonth, columnnameprefix):
         self._step2_df = step2_df
         self._step3_backtest_model = BacktestModel(fromyear, frommonth, toyear, tomonth)

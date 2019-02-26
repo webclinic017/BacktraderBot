@@ -14,9 +14,6 @@ import pandas as pd
 
 
 class EquityCurvePlotter(object):
-
-    _step_name = None
-
     _EQUITY_CURVE_IMAGE_WIDTH = 1500
     _EQUITY_CURVE_IMAGE_HEIGHT = 800
     _EQUITY_CURVE_SMA1_LENGTH = 20
@@ -105,49 +102,65 @@ class EquityCurvePlotter(object):
             result = row[column_name]
         return result
 
-    def build_description(self, row, prefix, is_fwtest):
-        result = figure(tools="", toolbar_location=None, plot_height=150, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, x_axis_location="above")
+    def create_text_lines(self, row, prefix, is_fwtest):
+        text_lines_arr = []
+        if is_fwtest is False:
+            strategy_str         = self.get_column_value_by_name(row, 'Strategy ID', prefix, False)
+            exchange_str         = self.get_column_value_by_name(row, 'Exchange', prefix, False)
+            symbol_str           = self.get_column_value_by_name(row, 'Currency Pair', prefix, False)
+            timeframe_str        = self.get_column_value_by_name(row, 'Timeframe', prefix, False)
+            parameters_str       = self.get_column_value_by_name(row, 'Parameters', prefix, False)
+            text_lines_arr.append("{}, {}, {}, {}".format(strategy_str, exchange_str, symbol_str, timeframe_str))
+            text_lines_arr.append("Parameters: {}".format(parameters_str))
 
-        strategy_str         = self.get_column_value_by_name(row, 'Strategy ID', prefix, False)
-        exchange_str         = self.get_column_value_by_name(row, 'Exchange', prefix, False)
-        symbol_str           = self.get_column_value_by_name(row, 'Currency Pair', prefix, False)
-        timeframe_str        = self.get_column_value_by_name(row, 'Timeframe', prefix, False)
-        date_range_str       = self.get_column_value_by_name(row, 'Date Range', prefix, is_fwtest)
+        daterange_str        = self.get_column_value_by_name(row, 'Date Range', prefix, is_fwtest)
         startcash_str        = self.get_column_value_by_name(row, 'Start Cash', prefix, is_fwtest)
-        parameters_str       = self.get_column_value_by_name(row, 'Parameters', prefix, False)
         total_closed_trades  = self.get_column_value_by_name(row, 'Total Closed Trades', prefix, is_fwtest)
         net_profit_pct       = self.get_column_value_by_name(row, 'Net Profit, %', prefix, is_fwtest)
         max_drawdown_pct     = self.get_column_value_by_name(row, 'Max Drawdown, %', prefix, is_fwtest)
         max_drawdown_length  = self.get_column_value_by_name(row, 'Max Drawdown Length', prefix, is_fwtest)
+        text_lines_arr.append("{} Date Range: {}, {} Start Cash: {}, {} Total Closed Trades: {}, {} Net Profit,%: {}%, {} Max Drawdown,%: {}%, {} Max Drawdown Length: {}".format(prefix, daterange_str, prefix, startcash_str, prefix, total_closed_trades, prefix, net_profit_pct, prefix, max_drawdown_pct, prefix, max_drawdown_length))
+
         win_rate_pct         = self.get_column_value_by_name(row, 'Win Rate, %', prefix, is_fwtest)
         winning_months_pct   = self.get_column_value_by_name(row, 'Winning Months, %', prefix, is_fwtest)
         profit_factor        = self.get_column_value_by_name(row, 'Profit Factor', prefix, is_fwtest)
         sqn                  = self.get_column_value_by_name(row, 'SQN', prefix, is_fwtest)
+        text_lines_arr.append("{} Win Rate,%: {}, {} Winning Months,%: {}%, {} Profit Factor: {}, {} SQN: {}".format(prefix, win_rate_pct, prefix, winning_months_pct, prefix, profit_factor, prefix, sqn))
+
         equitycurveangle     = self.get_column_value_by_name(row, 'Equity Curve Angle', prefix, is_fwtest)
         equitycurveslope     = round(self.get_column_value_by_name(row, 'Equity Curve Slope', prefix, is_fwtest), 3)
         equitycurveintercept = round(self.get_column_value_by_name(row, 'Equity Curve Intercept', prefix, is_fwtest), 3)
         equitycurvervalue    = round(self.get_column_value_by_name(row, 'Equity Curve R-value', prefix, is_fwtest), 3)
         equitycurvepvalue    = round(self.get_column_value_by_name(row, 'Equity Curve P-value', prefix, is_fwtest), 3)
         equitycurvestderr    = round(self.get_column_value_by_name(row, 'Equity Curve Stderr', prefix, is_fwtest), 3)
-        text1 = "{}, {}, {}, {}, {}, {}".format(strategy_str, exchange_str, symbol_str, timeframe_str, date_range_str, startcash_str)
-        text2 = "Parameters: {}".format(parameters_str)
-        text3 = "{} Start Cash: {}, {} Total Closed Trades: {}, {} Net Profit,%: {}%, {} Max Drawdown,%: {}%, {} Max Drawdown Length: {}, {} Win Rate,%: {}".format(prefix, startcash_str, prefix, total_closed_trades, prefix, net_profit_pct, prefix, max_drawdown_pct, prefix, max_drawdown_length, prefix, win_rate_pct)
-        text4 = "{} Winning Months,%: {}%, {} Profit Factor: {}, {} SQN: {}".format(prefix, winning_months_pct, prefix, profit_factor, prefix, sqn)
-        text5 = "{} Equity Curve Angle={}°, {} Equity Curve Slope={}, {} Equity Curve Intercept={}, {} Equity Curve R-value={}, {} Equity Curve P-value={}, {} Equity Curve Stderr={}".format(prefix, equitycurveangle, prefix, equitycurveslope, prefix, equitycurveintercept, prefix, equitycurvervalue, prefix, equitycurvepvalue, prefix, equitycurvestderr)
+        text_lines_arr.append("{} Equity Curve Angle={}°, {} Equity Curve Slope={}, {} Equity Curve Intercept={}, {} Equity Curve R-value={}, {} Equity Curve P-value={}, {} Equity Curve Stderr={}".format(prefix, equitycurveangle, prefix, equitycurveslope, prefix, equitycurveintercept, prefix, equitycurvervalue, prefix, equitycurvepvalue, prefix, equitycurvestderr))
+        return text_lines_arr
 
-        result.add_layout(self.build_plot_label(110, text1))
-        result.add_layout(self.build_plot_label(90, text2))
-        result.add_layout(self.build_plot_label(70, text3))
-        result.add_layout(self.build_plot_label(50, text4))
-        result.add_layout(self.build_plot_label(30, text5))
-        result.add_layout(self.build_plot_label(10, ""))
+    def build_description(self, row, is_fwtest):
+        start_text_y_coord = 190 if is_fwtest is True else 110
+        result = figure(tools="", toolbar_location=None, plot_height=start_text_y_coord + 40, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, x_axis_location="above")
+
+        text_lines_arr = self.create_text_lines(row, "BkTest", False)
+        result.add_layout(self.build_plot_label(start_text_y_coord - 0 * 20, text_lines_arr[0]))
+        result.add_layout(self.build_plot_label(start_text_y_coord - 1 * 20, text_lines_arr[1]))
+        result.add_layout(self.build_plot_label(start_text_y_coord - 2 * 20, text_lines_arr[2]))
+        result.add_layout(self.build_plot_label(start_text_y_coord - 3 * 20, text_lines_arr[3]))
+        result.add_layout(self.build_plot_label(start_text_y_coord - 4 * 20, text_lines_arr[4]))
+        result.add_layout(self.build_plot_label(start_text_y_coord - 5 * 20, ""))
+        if is_fwtest is True:
+            text_lines_arr = self.create_text_lines(row, "FwTest", True)
+            result.add_layout(self.build_plot_label(start_text_y_coord - 6 * 20,  text_lines_arr[0]))
+            result.add_layout(self.build_plot_label(start_text_y_coord - 7 * 20,  text_lines_arr[1]))
+            result.add_layout(self.build_plot_label(start_text_y_coord - 8 * 20,  text_lines_arr[2]))
+            result.add_layout(self.build_plot_label(start_text_y_coord - 9 * 20, ""))
+
         return result
 
     def draw_equity_curve(self, row, equity_curve_data_points_str, equitycurveslope, equitycurveintercept):
         plot_name_prefix = "BkTest"
         equity_curve_plot = self.build_equity_curve_plot_figure()
 
-        description = self.build_description(row, plot_name_prefix, False)
+        description = self.build_description(row, False)
 
         equity_curve_data_points_dict = json.loads(equity_curve_data_points_str)
         x_data = self.get_equity_curve_dates(equity_curve_data_points_dict.keys(), None)
@@ -172,7 +185,7 @@ class EquityCurvePlotter(object):
         plot_name_prefix = "FwTest"
         equity_curve_plot = self.build_equity_curve_plot_figure()
 
-        description = self.build_description(row, plot_name_prefix, True)
+        description = self.build_description(row, True)
 
         bktest_equity_curve_data_points_dict = json.loads(bktest_equity_curve_data_points_str)
         bktest_x_data = self.get_equity_curve_dates(bktest_equity_curve_data_points_dict.keys(), None)
@@ -229,12 +242,12 @@ class EquityCurvePlotter(object):
             equity_curve_data_points_str = self.get_equity_curve_data_points(equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str)
             draw_column = self.draw_equity_curve(row, equity_curve_data_points_str, equitycurveslope, equitycurveintercept)
             image_counter += 1
-            if image_counter % 10 == 0:
+            if image_counter % 10 == 0 or image_counter == len(results_df):
                 print("Rendered {} equity curve images...".format(image_counter))
             image_filename = self.get_output_image_filename(output_path, strategy_str, exchange_str, symbol_str, timeframe_str, image_counter)
             export_png(draw_column, filename=image_filename)
 
-    def generate_combined_equity_curves_images(self, results_df, bktest_equity_curve_df, fwtest_equity_curve_df, args):
+    def generate_combined_equity_curves_images_step4(self, results_df, bktest_equity_curve_df, fwtest_equity_curve_df, args):
         image_counter = 0
         base_dir = self.whereAmI()
         output_path = self.get_output_equity_curve_images_path(base_dir, args)
@@ -250,7 +263,7 @@ class EquityCurvePlotter(object):
             fwtest_equity_curve_data_points_str = self.get_equity_curve_data_points(fwtest_equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str)
             draw_column = self.draw_combined_equity_curves(row, bktest_equity_curve_data_points_str, fwtest_equity_curve_data_points_str)
             image_counter += 1
-            if image_counter % 10 == 0:
+            if image_counter % 10 == 0 or image_counter == len(results_df):
                 print("Rendered {} equity curve images...".format(image_counter))
             image_filename = self.get_output_image_filename(output_path, strategy_str, exchange_str, symbol_str, timeframe_str, image_counter)
             export_png(draw_column, filename=image_filename)

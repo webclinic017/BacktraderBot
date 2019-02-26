@@ -16,6 +16,7 @@ class S005_AlexNoroTripleRSIStrategy(AbstractStrategy):
         ("needlong", True),
         ("needshort", True),
         ("leverage", 1),
+        ("indi", 3),
         ("accuracy", 3),
         ("isreversive", False),
         ("fromyear", 2018),
@@ -72,8 +73,8 @@ class S005_AlexNoroTripleRSIStrategy(AbstractStrategy):
         self.signaldn2 = 1 if self.middlersi[0] > (90 - self.acc * 2) else 0
         self.signaldn3 = 1 if self.slowrsi[0] > (85 - self.acc * 3) else 0
 
-        self.up = True if self.signalup1 + self.signalup2 + self.signalup3 >= 3 else False
-        self.dn = True if self.signaldn1 + self.signaldn2 + self.signaldn3 >= 3 else False
+        self.up = True if self.signalup1 + self.signalup2 + self.signalup3 >= self.p.indi else False
+        self.dn = True if self.signaldn1 + self.signaldn2 + self.signaldn3 >= self.p.indi else False
         if self.p.isreversive is False:
             self.exit = True if (self.curr_position > 0 and self.data.close[0] > self.data.open[0] or self.curr_position < 0 and self.data.close[0] < self.data.open[0]) and self.body[0] > self.abody[0] / 3 else False
         else:

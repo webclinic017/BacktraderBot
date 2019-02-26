@@ -10,21 +10,36 @@ from extensions.sizers.percentsizer import VariablePercentSizer
 from extensions.sizers.cashsizer import FixedCashSizer
 from config.strategy_config import BTStrategyConfig
 from config.strategy_enum import BTStrategyEnum
+from plotting.equity_curve import EquityCurvePlotter
+from model.backtestmodel import BacktestModel
+from model.backtestmodelgenerator import BacktestModelGenerator
+import pandas as pd
 
 tradesopen = {}
 tradesclosed = {}
 
 
 class DebugStrategy(object):
+    _INDEX_COLUMNS = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters']
+    DEBUG_EXCHANGE = "bitfinex"
+    DEBUG_CURRENCY_PAIR = "ETHUSDT"
+    DEBUG_TIMEFRAME = "1h"
+    DEBUG_DATA_FILENAME = './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(DEBUG_EXCHANGE, DEBUG_CURRENCY_PAIR, DEBUG_TIMEFRAME, DEBUG_EXCHANGE, DEBUG_CURRENCY_PAIR, DEBUG_TIMEFRAME)
+    DEFAULT_LOT_SIZE = 98000
 
-    DATA_FILENAME = './marketdata/bitfinex/BTCUSDT/1h/bitfinex-BTCUSDT-1h.csv'
-
-    _cerebro = None
-    _strategy_enum = None
-    _debug_params = None
+    def __init__(self):
+        self._cerebro = None
+        self._strategy_enum = None
+        self._debug_params = None
+        self._equity_curve_plotter = EquityCurvePlotter("Debug")
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Debug Strategy')
+
+        parser.add_argument('-r', '--runid',
+                            type=str,
+                            default="Debug",
+                            help='Run ID')
 
         parser.add_argument('-y', '--strategy',
                             type=str,
@@ -45,7 +60,7 @@ class DebugStrategy(object):
 
         parser.add_argument('-z', '--lotsize',
                             type=int,
-                            default=98000,
+                            default=self.DEFAULT_LOT_SIZE,
                             help='Lot size: either percentage or number of units - depending on lottype parameter')
 
         parser.add_argument('--commission',
@@ -118,7 +133,7 @@ class DebugStrategy(object):
         todate_beyond = todate + todate_delta
 
         data = btfeeds.GenericCSVData(
-            dataname=self.DATA_FILENAME,
+            dataname=self.DEBUG_DATA_FILENAME,
             fromdate=fromdate_back,
             todate=todate_beyond,
             timeframe=TimeFrame.Ticks,
@@ -221,7 +236,7 @@ class DebugStrategy(object):
         # Print the rows
         print_list = [h1, r1, h2, r2, h3, r3, h4, r4]
         row_format = "{:<25}" * (len(h1) + 1)
-        print("Trade Analysis Results:")
+        print("Backtesting Results:")
         for row in print_list:
             print(row_format.format('', *row))
 
@@ -239,11 +254,25 @@ class DebugStrategy(object):
             print(keys)
             print(values)
 
-    def plot_results(self):
-        # Finally plot the end results
-        # self._cerebro.plot(b)
-        # self._cerebro.plot(style='candlestick')
-        pass
+    def getdaterange(self, arr):
+        return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(arr["fromyear"], arr["frommonth"], arr["fromday"], arr["toyear"], arr["tomonth"], arr["today"])
+
+    def create_model(self, run_results, args):
+        debug_params = self._debug_params
+        model = BacktestModel(debug_params["fromyear"], debug_params["frommonth"], debug_params["toyear"], debug_params["tomonth"])
+        generator = BacktestModelGenerator(False)
+        generator.populate_model_data(model, run_results, args.strategy, DebugStrategy.DEBUG_EXCHANGE, DebugStrategy.DEBUG_CURRENCY_PAIR, DebugStrategy.DEBUG_TIMEFRAME, args, self.getdaterange(debug_params))
+        return model
+
+    def render_equity_curve_image(self, strategies, args):
+        bktest_model = self.create_model([strategies], args)
+        bktest_results = bktest_model.get_model_data_arr()
+        bktest_results_df = pd.DataFrame(bktest_results, columns=bktest_model.get_header_names())
+        equity_curve = bktest_model.get_equitycurvedata_model().get_model_data_arr()
+        equity_curve_df = pd.DataFrame(equity_curve, columns=bktest_model.get_equitycurvedata_model().get_header_names())
+        equity_curve_df = equity_curve_df.set_index(self._INDEX_COLUMNS)
+        print("")
+        self._equity_curve_plotter.generate_equity_curve_images(bktest_results_df, equity_curve_df, args)
 
     def run(self):
         args = self.parse_args()
@@ -265,7 +294,7 @@ class DebugStrategy(object):
 
         self.print_all_results(executed_strat, startcash)
 
-        self.plot_results()
+        self.render_equity_curve_image(strategies, args)
 
 
 def main():

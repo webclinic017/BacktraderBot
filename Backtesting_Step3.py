@@ -15,6 +15,7 @@ from datetime import datetime
 from datetime import timedelta
 from config.strategy_enum import BTStrategyEnum
 from model.step3model import Step3Model
+from model.backtestmodelgenerator import BacktestModelGenerator
 from common.stfetcher import StFetcher
 import os
 import csv
@@ -315,94 +316,6 @@ class BacktestingStep3(object):
 
         return stratruns
 
-    def exists(self, obj, chain):
-        _key = chain.pop(0)
-        if _key in obj:
-            return self.exists(obj[_key], chain) if chain else obj[_key]
-
-    def getdaterange(self, daterange_arr):
-        return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(daterange_arr["fromyear"], daterange_arr["frommonth"], daterange_arr["fromday"],
-                                                      daterange_arr["toyear"], daterange_arr["tomonth"], daterange_arr["today"])
-
-    def getlotsize(self, args):
-        return "Lot{}{}".format(args.lotsize, "Pct" if args.lottype == "Percentage" else "")
-
-    def getparametersstr(self, params):
-        coll = vars(params).copy()
-        del coll["debug"]
-        del coll["startcash"]
-        del coll["fromyear"]
-        del coll["frommonth"]
-        del coll["fromday"]
-        del coll["toyear"]
-        del coll["tomonth"]
-        del coll["today"]
-        return "{}".format(coll)
-
-    def get_avg_monthly_net_profit_pct(self, monthly_stats, num_months):
-        sum_netprofits = 0
-        for key, val in monthly_stats.items():
-            curr_netprofit = val.pnl.netprofit.total
-            sum_netprofits += curr_netprofit
-        return round(sum_netprofits / float(num_months) if num_months > 0 else 0, 2)
-
-    def get_num_winning_months(self, monthly_stats, num_months):
-        num_positive_netprofit_months = 0
-        for key, val in monthly_stats.items():
-            curr_netprofit = val.pnl.netprofit.total
-            if curr_netprofit > 0:
-                num_positive_netprofit_months += 1
-        return round(num_positive_netprofit_months * 100 / float(num_months) if num_months > 0 else 0, 2)
-
-    def update_monthly_stats(self, stats, num_months):
-        if len(stats) > 0:
-            # Workaround: delete the last element of stats array - do not need to see last month of the whole calculation
-            if len(stats) == num_months + 1:
-                stats.popitem()
-
-        return stats
-
-    def append_model(self, model, strategy_id, exchange, symbol, timeframe, run_results, args, proc_daterange):
-        # Generate results list
-        for run in run_results:
-            for strat in run:
-                startcash = strat.params.startcash
-                # print the analyzers
-                ta_analysis = strat.analyzers.ta.get_analysis()
-                sqn_analysis = strat.analyzers.sqn.get_analysis()
-                dd_analysis = strat.analyzers.dd.get_analysis()
-
-                parameters = self.getparametersstr(strat.params)
-                monthly_stats = ta_analysis.monthly_stats if self.exists(ta_analysis, ['monthly_stats']) else {}
-                num_months = model.get_num_months()
-                monthly_stats = self.update_monthly_stats(monthly_stats, num_months)
-                total_closed = ta_analysis.total.closed if self.exists(ta_analysis, ['total', 'closed']) else 0
-                net_profit = round(ta_analysis.pnl.netprofit.total, 8) if self.exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
-                net_profit_pct = round(100 * ta_analysis.pnl.netprofit.total / startcash, 2) if self.exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
-                avg_monthly_net_profit_pct = '{}%'.format(self.get_avg_monthly_net_profit_pct(monthly_stats, num_months))
-                total_won = ta_analysis.won.total if self.exists(ta_analysis, ['won', 'total']) else 0
-                strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
-                max_drawdown_pct = round(dd_analysis.max.drawdown, 2)
-                max_drawdown_length = round(dd_analysis.max.len)
-                num_winning_months = '{}'.format(self.get_num_winning_months(monthly_stats, num_months))
-                profitfactor = round(ta_analysis.total.profitfactor, 3) if self.exists(ta_analysis, ['total', 'profitfactor']) else 0
-                buyandhold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if self.exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
-                sqn_number = round(sqn_analysis.sqn, 2)
-                monthlystatsprefix = ""
-                equitycurvedata = ta_analysis.total.equity.equitycurvedata if self.exists(ta_analysis, ['total', 'equity', 'equitycurvedata']) else {}
-                equitycurveangle = round(ta_analysis.total.equity.stats.angle) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'angle']) else 0
-                equitycurveslope = round(ta_analysis.total.equity.stats.slope, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'slope']) else 0
-                equitycurveintercept = round(ta_analysis.total.equity.stats.intercept, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'intercept']) else 0
-                equitycurvervalue = round(ta_analysis.total.equity.stats.r_value, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'r_value']) else 0
-                equitycurvepvalue = round(ta_analysis.total.equity.stats.p_value, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'p_value']) else 0
-                equitycurvestderr = round(ta_analysis.total.equity.stats.std_err, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'std_err']) else 0
-
-                model.get_backtest_model().add_result_row(strategy_id, exchange, symbol, timeframe, parameters, self.getdaterange(proc_daterange), startcash, self.getlotsize(args), total_closed,
-                                     net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, strike_rate, num_winning_months,
-                                     profitfactor, buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope,
-                                     equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)
-        return model
-
     def find_rows(self, df, strategy, exchange, symbol, timeframe):
         try:
             result = df.loc[[(strategy, exchange, symbol, timeframe)]]
@@ -411,6 +324,7 @@ class BacktestingStep3(object):
         return result
 
     def run_backtest_process(self, input_df, args):
+        generator = BacktestModelGenerator(False)
         proc_daterange = self.get_processing_daterange(args.testdaterange)
         step3_model = Step3Model(input_df.reset_index(), proc_daterange["fromyear"], proc_daterange["frommonth"], proc_daterange["toyear"], proc_daterange["tomonth"], args.columnnameprefix)
         strat_list, exc_list, sym_list, tf_list = self.get_unique_index_value_lists(input_df)
@@ -435,8 +349,8 @@ class BacktestingStep3(object):
                             self.enqueue_strategies(candidates_data_df, strategy_enum, proc_daterange, args)
 
                             run_results = self.run_strategies(runner)
-
-                            step3_model = self.append_model(step3_model, strategy, exchange, symbol, timeframe, run_results, args, proc_daterange)
+                            bktest_model = step3_model.get_backtest_model()
+                            generator.populate_model_data(bktest_model, run_results, strategy, exchange, symbol, timeframe, args, args.testdaterange)
         return step3_model
 
     def printfinalresultsheader(self, writer, step3_model):
@@ -459,6 +373,7 @@ class BacktestingStep3(object):
 
     def printfinalresults(self, writer, model):
         print_list = model.get_model_data_arr()
+        print("Writing {} rows...".format(len(print_list)))
         for item in print_list:
             writer.writerow(item)
 

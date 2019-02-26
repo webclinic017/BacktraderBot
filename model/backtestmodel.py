@@ -4,17 +4,10 @@ from calendar import monthrange
 
 
 class BacktestModel(object):
-
-    _monthlystatsprefix = None
-
-    _monthly_stats_column_names = []
-
-    _report_rows = []
-
-    _equitycurvedata_model = None
-
     def __init__(self, fromyear, frommonth, toyear, tomonth):
-        self.populate_monthly_stats_column_names(fromyear, frommonth, toyear, tomonth)
+        self._monthlystatsprefix = None
+        self._report_rows = []
+        self._monthly_stats_column_names = self.resolve_monthly_stats_column_names(fromyear, frommonth, toyear, tomonth)
         self._equitycurvedata_model = BacktestEquityCurveDataModel()
 
     def get_month_num_days(self, year, month):
@@ -23,14 +16,16 @@ class BacktestModel(object):
     def getdaterange_month(self, fromyear, frommonth, toyear, tomonth):
         return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(fromyear, frommonth, 1, toyear, tomonth, self.get_month_num_days(toyear, tomonth))
 
-    def populate_monthly_stats_column_names(self, fromyear, frommonth, toyear, tomonth):
+    def resolve_monthly_stats_column_names(self, fromyear, frommonth, toyear, tomonth):
+        result = []
         fromdate = date(fromyear, frommonth, 1)
         todate = date(toyear, tomonth, 1)
         for year in range(fromyear, toyear + 1):
             for month in range(1, 13):
                 currdate = date(year, month, 1)
                 if currdate >= fromdate and currdate <= todate:
-                    self._monthly_stats_column_names.append(self.getdaterange_month(year, month, year, month))
+                    result.append(self.getdaterange_month(year, month, year, month))
+        return result
 
     def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
                        total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
@@ -109,58 +104,6 @@ class BacktestModel(object):
 
 
 class BacktestReportRow(object):
-    strategyid = None
-
-    exchange = None
-
-    currency_pair = None
-
-    timeframe = None
-
-    parameters = None
-
-    daterange = None
-
-    startcash = None
-
-    lot_size = None
-
-    total_closed_trades = None
-
-    net_profit = None
-
-    net_profit_pct = None
-
-    avg_monthly_net_profit_pct = None
-
-    max_drawdown_pct = None
-
-    max_drawdown_length = None
-
-    win_rate_pct = None
-
-    num_winning_months = None
-
-    profit_factor = None
-
-    buy_and_hold_return_pct = None
-
-    sqn_number = None
-
-    monthly_stats = None
-
-    equitycurveangle = None
-
-    equitycurveslope = None
-
-    equitycurveintercept = None
-
-    equitycurvervalue = None
-
-    equitycurvepvalue = None
-
-    equitycurvestderr = None
-
     def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
                  total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                  max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
@@ -244,21 +187,6 @@ class BacktestEquityCurveDataModel(object):
 
 
 class BacktestEquityCurveDataRow(object):
-
-    strategyid = None
-
-    exchange = None
-
-    currency_pair = None
-
-    timeframe = None
-
-    parameters = None
-
-    daterange = None
-
-    equitycurvedata = None
-
     def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, equitycurvedata):
         self.strategyid = strategyid
         self.exchange = exchange
