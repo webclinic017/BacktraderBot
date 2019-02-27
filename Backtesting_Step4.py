@@ -162,7 +162,7 @@ class BacktestingStep4(object):
 
         bktest_equity_curve_df = self.read_csv_data(self.get_bktest_equity_curve_filename(args))
         fwtest_equity_curve_df = self.read_csv_data(self.get_fwtest_equity_curve_filename(args))
-        self._equity_curve_plotter.generate_combined_equity_curves_images_step4(step4_results_df, bktest_equity_curve_df, fwtest_equity_curve_df, args)
+        self._equity_curve_plotter.generate_combined_images_step4(step4_results_df, bktest_equity_curve_df, fwtest_equity_curve_df, args)
 
         self.cleanup()
 

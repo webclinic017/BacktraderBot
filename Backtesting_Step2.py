@@ -163,7 +163,7 @@ class BacktestingStep2(object):
 
         bktest_equity_curve_df = self.read_csv_data(self._bktest_equity_curve_filename)
 
-        self._equity_curve_plotter.generate_equity_curve_images(step2_results_df, bktest_equity_curve_df, args)
+        self._equity_curve_plotter.generate_images(step2_results_df, bktest_equity_curve_df, args)
 
         self.cleanup()
 

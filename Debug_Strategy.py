@@ -272,7 +272,7 @@ class DebugStrategy(object):
         equity_curve_df = pd.DataFrame(equity_curve, columns=bktest_model.get_equitycurvedata_model().get_header_names())
         equity_curve_df = equity_curve_df.set_index(self._INDEX_COLUMNS)
         print("")
-        self._equity_curve_plotter.generate_equity_curve_images(bktest_results_df, equity_curve_df, args)
+        self._equity_curve_plotter.generate_images(bktest_results_df, equity_curve_df, args)
 
     def run(self):
         args = self.parse_args()

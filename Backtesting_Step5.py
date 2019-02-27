@@ -52,7 +52,11 @@ class BacktestingStep5(object):
         dirname = self.whereAmI()
         return '{}/strategyrun_results/{}/{}_Step4.csv'.format(dirname, args.runid, args.runid)
 
-    def get_fwtest_equity_curve_input_filename(self, args):
+    def get_bktest_equity_curve_filename(self, args):
+        dirname = self.whereAmI()
+        return '{}/strategyrun_results/{}/{}_Step1_EquityCurveData.csv'.format(dirname, args.runid, args.runid)
+
+    def get_fwtest_equity_curve_filename(self, args):
         dirname = self.whereAmI()
         return '{}/strategyrun_results/{}/{}_Step3_EquityCurveData.csv'.format(dirname, args.runid, args.runid)
 
@@ -161,32 +165,6 @@ class BacktestingStep5(object):
         result.extend(list(df_copy.columns.values))
         return result
 
-    def filter_input_data(self, df):
-        column_names = self.get_all_column_names(df)
-        final_results = []
-
-        strat_list = self.get_unique_index_values(df, 'Strategy ID')
-        exc_list = self.get_unique_index_values(df, 'Exchange')
-        sym_list = self.get_unique_index_values(df, 'Currency Pair')
-        tf_list = self.get_unique_index_values(df, 'Timeframe')
-
-        for strategy in strat_list:
-            for exchange in exc_list:
-                for symbol in sym_list:
-                    for timeframe in tf_list:
-                        idx = pd.IndexSlice
-                        candidates_data_df = df.loc[idx[strategy, exchange, symbol, timeframe, :], idx[:]]
-                        if self._ENABLE_FILTERING is True:
-                            candidates_data_df = self.filter_top_records(candidates_data_df)
-                        if candidates_data_df is not None and len(candidates_data_df) > 0:
-                            print("Processing: {}/{}/{}/{}:\nNumber of best rows: {}\n".format(strategy, exchange, symbol, timeframe, len(candidates_data_df.values)))
-                            candidates_data_df = candidates_data_df.reset_index()
-                            final_results.extend(candidates_data_df.values.tolist())
-                            #print("candidates_data_df.values={}\n".format(candidates_data_df.values))
-
-        print("==========================\nFinal number of rows: {}".format(len(final_results)))
-        return pd.DataFrame(final_results, columns=column_names)
-
     def sort_results(self, df):
         df_sorted = df.sort_values(by=["Strategy ID", "Exchange", "Currency Pair", "Timeframe"])
 
@@ -218,9 +196,9 @@ class BacktestingStep5(object):
 
         self.printfinalresults(self._writer1, self._step5_model.get_model_data_arr())
 
-        #self._fwtest_equity_curve_filename = self.get_fwtest_equity_curve_input_filename(args)
-
-        #bktest_equity_curve_df = self.read_csv_data(self._fwtest_equity_curve_filename)
+        bktest_equity_curve_df = self.read_csv_data(self.get_bktest_equity_curve_filename(args))
+        fwtest_equity_curve_df = self.read_csv_data(self.get_fwtest_equity_curve_filename(args))
+        self._equity_curve_plotter.generate_combined_top_results_images_step5(top_values_df, bktest_equity_curve_df, fwtest_equity_curve_df, args)
 
         self.cleanup()
 

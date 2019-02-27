@@ -4,6 +4,7 @@ from bokeh.layouts import column
 from bokeh.models import Span, Label
 from bokeh.plotting import figure
 from bokeh.io import export_png
+import itertools as it
 from datetime import datetime
 from bokeh.models import DatetimeTickFormatter
 from bokeh.models import NumeralTickFormatter
@@ -19,6 +20,8 @@ class EquityCurvePlotter(object):
     _EQUITY_CURVE_SMA1_LENGTH = 20
     _EQUITY_CURVE_SMA2_LENGTH = 40
 
+    _PALETTE = ['#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5', '#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78']
+
     def __init__(self, step_name):
         self._step_name = step_name
 
@@ -30,6 +33,9 @@ class EquityCurvePlotter(object):
 
     def get_output_image_filename(self, base_path, strategy_id_data_str, exchange_str, symbol_str, timeframe_str, image_counter):
         return "{}/{:04d}-{}-{}-{}-{}.png".format(base_path, image_counter, strategy_id_data_str, exchange_str, symbol_str, timeframe_str)
+
+    def get_portfolio_output_image_filename(self, base_path):
+        return "{}/Portfolio_Strategy_Equity_Curve.png".format(base_path)
 
     def build_y_axis_zero_line(self):
         return Span(location=0, dimension='width', line_color='blue', line_dash='dashed', line_width=1, line_alpha=0.8)
@@ -225,7 +231,64 @@ class EquityCurvePlotter(object):
 
         return column(description, equity_curve_plot)
 
-    def generate_equity_curve_images(self, results_df, equity_curve_df, args):
+    def deltas_to_absolute_netprofit(self, y_data):
+        sum_value = 0
+        result = []
+        for val in y_data:
+            sum_value += val
+            result.append(sum_value)
+        return result
+
+    def absolute_to_deltas_netprofit(self, y_data):
+        counter = it.count()
+        result = [0]
+        for val in y_data:
+            idx = next(counter)
+            if idx > 0:
+                result.append(val - y_data[idx - 1])
+        return result
+
+    def merge_plot_data(self, combined_data_dict, x_data, y_data):
+        deltas_y_data = self.absolute_to_deltas_netprofit(y_data)
+        whole_data_dict = dict(zip(x_data, deltas_y_data))
+        for key, val in whole_data_dict.items():
+            if key not in combined_data_dict.keys():
+                combined_data_dict[key] = val
+            else:
+                combined_data_dict[key] = combined_data_dict[key] + val
+
+        return combined_data_dict
+
+    def draw_portfolio_strategy_equity_curve(self, df, bktest_equity_curve_data_points_list, fwtest_equity_curve_data_points_list):
+        counter = it.count()
+        equity_curve_plot = self.build_equity_curve_plot_figure()
+        combined_data_dict = {}
+        for index, value in df.iterrows():
+            idx = next(counter)
+            bktest_equity_curve_data_points_dict = json.loads(bktest_equity_curve_data_points_list[idx])
+            bktest_x_data = self.get_equity_curve_dates(bktest_equity_curve_data_points_dict.keys(), None)
+            bktest_y_data = self.get_equity_data(bktest_equity_curve_data_points_dict.values(), 0)
+            fwtest_equity_curve_data_points_dict = json.loads(fwtest_equity_curve_data_points_list[idx])
+            fwtest_x_data = self.get_equity_curve_dates(fwtest_equity_curve_data_points_dict.keys(), bktest_x_data[-1])
+            fwtest_y_data = self.get_equity_data(fwtest_equity_curve_data_points_dict.values(), 0)
+            fwtest_startcash = bktest_y_data[-1]
+            fwtest_y_data = self.adjust_fwtest_data_by_startcash(fwtest_y_data, fwtest_startcash)
+            strategy_str = value['Strategy ID']
+            whole_x_data = bktest_x_data + fwtest_x_data
+            whole_y_data = bktest_y_data + fwtest_y_data
+            equity_curve_plot.line(whole_x_data, whole_y_data, line_width=2, alpha=0.8, color=self._PALETTE[idx], legend='{}'.format(strategy_str))
+            combined_data_dict = self.merge_plot_data(combined_data_dict, whole_x_data, whole_y_data)
+
+        combined_data_dict = dict(sorted(combined_data_dict.items(), key=lambda t: t[0]))
+        combined_x_data = list(combined_data_dict.keys())
+        combined_y_data = combined_data_dict.values()
+        combined_y_data = self.deltas_to_absolute_netprofit(combined_y_data)
+        equity_curve_plot.line(combined_x_data, combined_y_data, line_width=4, alpha=1, color='red', legend='Portfolio Equity Curve')
+
+        equity_curve_plot.legend.location = "top_left"
+        return column(equity_curve_plot)
+
+    def generate_images(self, results_df, equity_curve_df, args):
         image_counter = 0
         base_dir = self.whereAmI()
         output_path = self.get_output_equity_curve_images_path(base_dir, args)
@@ -247,7 +310,7 @@ class EquityCurvePlotter(object):
             image_filename = self.get_output_image_filename(output_path, strategy_str, exchange_str, symbol_str, timeframe_str, image_counter)
             export_png(draw_column, filename=image_filename)
 
-    def generate_combined_equity_curves_images_step4(self, results_df, bktest_equity_curve_df, fwtest_equity_curve_df, args):
+    def generate_combined_images_step4(self, results_df, bktest_equity_curve_df, fwtest_equity_curve_df, args):
         image_counter = 0
         base_dir = self.whereAmI()
         output_path = self.get_output_equity_curve_images_path(base_dir, args)
@@ -267,3 +330,27 @@ class EquityCurvePlotter(object):
                 print("Rendered {} equity curve images...".format(image_counter))
             image_filename = self.get_output_image_filename(output_path, strategy_str, exchange_str, symbol_str, timeframe_str, image_counter)
             export_png(draw_column, filename=image_filename)
+
+    def generate_combined_top_results_images_step5(self, top_values_df, bktest_equity_curve_df, fwtest_equity_curve_df, args):
+        df = top_values_df.reset_index(drop=False)
+        base_dir = self.whereAmI()
+        output_path = self.get_output_equity_curve_images_path(base_dir, args)
+        os.makedirs(output_path, exist_ok=True)
+        print("Rendering a Portfolio Strategy Equity Curve into {}".format(output_path))
+        bktest_equity_curve_data_points_list = []
+        fwtest_equity_curve_data_points_list = []
+        for index, row in df.iterrows():
+            strategy_str = row['Strategy ID']
+            exchange_str = row['Exchange']
+            symbol_str = row['Currency Pair']
+            timeframe_str = row['Timeframe']
+            parameters_str = row['Parameters']
+            bktest_equity_curve_data_points_str = self.get_equity_curve_data_points(bktest_equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str)
+            bktest_equity_curve_data_points_list.append(bktest_equity_curve_data_points_str)
+            fwtest_equity_curve_data_points_str = self.get_equity_curve_data_points(fwtest_equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str)
+            fwtest_equity_curve_data_points_list.append(fwtest_equity_curve_data_points_str)
+
+        draw_column = self.draw_portfolio_strategy_equity_curve(df, bktest_equity_curve_data_points_list, fwtest_equity_curve_data_points_list)
+        image_filename = self.get_portfolio_output_image_filename(output_path)
+        export_png(draw_column, filename=image_filename)
+        print("Finished.")
