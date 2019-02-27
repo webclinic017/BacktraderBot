@@ -17,6 +17,10 @@ from config.strategy_enum import BTStrategyEnum
 from model.step3model import Step3Model
 from model.backtestmodelgenerator import BacktestModelGenerator
 from common.stfetcher import StFetcher
+from scipy import stats
+from sklearn import preprocessing
+import math
+import json
 import os
 import csv
 import pandas as pd
@@ -25,6 +29,22 @@ import gc
 
 string_types = str
 
+
+class LinearRegressionStats(object):
+    angle = None
+    slope = None
+    intercept = None
+    r_value = None
+    p_value = None
+    std_err = None
+
+    def __init__(self, angle, slope, intercept, r_value, p_value, std_err):
+        self.angle = angle
+        self.slope = slope
+        self.intercept = intercept
+        self.r_value = r_value
+        self.p_value = p_value
+        self.std_err = std_err
 
 class CerebroRunner(object):
     cerebro = None
@@ -46,22 +66,24 @@ class CerebroRunner(object):
 
 class BacktestingStep3(object):
 
+    _INDEX_ALL_KEYS_ARR = ["Strategy ID", "Exchange", "Currency Pair", "Timeframe", "Parameters"]
     _INDEX_STEP2_NUMBERS_ARR = [0, 1, 2, 3]
 
     DEFAULT_STARTCASH_VALUE = 100000
     DEFAULT_LOT_SIZE = 98000
 
-    _cerebro = None
-    _input_filename = None
-    _step2_df = None
-    _market_data_input_filename = None
-    _output_file1_full_name = None
-    _output_file2_full_name = None
-    _ofile1 = None
-    _ofile2 = None
-    _writer1 = None
-    _writer2 = None
-    _step3_model = None
+    def __init__(self):
+        self._cerebro = None
+        self._input_filename = None
+        self._step2_df = None
+        self._market_data_input_filename = None
+        self._output_file1_full_name = None
+        self._output_file2_full_name = None
+        self._ofile1 = None
+        self._ofile2 = None
+        self._writer1 = None
+        self._writer2 = None
+        self._step3_model = None
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Backtesting Step 3')
@@ -156,6 +178,10 @@ class BacktestingStep3(object):
     def get_input_filename(self, args):
         dirname = self.whereAmI()
         return '{}/strategyrun_results/{}/{}_Step2.csv'.format(dirname, args.runid, args.runid)
+
+    def get_step1_equity_curve_filename(self, args):
+        dirname = self.whereAmI()
+        return '{}/strategyrun_results/{}/{}_Step1_EquityCurveData.csv'.format(dirname, args.runid, args.runid)
 
     def read_csv_data(self, filepath):
         df = pd.read_csv(filepath, index_col=self._INDEX_STEP2_NUMBERS_ARR)
@@ -323,15 +349,70 @@ class BacktestingStep3(object):
             result = None
         return result
 
+    def get_equity_curve_data_by_key(self, df, row_key):
+        try:
+            result = df.loc[row_key, "Equity Curve Data Points"]
+        except KeyError:
+            result = None
+        return result
+
+    def calculate_linear_regression_stats(self, equity_curve_data_points):
+        counter = 1
+        process_dict = {}
+        for key, value in equity_curve_data_points.items():
+            process_dict[counter] = value
+            counter += 1
+
+        x_arr = list(process_dict.keys())
+        y_arr = list(process_dict.values())
+        #print("!!! x_arr={}, y_arr={}".format(x_arr, y_arr))
+        slope, intercept, r_value, p_value, std_err = stats.linregress(x_arr, y_arr)
+        x_arr_norm = preprocessing.normalize([x_arr])[0]
+        y_arr_norm = preprocessing.normalize([y_arr])[0]
+        slope_norm, intercept_norm, r_value_norm, p_value_norm, std_err_norm = stats.linregress(x_arr_norm, y_arr_norm)
+        angle = math.degrees(math.atan(slope_norm))
+        #print("angle={}, slope={}, intercept={}, r_value={}, p_value={}, std_err={}".format(angle, slope, intercept, r_value, p_value, std_err))
+        return LinearRegressionStats(angle, slope, intercept, r_value, p_value, std_err)
+
+    def adjust_step3_data_by_startcash(self, data_dict, startcash):
+        for key, value in data_dict.items():
+            data_dict[key] = value + startcash
+        return data_dict
+
+    def generate_step3_combined_lr_stats(self, step2_df, step3_model, args):
+        step3_combined_lr_stats = {}
+        if len(step3_model.combined_lr_stats) == 0:
+            step1_equity_curve_df = self.read_csv_data(self.get_step1_equity_curve_filename(args))
+            step1_equity_curve_df = step1_equity_curve_df.reset_index(drop=False)
+            step1_equity_curve_df = step1_equity_curve_df.set_index(self._INDEX_ALL_KEYS_ARR)
+            step2_df_copy = step2_df.copy()
+            step2_df_copy = step2_df_copy.reset_index(drop=False)
+            step2_df_copy = step2_df_copy.set_index(self._INDEX_ALL_KEYS_ARR)
+            step3_equity_curve_df = pd.DataFrame(step3_model.get_equitycurvedata_model().get_model_data_arr(), columns=step3_model.get_equitycurvedata_model().get_header_names())
+            step3_equity_curve_df = step3_equity_curve_df.set_index(self._INDEX_ALL_KEYS_ARR)
+            for key, val in step2_df_copy.iterrows():
+                step1_equity_curve = self.get_equity_curve_data_by_key(step1_equity_curve_df, key)
+                step3_equity_curve = self.get_equity_curve_data_by_key(step3_equity_curve_df, key)
+                if step1_equity_curve and step3_equity_curve:
+                    step1_equity_curve_data_points_dict = json.loads(step1_equity_curve)
+                    step3_equity_curve_data_points_dict = json.loads(step3_equity_curve)
+                    combined_equity_curve_data_points_dict = step1_equity_curve_data_points_dict.copy()
+                    step3_startcash = list(step3_equity_curve_data_points_dict.values())[-1]
+                    step3_equity_curve_data_points_dict = self.adjust_step3_data_by_startcash(step3_equity_curve_data_points_dict, step3_startcash)
+                    combined_equity_curve_data_points_dict.update(step3_equity_curve_data_points_dict)
+                    step3_combined_lr_stats[key] = self.calculate_linear_regression_stats(combined_equity_curve_data_points_dict)
+        step3_model.combined_lr_stats = step3_combined_lr_stats
+        return step3_model
+
     def run_backtest_process(self, input_df, args):
         generator = BacktestModelGenerator(False)
         proc_daterange = self.get_processing_daterange(args.testdaterange)
         step3_model = Step3Model(input_df.reset_index(), proc_daterange["fromyear"], proc_daterange["frommonth"], proc_daterange["toyear"], proc_daterange["tomonth"], args.columnnameprefix)
         strat_list, exc_list, sym_list, tf_list = self.get_unique_index_value_lists(input_df)
-        for strategy in strat_list:  # [strat_list[0]]:
-            for exchange in exc_list:  # [exc_list[0]]:
-                for symbol in sym_list:  # [sym_list[0]]:
-                    for timeframe in tf_list:  # [tf_list[0]]:
+        for strategy in strat_list:
+            for exchange in exc_list:
+                for symbol in sym_list:
+                    for timeframe in tf_list:
                         candidates_data_df = self.find_rows(input_df, strategy, exchange, symbol, timeframe)
                         if candidates_data_df is not None:
                             # Get list of candidates from Step2 for strategy/exchange/symbol/timeframe/date range
@@ -351,6 +432,7 @@ class BacktestingStep3(object):
                             run_results = self.run_strategies(runner)
                             bktest_model = step3_model.get_backtest_model()
                             generator.populate_model_data(bktest_model, run_results, strategy, exchange, symbol, timeframe, args, args.testdaterange)
+
         return step3_model
 
     def printfinalresultsheader(self, writer, step3_model):
@@ -399,6 +481,8 @@ class BacktestingStep3(object):
 
         self._step3_model = self.run_backtest_process(self._step2_df, args)
 
+        self._step3_model = self.generate_step3_combined_lr_stats(self._step2_df, self._step3_model, args)
+
         self.printfinalresultsheader(self._writer1, self._step3_model)
 
         print("Writing Step 3 backtesting equity curve data to: {}".format(self._output_file2_full_name))
@@ -408,6 +492,7 @@ class BacktestingStep3(object):
         self.printfinalresults(self._writer1, self._step3_model)
 
         self.printequitycurvedataresults(self._writer2, self._step3_model)
+
 
         self.cleanup()
 

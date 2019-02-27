@@ -80,7 +80,7 @@ class EquityCurvePlotter(object):
     def get_equity_curve_data_points(self, equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str):
         return equity_curve_df.loc[(strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str), "Equity Curve Data Points"]
 
-    def get_linear_regression_points(self, x_axis_data, equitycurveslope, equitycurveintercept, startcash):
+    def get_linear_regression_line_points(self, x_axis_data, equitycurveslope, equitycurveintercept, startcash):
         x1 = x_axis_data[0]
         y1 = startcash + equitycurveintercept
         xn = x_axis_data[-1]
@@ -102,10 +102,11 @@ class EquityCurvePlotter(object):
         return Label(x=10, y=y_coord, x_units='screen', y_units='screen', text=txt, text_font_size="10pt", render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
 
     def get_column_value_by_name(self, row, name, prefix, is_fwtest):
-        result = row[name]
         if is_fwtest:
             column_name = "{}: {}".format(prefix, name)
             result = row[column_name]
+        else:
+            result = row[name]
         return result
 
     def create_text_lines(self, row, prefix, is_fwtest):
@@ -140,10 +141,17 @@ class EquityCurvePlotter(object):
         equitycurvepvalue    = round(self.get_column_value_by_name(row, 'Equity Curve P-value', prefix, is_fwtest), 3)
         equitycurvestderr    = round(self.get_column_value_by_name(row, 'Equity Curve Stderr', prefix, is_fwtest), 3)
         text_lines_arr.append("{} Equity Curve Angle={}°, {} Equity Curve Slope={}, {} Equity Curve Intercept={}, {} Equity Curve R-value={}, {} Equity Curve P-value={}, {} Equity Curve Stderr={}".format(prefix, equitycurveangle, prefix, equitycurveslope, prefix, equitycurveintercept, prefix, equitycurvervalue, prefix, equitycurvepvalue, prefix, equitycurvestderr))
+
+        if is_fwtest is True:
+            combinedequitycurveslope     = round(self.get_column_value_by_name(row, 'Combined Equity Curve Slope', prefix, is_fwtest), 3)
+            combinedequitycurveintercept = round(self.get_column_value_by_name(row, 'Combined Equity Curve Intercept', prefix, is_fwtest), 3)
+            combinedequitycurvervalue    = round(self.get_column_value_by_name(row, 'Combined Equity Curve R-value', prefix, is_fwtest), 3)
+            text_lines_arr.append("Combined Equity Curve Slope={}, Combined Equity Curve Intercept={}, Combined Equity Curve R-value={}".format(combinedequitycurveslope, combinedequitycurveintercept, combinedequitycurvervalue))
+
         return text_lines_arr
 
     def build_description(self, row, is_fwtest):
-        start_text_y_coord = 190 if is_fwtest is True else 110
+        start_text_y_coord = 210 if is_fwtest is True else 110
         result = figure(tools="", toolbar_location=None, plot_height=start_text_y_coord + 40, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, x_axis_location="above")
 
         text_lines_arr = self.create_text_lines(row, "BkTest", False)
@@ -158,7 +166,7 @@ class EquityCurvePlotter(object):
             result.add_layout(self.build_plot_label(start_text_y_coord - 6 * 20,  text_lines_arr[0]))
             result.add_layout(self.build_plot_label(start_text_y_coord - 7 * 20,  text_lines_arr[1]))
             result.add_layout(self.build_plot_label(start_text_y_coord - 8 * 20,  text_lines_arr[2]))
-            result.add_layout(self.build_plot_label(start_text_y_coord - 9 * 20, ""))
+            result.add_layout(self.build_plot_label(start_text_y_coord - 10 * 20,  text_lines_arr[3]))
 
         return result
 
@@ -173,7 +181,7 @@ class EquityCurvePlotter(object):
         y_data = self.get_equity_data(equity_curve_data_points_dict.values(), 0)
         equity_curve_plot.line(x_data, y_data, line_width=3, alpha=0.7, legend='{} equity curve'.format(plot_name_prefix))
 
-        lr_points = self.get_linear_regression_points(x_data, equitycurveslope, equitycurveintercept, 0)
+        lr_points = self.get_linear_regression_line_points(x_data, equitycurveslope, equitycurveintercept, 0)
         equity_curve_plot.line(lr_points[0], lr_points[1], line_width=1, line_color="red", alpha=0.5, legend='{} linear regression'.format(plot_name_prefix))
 
         if self.is_possible_to_draw_sma(x_data, self._EQUITY_CURVE_SMA1_LENGTH):
@@ -205,16 +213,6 @@ class EquityCurvePlotter(object):
         fwtest_y_data = self.adjust_fwtest_data_by_startcash(fwtest_y_data, fwtest_startcash)
         equity_curve_plot.line(fwtest_x_data, fwtest_y_data, line_width=3, alpha=1, legend='{} equity curve'.format(plot_name_prefix), color="mediumseagreen")
 
-        equitycurveslope = self.get_column_value_by_name(row, 'Equity Curve Slope', "", False)
-        equitycurveintercept = self.get_column_value_by_name(row, 'Equity Curve Intercept', "", False)
-        lr_points = self.get_linear_regression_points(bktest_x_data, equitycurveslope, equitycurveintercept, 0)
-        equity_curve_plot.line(lr_points[0], lr_points[1], line_width=1, line_color="red", alpha=0.5, legend='BkTest linear regression')
-
-        equitycurveslope = self.get_column_value_by_name(row, 'Equity Curve Slope', plot_name_prefix, True)
-        equitycurveintercept = self.get_column_value_by_name(row, 'Equity Curve Intercept', plot_name_prefix, True)
-        lr_points = self.get_linear_regression_points(fwtest_x_data, equitycurveslope, equitycurveintercept, fwtest_startcash)
-        equity_curve_plot.line(lr_points[0], lr_points[1], line_width=1, line_color="red", alpha=0.5, legend='{} linear regression'.format(plot_name_prefix))
-
         combined_x_data = bktest_x_data.copy()
         combined_y_data = bktest_y_data.copy()
         combined_x_data.extend(fwtest_x_data[:-1])
@@ -226,6 +224,11 @@ class EquityCurvePlotter(object):
         if self.is_possible_to_draw_sma(combined_x_data, self._EQUITY_CURVE_SMA2_LENGTH):
             equity_curve_sma2_y_data = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA2_LENGTH, combined_y_data)
             equity_curve_plot.line(combined_x_data, equity_curve_sma2_y_data, color='magenta', line_width=1, alpha=0.5, legend='Combined equity curve SMA({})'.format(self._EQUITY_CURVE_SMA2_LENGTH))
+
+        equitycurveslope = self.get_column_value_by_name(row, 'Combined Equity Curve Slope', plot_name_prefix, True)
+        equitycurveintercept = self.get_column_value_by_name(row, 'Combined Equity Curve Intercept', plot_name_prefix, True)
+        lr_points = self.get_linear_regression_line_points(combined_x_data, equitycurveslope, equitycurveintercept, 0)
+        equity_curve_plot.line(lr_points[0], lr_points[1], line_width=1, line_color="red", alpha=0.5, legend='Combined linear regression')
 
         equity_curve_plot.legend.location = "bottom_right"
 
