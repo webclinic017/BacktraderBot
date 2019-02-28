@@ -28,7 +28,7 @@ class Step3Model(object):
         combined_arr.extend(bktest_header_names)
         bktest_header_names = self.append_prefix(combined_arr)
         result.extend(bktest_header_names)
-        combined_lr_stats_columns = ['Combined Equity Curve Slope', 'Combined Equity Curve Intercept', 'Combined Equity Curve R-value']
+        combined_lr_stats_columns = ['Combined Equity Curve Angle', 'Combined Equity Curve Slope', 'Combined Equity Curve Intercept', 'Combined Equity Curve R-value']
         combined_lr_stats_columns = self.append_prefix(combined_lr_stats_columns)
         result.extend(combined_lr_stats_columns)
         return result
@@ -42,7 +42,7 @@ class Step3Model(object):
 
     def get_combined_lr_stats_row(self, combined_lr_stats, row_key):
         stats = combined_lr_stats[row_key]
-        return [stats.slope, stats.intercept, stats.r_value]
+        return [stats.angle, stats.slope, stats.intercept, stats.r_value]
 
     def merge_results(self, step2_df, backtest_model):
         final_results = []

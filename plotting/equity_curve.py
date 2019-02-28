@@ -144,10 +144,11 @@ class EquityCurvePlotter(object):
         text_lines_arr.append("{} Equity Curve Angle={}°, {} Equity Curve Slope={}, {} Equity Curve Intercept={}, {} Equity Curve R-value={}, {} Equity Curve P-value={}, {} Equity Curve Stderr={}".format(prefix, equitycurveangle, prefix, equitycurveslope, prefix, equitycurveintercept, prefix, equitycurvervalue, prefix, equitycurvepvalue, prefix, equitycurvestderr))
 
         if is_fwtest is True:
+            combinedequitycurveangle     = round(self.get_column_value_by_name(row, 'Combined Equity Curve Angle', prefix, is_fwtest))
             combinedequitycurveslope     = round(self.get_column_value_by_name(row, 'Combined Equity Curve Slope', prefix, is_fwtest), 3)
             combinedequitycurveintercept = round(self.get_column_value_by_name(row, 'Combined Equity Curve Intercept', prefix, is_fwtest), 3)
             combinedequitycurvervalue    = round(self.get_column_value_by_name(row, 'Combined Equity Curve R-value', prefix, is_fwtest), 3)
-            text_lines_arr.append("Combined Equity Curve Slope={}, Combined Equity Curve Intercept={}, Combined Equity Curve R-value={}".format(combinedequitycurveslope, combinedequitycurveintercept, combinedequitycurvervalue))
+            text_lines_arr.append("Combined Equity Curve Angle={}, Combined Equity Curve Slope={}, Combined Equity Curve Intercept={}, Combined Equity Curve R-value={}".format(combinedequitycurveangle, combinedequitycurveslope, combinedequitycurveintercept, combinedequitycurvervalue))
 
         return text_lines_arr
 
