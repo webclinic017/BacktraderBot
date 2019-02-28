@@ -20,18 +20,18 @@ tradesclosed = {}
 
 
 class DebugStrategy(object):
-    DEBUG_EXCHANGE = "bitfinex"
-    DEBUG_CURRENCY_PAIR = "XRPUSDT"
-    DEBUG_TIMEFRAME = "1h"
-    DEBUG_DATA_FILENAME = './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(DEBUG_EXCHANGE, DEBUG_CURRENCY_PAIR, DEBUG_TIMEFRAME, DEBUG_EXCHANGE, DEBUG_CURRENCY_PAIR, DEBUG_TIMEFRAME)
+
     DEFAULT_LOT_SIZE = 98000
 
     _INDEX_COLUMNS = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters']
 
     def __init__(self):
+        self._exchange = None
+        self._currency_pair = None
+        self._timeframe = None
         self._cerebro = None
         self._strategy_enum = None
-        self._debug_params = None
+        self._params = None
         self._equity_curve_plotter = EquityCurvePlotter("Debug")
 
     def parse_args(self):
@@ -104,13 +104,22 @@ class DebugStrategy(object):
     def get_strategy_enum(self, args):
         return BTStrategyEnum.get_strategy_enum_by_str(args.strategy)
 
-    def init_debug_params(self, strategy_enum, args):
-        self._debug_params = BTStrategyConfig.get_debug_strategy_params(strategy_enum).copy()
-        self._debug_params.update({("debug", args.debug)})
+    def init_params(self, strategy_enum, args):
+        debug_strategy_config = BTStrategyConfig.get_debug_strategy_params(strategy_enum)
+        base_params = debug_strategy_config[0]
+        params_dict = debug_strategy_config[1]
+        self._exchange = base_params["exchange"]
+        self._currency_pair = base_params["currency_pair"]
+        self._timeframe = base_params["timeframe"]
+        self._params = params_dict.copy()
+        self._params.update({("debug", args.debug)})
+
+    def get_marketdata_filename(self, exchange, symbol, timeframe):
+        return './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(exchange, symbol, timeframe, exchange, symbol, timeframe)
 
     def add_strategy(self):
         strategy_class = self._strategy_enum.value.clazz
-        self._cerebro.addstrategy(strategy_class, **self._debug_params)
+        self._cerebro.addstrategy(strategy_class, **self._params)
 
     def get_fromdate(self, arr):
         fromyear = arr["fromyear"]
@@ -125,16 +134,17 @@ class DebugStrategy(object):
         return datetime(toyear, tomonth, today)
 
     def add_data(self):
-        fromdate = self.get_fromdate(self._debug_params)
-        todate = self.get_todate(self._debug_params)
+        fromdate = self.get_fromdate(self._params)
+        todate = self.get_todate(self._params)
 
         fromdate_back_delta = timedelta(days=50)  # Adjust from date to add more candle data from the past to strategy to prevent any calculation problems with indicators
         fromdate_back = fromdate - fromdate_back_delta
         todate_delta = timedelta(days=2)  # Adjust to date to add more candle data
         todate_beyond = todate + todate_delta
 
+        marketdata_filename = self.get_marketdata_filename(self._exchange, self._currency_pair, self._timeframe)
         data = btfeeds.GenericCSVData(
-            dataname=self.DEBUG_DATA_FILENAME,
+            dataname=marketdata_filename,
             fromdate=fromdate_back,
             todate=todate_beyond,
             timeframe=TimeFrame.Ticks,
@@ -259,10 +269,10 @@ class DebugStrategy(object):
         return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(arr["fromyear"], arr["frommonth"], arr["fromday"], arr["toyear"], arr["tomonth"], arr["today"])
 
     def create_model(self, run_results, args):
-        debug_params = self._debug_params
+        debug_params = self._params
         model = BacktestModel(debug_params["fromyear"], debug_params["frommonth"], debug_params["toyear"], debug_params["tomonth"])
         generator = BacktestModelGenerator(False)
-        generator.populate_model_data(model, run_results, args.strategy, DebugStrategy.DEBUG_EXCHANGE, DebugStrategy.DEBUG_CURRENCY_PAIR, DebugStrategy.DEBUG_TIMEFRAME, args, self.getdaterange(debug_params))
+        generator.populate_model_data(model, run_results, args.strategy, self._exchange, self._currency_pair, self._timeframe, args, self.getdaterange(debug_params))
         return model
 
     def render_equity_curve_image(self, strategies, args):
@@ -279,9 +289,9 @@ class DebugStrategy(object):
         args = self.parse_args()
 
         self._strategy_enum = self.get_strategy_enum(args)
-        self.init_debug_params(self._strategy_enum, args)
+        self.init_params(self._strategy_enum, args)
 
-        startcash = self._debug_params["startcash"]
+        startcash = self._params["startcash"]
 
         self.init_cerebro(args, startcash)
 
