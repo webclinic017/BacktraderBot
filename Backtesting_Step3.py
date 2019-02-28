@@ -365,7 +365,6 @@ class BacktestingStep3(object):
 
         x_arr = list(process_dict.keys())
         y_arr = list(process_dict.values())
-        #print("!!! x_arr={}, y_arr={}".format(x_arr, y_arr))
         slope, intercept, r_value, p_value, std_err = stats.linregress(x_arr, y_arr)
         x_arr_norm = preprocessing.normalize([x_arr])[0]
         y_arr_norm = preprocessing.normalize([y_arr])[0]
@@ -397,7 +396,7 @@ class BacktestingStep3(object):
                     step1_equity_curve_data_points_dict = json.loads(step1_equity_curve)
                     step3_equity_curve_data_points_dict = json.loads(step3_equity_curve)
                     combined_equity_curve_data_points_dict = step1_equity_curve_data_points_dict.copy()
-                    step3_startcash = list(step3_equity_curve_data_points_dict.values())[-1]
+                    step3_startcash = list(step1_equity_curve_data_points_dict.values())[-1]
                     step3_equity_curve_data_points_dict = self.adjust_step3_data_by_startcash(step3_equity_curve_data_points_dict, step3_startcash)
                     combined_equity_curve_data_points_dict.update(step3_equity_curve_data_points_dict)
                     step3_combined_lr_stats[key] = self.calculate_linear_regression_stats(combined_equity_curve_data_points_dict)

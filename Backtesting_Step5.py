@@ -11,20 +11,22 @@ from plotting.equity_curve import EquityCurvePlotter
 from model.step5model import Step5Model
 import re
 
+
 class BacktestingStep5(object):
 
     _ENABLE_FILTERING = True
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
-    _equity_curve_plotter = EquityCurvePlotter("Step5")
-    _params = None
-    _input_filename = None
-    _fwtest_equity_curve_filename = None
-    _output_file1_full_name = None
-    _ofile1 = None
-    _writer1 = None
-    _step5_model = None
+    def __init__(self):
+        self._equity_curve_plotter = EquityCurvePlotter("Step5")
+        self._params = None
+        self._input_filename = None
+        self._fwtest_equity_curve_filename = None
+        self. _output_file1_full_name = None
+        self._ofile1 = None
+        self._writer1 = None
+        self._step5_model = None
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Backtesting Step 5')

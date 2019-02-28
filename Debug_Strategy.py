@@ -20,12 +20,13 @@ tradesclosed = {}
 
 
 class DebugStrategy(object):
-    _INDEX_COLUMNS = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters']
     DEBUG_EXCHANGE = "bitfinex"
-    DEBUG_CURRENCY_PAIR = "ETHUSDT"
+    DEBUG_CURRENCY_PAIR = "XRPUSDT"
     DEBUG_TIMEFRAME = "1h"
     DEBUG_DATA_FILENAME = './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(DEBUG_EXCHANGE, DEBUG_CURRENCY_PAIR, DEBUG_TIMEFRAME, DEBUG_EXCHANGE, DEBUG_CURRENCY_PAIR, DEBUG_TIMEFRAME)
     DEFAULT_LOT_SIZE = 98000
+
+    _INDEX_COLUMNS = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters']
 
     def __init__(self):
         self._cerebro = None

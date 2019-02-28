@@ -12,7 +12,7 @@ class Step5Model(object):
 
     def calc_average(self, arr):
         len_non_zero = len(list(filter(lambda x: (x != 0), arr)))
-        return sum(arr) / float(len_non_zero)
+        return sum(arr) / float(len_non_zero) if len_non_zero != 0 else 0
 
     def calc_worst_value(self, arr):
         return min(arr)

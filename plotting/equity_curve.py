@@ -12,6 +12,7 @@ from datetime import timedelta
 import json
 import os
 import pandas as pd
+import ast
 
 
 class EquityCurvePlotter(object):
@@ -262,6 +263,9 @@ class EquityCurvePlotter(object):
 
         return combined_data_dict
 
+    def get_parameters_map(self, parameters_json):
+        return ast.literal_eval(parameters_json)
+
     def draw_portfolio_strategy_equity_curve(self, df, bktest_equity_curve_data_points_list, fwtest_equity_curve_data_points_list):
         counter = it.count()
         equity_curve_plot = self.build_equity_curve_plot_figure()
@@ -277,9 +281,14 @@ class EquityCurvePlotter(object):
             fwtest_startcash = bktest_y_data[-1]
             fwtest_y_data = self.adjust_fwtest_data_by_startcash(fwtest_y_data, fwtest_startcash)
             strategy_str = value['Strategy ID']
+            exchange_str = value['Exchange']
+            symbol_str = value['Currency Pair']
+            timeframe_str = value['Timeframe']
+            parameters_str = value['Parameters']
+            params_str = "{}".format(list(self.get_parameters_map(parameters_str).values()))
             whole_x_data = bktest_x_data + fwtest_x_data
             whole_y_data = bktest_y_data + fwtest_y_data
-            equity_curve_plot.line(whole_x_data, whole_y_data, line_width=2, alpha=0.8, color=self._PALETTE[idx], legend='{}'.format(strategy_str))
+            equity_curve_plot.line(whole_x_data, whole_y_data, line_width=1, alpha=1, color=self._PALETTE[idx], legend='{}, {}, {}, {}: {}'.format(strategy_str, exchange_str, symbol_str, timeframe_str, params_str))
             combined_data_dict = self.merge_plot_data(combined_data_dict, whole_x_data, whole_y_data)
 
         combined_data_dict = dict(sorted(combined_data_dict.items(), key=lambda t: t[0]))

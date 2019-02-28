@@ -42,7 +42,7 @@ class StrategyOptimizationFactory(object):
 
 
     # Step5 testing configuration
-    _STEP5_TOP_NET_PROFIT_VALUE_FILTER = TopNFilter("FwTest: Combined Equity Curve R-value", 1, False)
+    _STEP5_TOP_NET_PROFIT_VALUE_FILTER = TopNFilter("Net Profit, %", 1, False)
 
 
     @classmethod
