@@ -2,11 +2,11 @@
 
 
 # declare -a arr_symbols=( "BTC/USDT" "ETH/USDT" "XRP/USDT" "LTC/USDT" "ETC/USDT" "IOTA/USDT" "EOS/USDT" "NEO/USDT" "ZEC/USDT" "ETP/USDT" "XMR/USDT"  "DASH/USDT")
-declare -a arr_symbols=( "EOS/USDT")
+declare -a arr_symbols=( "BTC/USDT" "LTC/USDT" "ETH/USDT" "XRP/USDT" "ETC/USDT" "IOTA/USDT" "EOS/USDT" "NEO/USDT" "ZEC/USDT" "ETP/USDT" "XMR/USDT"  "DASH/USDT")
 #declare -a arr_timeframes=("1m" "5m" "15m" "30m" "1h" "3h" "6h" "12h" "1d")
-declare -a arr_timeframes=("5m" "15m" "30m" "1h" "3h")
+declare -a arr_timeframes=("15m" "30m" "1h" "3h")
 
-declare exchange="binance"
+declare exchange="bitfinex"
 
 for symbol in "${arr_symbols[@]}"
 do

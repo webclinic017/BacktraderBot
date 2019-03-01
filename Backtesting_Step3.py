@@ -351,7 +351,7 @@ class BacktestingStep3(object):
 
     def get_equity_curve_data_by_key(self, df, row_key):
         try:
-            result = df.loc[row_key, "Equity Curve Data Points"]
+            result = df.loc[[row_key], "Equity Curve Data Points"].values[0]
         except KeyError:
             result = None
         return result

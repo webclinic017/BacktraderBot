@@ -79,7 +79,7 @@ class EquityCurvePlotter(object):
         return [x + startcash for x in fwtest_y_data]
 
     def get_equity_curve_data_points(self, equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str):
-        return equity_curve_df.loc[(strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str), "Equity Curve Data Points"]
+        return equity_curve_df.loc[[(strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str)], "Equity Curve Data Points"].values[0]
 
     def get_linear_regression_line_points(self, x_axis_data, equitycurveslope, equitycurveintercept, startcash):
         x1 = x_axis_data[0]
