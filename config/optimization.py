@@ -30,7 +30,7 @@ class StrategyOptimizationFactory(object):
 
 
     # Step 4 (Forward testing) configuration
-    _FWTEST_TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("FwTest: Total Closed Trades", 50, False)
+    _FWTEST_TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("FwTest: Total Closed Trades", 20, False)
 
     _FWTEST_EQUITY_CURVE_ANGLE_VALUE_FILTER = ValueFilter("FwTest: Equity Curve Angle", 5, False)
 
@@ -42,7 +42,7 @@ class StrategyOptimizationFactory(object):
 
 
     # Step5 testing configuration
-    _STEP5_TOP_NET_PROFIT_VALUE_FILTER = TopNFilter("Net Profit, %", 1, False)
+    _STEP5_TOP_NET_PROFIT_VALUE_FILTER = TopNFilter("FwTest: Combined Net Profit", 1, False)
 
 
     @classmethod

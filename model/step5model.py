@@ -7,8 +7,16 @@ class Step5Model(object):
         self._result_columns = []
         self._dateranges_arr = []
 
-    def calc_simple_sum(self, arr):
+    def calc_sum(self, arr):
         return sum(arr)
+
+    def calc_pct_sum(self, arr):
+        initial_bal = 100
+        result_sum = initial_bal
+        for elem in arr:
+            result_sum = result_sum * (1 + elem / 100)
+        result_sum = (result_sum - initial_bal)
+        return result_sum
 
     def calc_average(self, arr):
         len_non_zero = len(list(filter(lambda x: (x != 0), arr)))
@@ -22,7 +30,7 @@ class Step5Model(object):
 
     def add_result_column(self, strategyid, exchange, currency_pair, timeframe, parameters, commission, leverage, pyramiding, profit_factor, win_rate_pct, max_drawdown_pct, total_closed_trades, monthly_stats):
         self._dateranges_arr = monthly_stats.keys()
-        simple_sum_net_profit_pct_monthly = round(self.calc_simple_sum(monthly_stats.values()), 2)
+        simple_sum_net_profit_pct_monthly = round(self.calc_sum(monthly_stats.values()), 2)
         average_net_profit_pct_monthly = round(self.calc_average(monthly_stats.values()), 2)
         worst_net_profit_pct_monthly = round(self.calc_worst_value(monthly_stats.values()), 2)
         num_months_in_loss = self.calc_negative_elements_num(monthly_stats.values())
@@ -38,7 +46,7 @@ class Step5Model(object):
         result.extend(['Simple Sum Net Profit, %', 'Avg Monthly Net Profit, %', 'Worst Monthly Net Profit, %', 'Losing Months'])
         return result
 
-    def get_vert_footer_column(self):
+    def get_vert_avg_footer_column(self):
         result = ['', '', '', '', '', '', '', 'Average']
         profit_factor_list = [x.profit_factor for x in self._result_columns]
         win_rate_pct_list = [x.win_rate_pct for x in self._result_columns]
@@ -67,12 +75,28 @@ class Step5Model(object):
 
         return result
 
+    def get_vert_sum_footer_column(self):
+        result = ['', '', '', '', '', '', '', 'Sum', '', '', '']
+        total_closed_trades_list = [x.total_closed_trades for x in self._result_columns]
+        result.append(self.calc_sum(total_closed_trades_list))
+        result.append(Step5Model.EMPTY_VALUE)
+
+        for daterange_val in self._dateranges_arr:
+            monthly_net_profict_pct_list = [x.monthly_stats[daterange_val] for x in self._result_columns]
+            result.append(round(self.calc_pct_sum(monthly_net_profict_pct_list), 2))
+
+        result.append(Step5Model.EMPTY_VALUE)
+        result.extend(['', '', '', ''])
+
+        return result
+
     def get_model_data_arr(self):
         result_matrix = []
         result_matrix.append(self.get_vert_header_column())
         for column in self._result_columns:
             result_matrix.append(column.get_data())
-        result_matrix.append(self.get_vert_footer_column())
+        result_matrix.append(self.get_vert_sum_footer_column())
+        result_matrix.append(self.get_vert_avg_footer_column())
 
         # Transpose matrix
         result = [*zip(*result_matrix)]
