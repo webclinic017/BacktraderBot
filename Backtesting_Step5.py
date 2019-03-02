@@ -76,15 +76,28 @@ class BacktestingStep5(object):
         filter = StrategyOptimizationFactory.get_filters_step5()
         return filter.filter(df)
 
-    def get_top_values_per_strategy(self, df):
+    def get_value_index(self, arr, val):
+        try:
+            result = arr.index(val)
+        except ValueError:
+            result = None
+        return result
+
+    def get_top_rows_per_strategy(self, df):
         result = []
-        all_strategies = self.get_unique_index_values(df, 'Strategy ID')
-        for strategy in all_strategies:
-            strategy_rows_df = self.find_rows_for_strategy(df, strategy)
-            if strategy_rows_df is not None:
-                filtered_rows = self.filter_top_records(strategy_rows_df)
-                result.append(filtered_rows)
-        return pd.concat(result)
+        selected_strategies_arr = []
+        selected_currencypairs_arr = []
+        df_copy = df.copy().reset_index(drop=False).sort_values(by='FwTest: Combined Net Profit', ascending=False)
+        for index, row in df_copy.iterrows():
+            strategy = row["Strategy ID"]
+            currency_pair = row["Currency Pair"]
+            if self.get_value_index(selected_strategies_arr, strategy) is None and self.get_value_index(selected_currencypairs_arr, currency_pair) is None:
+                selected_strategies_arr.append(strategy)
+                selected_currencypairs_arr.append(currency_pair)
+                result.append(row)
+        result_pd = pd.DataFrame(result)
+        result_pd = result_pd.sort_values(by='Strategy ID', ascending=True)
+        return result_pd
 
     def create_model(self, df, args):
         generator = Step5ModelGenerator()
@@ -153,9 +166,9 @@ class BacktestingStep5(object):
 
         step4_df = self.read_csv_data(self._input_filename)
 
-        top_values_df = self.get_top_values_per_strategy(step4_df)
+        top_rows_df = self.get_top_rows_per_strategy(step4_df)
 
-        self._step5_model = self.create_model(top_values_df, args)
+        self._step5_model = self.create_model(top_rows_df, args)
 
         self.init_output_files(args)
 
@@ -165,7 +178,7 @@ class BacktestingStep5(object):
 
         bktest_equity_curve_df = self.read_csv_data(self.get_bktest_equity_curve_filename(args))
         fwtest_equity_curve_df = self.read_csv_data(self.get_fwtest_equity_curve_filename(args))
-        self._equity_curve_plotter.generate_combined_top_results_images_step5(top_values_df, bktest_equity_curve_df, fwtest_equity_curve_df, args)
+        self._equity_curve_plotter.generate_combined_top_results_images_step5(top_rows_df, bktest_equity_curve_df, fwtest_equity_curve_df, args)
 
         self.cleanup()
 

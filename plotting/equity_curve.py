@@ -345,8 +345,8 @@ class EquityCurvePlotter(object):
             image_filename = self.get_output_image_filename(output_path, strategy_str, exchange_str, symbol_str, timeframe_str, image_counter)
             export_png(draw_column, filename=image_filename)
 
-    def generate_combined_top_results_images_step5(self, top_values_df, bktest_equity_curve_df, fwtest_equity_curve_df, args):
-        df = top_values_df.reset_index(drop=False)
+    def generate_combined_top_results_images_step5(self, top_rows_df, bktest_equity_curve_df, fwtest_equity_curve_df, args):
+        df = top_rows_df.reset_index(drop=False)
         base_dir = self.whereAmI()
         output_path = self.get_output_equity_curve_images_path(base_dir, args)
         os.makedirs(output_path, exist_ok=True)
