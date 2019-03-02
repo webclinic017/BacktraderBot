@@ -1,3 +1,5 @@
+import itertools
+
 
 class Step5Model(object):
 
@@ -10,14 +12,6 @@ class Step5Model(object):
     def calc_sum(self, arr):
         return sum(arr)
 
-    def calc_pct_sum(self, arr):
-        initial_bal = 100
-        result_sum = initial_bal
-        for elem in arr:
-            result_sum = result_sum * (1 + elem / 100)
-        result_sum = (result_sum - initial_bal)
-        return result_sum
-
     def calc_average(self, arr):
         len_non_zero = len(list(filter(lambda x: (x != 0), arr)))
         return sum(arr) / float(len_non_zero) if len_non_zero != 0 else 0
@@ -28,13 +22,13 @@ class Step5Model(object):
     def calc_negative_elements_num(self, arr):
         return len(list(filter(lambda x: (x < 0), arr)))
 
-    def add_result_column(self, strategyid, exchange, currency_pair, timeframe, parameters, commission, leverage, pyramiding, profit_factor, win_rate_pct, max_drawdown_pct, total_closed_trades, monthly_stats):
+    def add_result_column(self, strategyid, exchange, currency_pair, timeframe, parameters, startcash, commission, leverage, pyramiding, profit_factor, win_rate_pct, max_drawdown_pct, total_closed_trades, monthly_stats):
         self._dateranges_arr = monthly_stats.keys()
         simple_sum_net_profit_pct_monthly = round(self.calc_sum(monthly_stats.values()), 2)
         average_net_profit_pct_monthly = round(self.calc_average(monthly_stats.values()), 2)
         worst_net_profit_pct_monthly = round(self.calc_worst_value(monthly_stats.values()), 2)
         num_months_in_loss = self.calc_negative_elements_num(monthly_stats.values())
-        entry = Step5Column(strategyid, exchange, currency_pair, timeframe, parameters, commission, leverage, pyramiding, profit_factor, win_rate_pct, max_drawdown_pct, total_closed_trades, monthly_stats,
+        entry = Step5Column(strategyid, exchange, currency_pair, timeframe, parameters, startcash, commission, leverage, pyramiding, profit_factor, win_rate_pct, max_drawdown_pct, total_closed_trades, monthly_stats,
                             simple_sum_net_profit_pct_monthly, average_net_profit_pct_monthly, worst_net_profit_pct_monthly, num_months_in_loss)
         self._result_columns.append(entry)
 
@@ -47,7 +41,7 @@ class Step5Model(object):
         return result
 
     def get_vert_avg_footer_column(self):
-        result = ['', '', '', '', '', '', '', 'Average']
+        result = ['', '', '', '', '', '', '', 'Portfolio Monthly Average']
         profit_factor_list = [x.profit_factor for x in self._result_columns]
         win_rate_pct_list = [x.win_rate_pct for x in self._result_columns]
         max_drawdown_pct_list = [x.max_drawdown_pct for x in self._result_columns]
@@ -76,17 +70,31 @@ class Step5Model(object):
         return result
 
     def get_vert_sum_footer_column(self):
-        result = ['', '', '', '', '', '', '', 'Sum', '', '', '']
+        result = ['', '', '', '', '', '', '', 'Portfolio Equity Sum', '', '', '']
         total_closed_trades_list = [x.total_closed_trades for x in self._result_columns]
         result.append(self.calc_sum(total_closed_trades_list))
         result.append(Step5Model.EMPTY_VALUE)
 
+        monthly_equity_change_pct_list = []
+        accum_equity_list = [x.startcash for x in self._result_columns]
         for daterange_val in self._dateranges_arr:
-            monthly_net_profict_pct_list = [x.monthly_stats[daterange_val] for x in self._result_columns]
-            result.append(round(self.calc_pct_sum(monthly_net_profict_pct_list), 2))
+            counter = itertools.count()
+            prev_month_accum_equity = sum(accum_equity_list)
+            for column in self._result_columns:
+                idx = next(counter)
+                monthly_netprofit_pct = column.monthly_stats[daterange_val]
+                accum_equity_list[idx] = accum_equity_list[idx] * (1 + monthly_netprofit_pct/100)
+            curr_month_accum_equity = sum(accum_equity_list)
+            monthly_equity_change_pct = round((curr_month_accum_equity - prev_month_accum_equity) * 100 / prev_month_accum_equity, 2)
+            monthly_equity_change_pct_list.append(monthly_equity_change_pct)
+            result.append(monthly_equity_change_pct)
 
         result.append(Step5Model.EMPTY_VALUE)
-        result.extend(['', '', '', ''])
+
+        result.append(round(self.calc_sum(monthly_equity_change_pct_list), 2))
+        result.append(round(self.calc_average(monthly_equity_change_pct_list), 2))
+        result.append(round(self.calc_worst_value(monthly_equity_change_pct_list), 2))
+        result.append(self.calc_negative_elements_num(monthly_equity_change_pct_list))
 
         return result
 
@@ -104,13 +112,14 @@ class Step5Model(object):
 
 
 class Step5Column(object):
-    def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, commission, leverage, pyramiding, profit_factor, win_rate_pct, max_drawdown_pct, total_closed_trades, monthly_stats,
+    def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, startcash, commission, leverage, pyramiding, profit_factor, win_rate_pct, max_drawdown_pct, total_closed_trades, monthly_stats,
                  simple_sum_net_profit_pct_monthly, average_net_profit_pct_monthly, worst_net_profit_pct_monthly, num_months_in_loss):
         self.strategyid = strategyid
         self.exchange = exchange
         self.currency_pair = currency_pair
         self.timeframe = timeframe
         self.parameters = parameters
+        self.startcash = startcash
         self.commission = commission
         self.leverage = leverage
         self.pyramiding = pyramiding

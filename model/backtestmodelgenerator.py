@@ -1,4 +1,3 @@
-from model.backtestmodel import BacktestModel
 
 
 class BacktestModelGenerator(object):

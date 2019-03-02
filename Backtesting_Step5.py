@@ -8,8 +8,7 @@ import csv
 import pandas as pd
 from config.optimization import StrategyOptimizationFactory
 from plotting.equity_curve import EquityCurvePlotter
-from model.step5model import Step5Model
-import re
+from model.step5modelgenerator import Step5ModelGenerator
 
 
 class BacktestingStep5(object):
@@ -87,43 +86,9 @@ class BacktestingStep5(object):
                 result.append(filtered_rows)
         return pd.concat(result)
 
-    def parse_monthly_stats(self, df, columns):
-        result = {}
-        for column in columns:
-            daterange_regex = "(\d{8}-\d{8})"
-            month_range = re.search(daterange_regex, column)
-            if month_range:
-                month_value = df[column]
-                net_profit_pct = re.match("[-+]?[0-9]*\.?[0-9]+", month_value)
-                if net_profit_pct:
-                    net_profit_pct = float(net_profit_pct.group())
-                    month_key = month_range.group(1)
-                    result[month_key] = net_profit_pct
-        return result
-
-    def parse_pct_to_float(self, str_val):
-        val = str_val.replace("%", "")
-        return float(val)
-
-    def parse_dataframe_to_model(self, df, args):
-        model = Step5Model()
-        df = df.copy()
-        df = df.reset_index()
-        for index, row in df.iterrows():
-            strategyid          = row['Strategy ID']
-            exchange            = row['Exchange']
-            currency_pair       = row['Currency Pair']
-            timeframe           = row['Timeframe']
-            parameters          = row['Parameters']
-            commission          = args.commission * 100
-            leverage            = 1
-            pyramiding          = 1
-            profit_factor       = row['Profit Factor']
-            win_rate_pct        = self.parse_pct_to_float(row['Win Rate, %'])
-            max_drawdown_pct    = row['Max Drawdown, %']
-            total_closed_trades = row['Total Closed Trades']
-            monthly_stats = self.parse_monthly_stats(row, df.columns.values)
-            model.add_result_column(strategyid, exchange, currency_pair, timeframe, parameters, commission, leverage, pyramiding, profit_factor, win_rate_pct, max_drawdown_pct, total_closed_trades, monthly_stats)
+    def create_model(self, df, args):
+        generator = Step5ModelGenerator()
+        model = generator.generate_model(df, args)
         return model
 
     def get_daterange(self, df):
@@ -190,7 +155,7 @@ class BacktestingStep5(object):
 
         top_values_df = self.get_top_values_per_strategy(step4_df)
 
-        self._step5_model = self.parse_dataframe_to_model(top_values_df, args)
+        self._step5_model = self.create_model(top_values_df, args)
 
         self.init_output_files(args)
 
