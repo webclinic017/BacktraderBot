@@ -13,7 +13,7 @@ from extensions.sizers.percentsizer import VariablePercentSizer
 from extensions.sizers.cashsizer import FixedCashSizer
 from datetime import datetime
 from datetime import timedelta
-from config.strategy_config import BTStrategyConfig
+from config.strategy_config import AppConfig
 from config.strategy_enum import BTStrategyEnum
 from model.backtestmodel import BacktestModel
 from model.backtestmodelgenerator import BacktestModelGenerator
@@ -94,10 +94,7 @@ class CerebroRunner(object):
 
 class BacktestingStep1(object):
 
-    _ENABLE_FILTERING = False
-
-    START_CASH_VALUE = 100000
-    DEFAULT_LOT_SIZE = 98000
+    _ENABLE_FILTERING = AppConfig.is_global_step1_enable_filtering()
 
     def __init__(self):
         self._cerebro = None
@@ -158,7 +155,7 @@ class BacktestingStep1(object):
 
         parser.add_argument('-z', '--lotsize',
                             type=int,
-                            default=self.DEFAULT_LOT_SIZE,
+                            default=AppConfig.get_global_lot_size(),
                             help='Lot size: either percentage or number of units - depending on lottype parameter')
 
         parser.add_argument('--commsizer',
@@ -239,7 +236,7 @@ class BacktestingStep1(object):
 
         # add the sizer
         if args.lottype != "" and args.lottype == "Percentage":
-            self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
+            self._cerebro.addsizer(VariablePercentSizer, percents=args.lotsize, debug=args.debug)
         else:
             self._cerebro.addsizer(FixedCashSizer, cashamount=args.lotsize)
 
@@ -249,9 +246,10 @@ class BacktestingStep1(object):
     def get_strategy_enum(self, args):
         return BTStrategyEnum.get_strategy_enum_by_str(args.strategy)
 
-    def init_params(self, strat_enum, args):
-        self._params = BTStrategyConfig.get_step1_strategy_params(strat_enum).copy()
+    def init_params(self, strat_enum, args, startcash):
+        self._params = AppConfig.get_step1_strategy_params(strat_enum).copy()
         self._params.update({("debug", args.debug),
+                             ("startcash", startcash),
                              ("fromyear", args.fromyear),
                              ("toyear", args.toyear),
                              ("frommonth", args.frommonth),
@@ -453,9 +451,9 @@ class BacktestingStep1(object):
         args = self.parse_args()
 
         self._strategy_enum = self.get_strategy_enum(args)
-        self.init_params(self._strategy_enum, args)
 
-        startcash = self.START_CASH_VALUE
+        startcash = AppConfig.get_global_default_cash_size()
+        self.init_params(self._strategy_enum, args, startcash)
 
         runner = CerebroRunner()
         self.init_cerebro(runner, args, startcash)

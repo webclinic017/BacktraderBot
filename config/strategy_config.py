@@ -1,10 +1,19 @@
 from config.strategy_enum import BTStrategyEnum
 
-class BTStrategyConfig(object):
+
+class AppConfig(object):
+
+    _GLOBAL_STRATEGY_PARAMS_DICT = {
+            "DEFAULT_START_CASH_VALUE": 15000,
+            "DEFAULT_LOT_SIZE": 1500,
+            "STEP1_ENABLE_FILTERING": True,
+            "STEP2_ENABLE_FILTERING": True,
+            "STEP4_ENABLE_FILTERING": True,
+            "STEP5_ENABLE_FILTERING": True,
+        }
 
     _STEP1_STRATEGY_PARAMS_DICT = {
         BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: {
-            "startcash": 100000,
             "needlong": (True, False),
             "needshort": (True, False),
             "needstops": False,
@@ -16,7 +25,6 @@ class BTStrategyConfig(object):
             "needex": False
         },
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
-            "startcash": 100000,
             "sensup": range(0, 9),
             "sensdn": range(0, 9),
             "usewow": True,
@@ -30,7 +38,6 @@ class BTStrategyConfig(object):
             "uselocoentry": (False, True),
         },
         BTStrategyEnum.S003_ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
-            "startcash": 100000,
             "needlong": (True, False),
             "needshort": (True, False),
             "rsiperiod": 7,
@@ -47,7 +54,6 @@ class BTStrategyConfig(object):
             "closebody": range(20, 51, 5),
         },
         BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
-            "startcash": 100000,
             "needlong": (True, False),
             "needshort": (True, False),
             "takepercent": range(0, 5),
@@ -58,7 +64,6 @@ class BTStrategyConfig(object):
             "len": 20,
         },
         BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: {
-            "startcash": 100000,
             "needlong": (True, False),
             "needshort": (True, False),
             "leverage": 1,
@@ -67,7 +72,6 @@ class BTStrategyConfig(object):
             "isreversive": (False, True),
         },
         BTStrategyEnum.S006_ALEX_NORO_SQUEEZE_MOMENTUM_STRATEGY_ID: {
-            "startcash": 100000,
             "needlong": (True, False),
             "needshort": (True, False),
             "length": 20,
@@ -78,7 +82,6 @@ class BTStrategyConfig(object):
             "usebody": (False, True),
         },
         BTStrategyEnum.S007_ALEX_NORO_MULTIMA_STRATEGY_ID: {
-            "startcash": 100000,
             "needlong": (True, False),
             "needshort": (True, False),
             "usema1": True,
@@ -88,7 +91,6 @@ class BTStrategyConfig(object):
             "usecf": (False, True),
         },
         BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: {
-            "startcash": 100000,
             "needlong": (True, False),
             "needshort": (True, False),
             "cloud": 25,
@@ -102,10 +104,11 @@ class BTStrategyConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
-                "timeframe": "1h"
+                "timeframe": "1h",
+                "startcash": 100000,
+                "lotsize": 98000
             },
             {
-                "startcash": 100000,
                 "needlong": True,
                 "needshort": True,
                 "needstops": False,
@@ -127,10 +130,11 @@ class BTStrategyConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
-                "timeframe": "1h"
+                "timeframe": "1h",
+                "startcash": 100000,
+                "lotsize": 98000
             },
             {
-                "startcash": 100000,
                 "sensup": 0,
                 "sensdn": 7,
                 "usewow": True,
@@ -153,10 +157,11 @@ class BTStrategyConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
-                "timeframe": "1h"
+                "timeframe": "1h",
+                "startcash": 100000,
+                "lotsize": 98000
             },
             {
-                "startcash": 100000,
                 "needlong": True,
                 "needshort": False,
                 "rsiperiod": 7,
@@ -182,10 +187,11 @@ class BTStrategyConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
-                "timeframe": "1h"
+                "timeframe": "1h",
+                "startcash": 100000,
+                "lotsize": 98000
             },
             {
-                "startcash": 100000,
                 "needlong": True,
                 "needshort": True,
                 "takepercent": 4,
@@ -205,9 +211,10 @@ class BTStrategyConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
-                "timeframe": "1h"
-            },  {
+                "timeframe": "1h",
                 "startcash": 100000,
+                "lotsize": 98000
+            },  {
                 "needlong": True,
                 "needshort": True,
                 "leverage": 1,
@@ -225,9 +232,10 @@ class BTStrategyConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
-                "timeframe": "1h"
-            },  {
+                "timeframe": "1h",
                 "startcash": 100000,
+                "lotsize": 98000
+            },  {
                 "needlong": True,
                 "needshort": True,
                 "length": 20,
@@ -247,9 +255,10 @@ class BTStrategyConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
-                "timeframe": "1h"
-            },  {
+                "timeframe": "1h",
                 "startcash": 100000,
+                "lotsize": 98000
+            },  {
                 "needlong": True,
                 "needshort": True,
                 "usema1": True,
@@ -268,9 +277,10 @@ class BTStrategyConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
-                "timeframe": "1h"
+                "timeframe": "1h",
+                "startcash": 100000,
+                "lotsize": 98000,
             },  {
-                "startcash": 306773.82066803,
                 "needlong": True,
                 "needshort": False,
                 "cloud": 25,
@@ -284,6 +294,30 @@ class BTStrategyConfig(object):
                 "today": 30,
             }],
     }
+
+    @classmethod
+    def get_global_default_cash_size(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["DEFAULT_START_CASH_VALUE"]
+
+    @classmethod
+    def get_global_lot_size(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["DEFAULT_LOT_SIZE"]
+
+    @classmethod
+    def is_global_step1_enable_filtering(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP1_ENABLE_FILTERING"]
+
+    @classmethod
+    def is_global_step2_enable_filtering(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP2_ENABLE_FILTERING"]
+
+    @classmethod
+    def is_global_step4_enable_filtering(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP4_ENABLE_FILTERING"]
+
+    @classmethod
+    def is_global_step5_enable_filtering(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP5_ENABLE_FILTERING"]
 
     @classmethod
     def get_step1_strategy_params(cls, strategy_enum):

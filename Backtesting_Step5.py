@@ -9,11 +9,12 @@ import pandas as pd
 from config.optimization import StrategyOptimizationFactory
 from plotting.equity_curve import EquityCurvePlotter
 from model.step5modelgenerator import Step5ModelGenerator
+from config.strategy_config import AppConfig
 
 
 class BacktestingStep5(object):
 
-    _ENABLE_FILTERING = True
+    _ENABLE_FILTERING = AppConfig.is_global_step5_enable_filtering()
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 

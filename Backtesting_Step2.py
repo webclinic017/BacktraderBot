@@ -8,11 +8,12 @@ import csv
 import pandas as pd
 from config.optimization import StrategyOptimizationFactory
 from plotting.equity_curve import EquityCurvePlotter
+from config.strategy_config import AppConfig
 
 
 class BacktestingStep2(object):
 
-    _ENABLE_FILTERING = True
+    _ENABLE_FILTERING = AppConfig.is_global_step2_enable_filtering()
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 

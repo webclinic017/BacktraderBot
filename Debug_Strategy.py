@@ -8,7 +8,7 @@ from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
 from extensions.sizers.cashsizer import FixedCashSizer
-from config.strategy_config import BTStrategyConfig
+from config.strategy_config import AppConfig
 from config.strategy_enum import BTStrategyEnum
 from plotting.equity_curve import EquityCurvePlotter
 from model.backtestmodel import BacktestModel
@@ -21,14 +21,14 @@ tradesclosed = {}
 
 class DebugStrategy(object):
 
-    DEFAULT_LOT_SIZE = 98000
-
     _INDEX_COLUMNS = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters']
 
     def __init__(self):
         self._exchange = None
         self._currency_pair = None
         self._timeframe = None
+        self._startcash = None
+        self._lotsize = None
         self._cerebro = None
         self._strategy_enum = None
         self._params = None
@@ -59,11 +59,6 @@ class DebugStrategy(object):
                             choices=["Percentage", "Fixed"],
                             help='Lot type')
 
-        parser.add_argument('-z', '--lotsize',
-                            type=int,
-                            default=self.DEFAULT_LOT_SIZE,
-                            help='Lot size: either percentage or number of units - depending on lottype parameter')
-
         parser.add_argument('--commission',
                             default=0.0015,
                             type=float,
@@ -80,7 +75,7 @@ class DebugStrategy(object):
 
         return parser.parse_args()
 
-    def init_cerebro(self, args, startcash):
+    def init_cerebro(self, args, startcash, lotsize):
         # Create an instance of cerebro
         self._cerebro = bt.Cerebro(cheat_on_open=True)
 
@@ -94,9 +89,9 @@ class DebugStrategy(object):
 
         # add the sizer
         if args.lottype != "" and args.lottype == "Percentage":
-            self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
+            self._cerebro.addsizer(VariablePercentSizer, percents=lotsize, debug=args.debug)
         else:
-            self._cerebro.addsizer(FixedCashSizer, cashamount=args.lotsize, commission=args.commission)
+            self._cerebro.addsizer(FixedCashSizer, cashamount=lotsize, commission=args.commission)
 
         if args.commtype.lower() == 'percentage':
             self._cerebro.broker.setcommission(args.commission)
@@ -105,12 +100,14 @@ class DebugStrategy(object):
         return BTStrategyEnum.get_strategy_enum_by_str(args.strategy)
 
     def init_params(self, strategy_enum, args):
-        debug_strategy_config = BTStrategyConfig.get_debug_strategy_params(strategy_enum)
+        debug_strategy_config = AppConfig.get_debug_strategy_params(strategy_enum)
         base_params = debug_strategy_config[0]
         params_dict = debug_strategy_config[1]
         self._exchange = base_params["exchange"]
         self._currency_pair = base_params["currency_pair"]
         self._timeframe = base_params["timeframe"]
+        self._startcash = base_params["startcash"]
+        self._lotsize = base_params["lotsize"]
         self._params = params_dict.copy()
         self._params.update({("debug", args.debug)})
 
@@ -291,9 +288,10 @@ class DebugStrategy(object):
         self._strategy_enum = self.get_strategy_enum(args)
         self.init_params(self._strategy_enum, args)
 
-        startcash = self._params["startcash"]
+        startcash = self._startcash
+        lotsize = self._lotsize
 
-        self.init_cerebro(args, startcash)
+        self.init_cerebro(args, startcash, lotsize)
 
         self.add_strategy()
 

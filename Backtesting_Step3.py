@@ -19,6 +19,7 @@ from model.backtestmodelgenerator import BacktestModelGenerator
 from common.stfetcher import StFetcher
 from scipy import stats
 from sklearn import preprocessing
+from config.strategy_config import AppConfig
 import math
 import json
 import os
@@ -69,9 +70,6 @@ class BacktestingStep3(object):
     _INDEX_ALL_KEYS_ARR = ["Strategy ID", "Exchange", "Currency Pair", "Timeframe", "Parameters"]
     _INDEX_STEP2_NUMBERS_ARR = [0, 1, 2, 3]
 
-    DEFAULT_STARTCASH_VALUE = 100000
-    DEFAULT_LOT_SIZE = 98000
-
     def __init__(self):
         self._cerebro = None
         self._input_filename = None
@@ -108,7 +106,7 @@ class BacktestingStep3(object):
 
         parser.add_argument('-z', '--lotsize',
                             type=int,
-                            default=self.DEFAULT_LOT_SIZE,
+                            default=AppConfig.get_global_lot_size(),
                             help='Lot size: either percentage or number of units - depending on lottype parameter')
 
         parser.add_argument('--commtype',
@@ -155,7 +153,7 @@ class BacktestingStep3(object):
 
         # add the sizer
         if args.lottype != "" and args.lottype == "Percentage":
-            self._cerebro.addsizer(VariablePercentSizer, percents=98, debug=args.debug)
+            self._cerebro.addsizer(VariablePercentSizer, percents=args.lotsize, debug=args.debug)
         else:
             self._cerebro.addsizer(FixedCashSizer, cashamount=args.lotsize)
 
@@ -291,7 +289,7 @@ class BacktestingStep3(object):
         return ast.literal_eval(parameters_json)
 
     def calc_startcash(self, netprofit):
-        return self.DEFAULT_STARTCASH_VALUE + netprofit
+        return AppConfig.get_global_default_cash_size() + netprofit
 
     def enqueue_strategies(self, df, strategy_enum, proc_daterange, args):
         for index, data_row in df.iterrows():
@@ -417,7 +415,7 @@ class BacktestingStep3(object):
                             # Get list of candidates from Step2 for strategy/exchange/symbol/timeframe/date range
                             print("\n******** Processing {} rows for: {}, {}, {}, {}, {} ********".format(len(candidates_data_df), strategy, exchange, symbol, timeframe, args.testdaterange))
 
-                            startcash = self.DEFAULT_STARTCASH_VALUE
+                            startcash = AppConfig.get_global_default_cash_size()
                             runner = CerebroRunner()
                             self.init_cerebro(runner, args, startcash)
 
