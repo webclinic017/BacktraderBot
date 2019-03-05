@@ -40,7 +40,7 @@ class Step5Model(object):
         self._result_columns.append(entry)
 
     def get_vert_header_column(self):
-        result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Commission', 'Leverage', 'Pyramiding', 'Profit Factor', 'Win Rate, %', 'Max Drawdown, %', 'Total Closed Trades']
+        result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Commission', 'Leverage', 'Pyramiding', 'Profit Factor', 'Win Rate, %', 'Max Drawdown, %', 'Combined Total Closed Trades']
         result.append(Step5Model.EMPTY_VALUE)
         result.extend(self._dateranges_arr)
         result.append(Step5Model.EMPTY_VALUE)

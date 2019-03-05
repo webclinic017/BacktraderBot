@@ -41,7 +41,7 @@ class Step5ModelGenerator(object):
             profit_factor       = row['Profit Factor']
             win_rate_pct        = self.parse_pct_to_float(row['Win Rate, %'])
             max_drawdown_pct    = row['Max Drawdown, %']
-            total_closed_trades = row['Total Closed Trades']
+            total_closed_trades = row['Total Closed Trades'] + row['FwTest: Total Closed Trades']
             monthly_stats = self.parse_monthly_stats(row, df.columns.values)
             model.add_result_column(strategyid, exchange, currency_pair, timeframe, parameters, startcash, commission, leverage, pyramiding, profit_factor, win_rate_pct, max_drawdown_pct, total_closed_trades, monthly_stats)
         return model

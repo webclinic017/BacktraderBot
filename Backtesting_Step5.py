@@ -65,14 +65,6 @@ class BacktestingStep5(object):
     def read_csv_data(self, filename):
         return pd.read_csv(filename, index_col=self._INDEX_NUMBERS_ARR)
 
-    def find_rows_for_strategy(self, df, strategy):
-        try:
-            idx = pd.IndexSlice
-            result = df.loc[idx[strategy, :], idx[:]]
-        except KeyError:
-            result = None
-        return result
-
     def filter_top_records(self, df):
         filter = StrategyOptimizationFactory.get_filters_step5()
         return filter.filter(df)
@@ -167,7 +159,7 @@ class BacktestingStep5(object):
 
         step4_df = self.read_csv_data(self._input_filename)
 
-        top_rows_df = self.get_top_rows_per_strategy(step4_df)
+        top_rows_df = self.filter_top_records(step4_df)
 
         self._step5_model = self.create_model(top_rows_df, args)
 

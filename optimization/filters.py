@@ -1,3 +1,4 @@
+import pandas as pd
 
 class Filter(object):
     def __init__(self):
@@ -5,12 +6,6 @@ class Filter(object):
 
 
 class ValueFilter(Filter):
-    field_name = None
-
-    value = None
-
-    is_below = None
-
     def __init__(self, field_name, value, is_below):
         super().__init__()
         self.field_name = field_name
@@ -28,10 +23,6 @@ class ValueFilter(Filter):
 
 
 class TopNFilter(Filter):
-    field_name = None
-    number = None
-    ascending = None
-
     def __init__(self, field_name, number, ascending):
         super().__init__()
         self.field_name = field_name
@@ -52,10 +43,6 @@ class TopNFilter(Filter):
 
 
 class TopNPercentFilter(Filter):
-    field_name = None
-    percent = None
-    ascending = None
-
     def __init__(self, field_name, percent, ascending):
         super().__init__()
         self.field_name = field_name
@@ -92,8 +79,6 @@ class TopNPercentFilter(Filter):
 
 class FilterSequence(Filter):
 
-    _filters = []
-
     def __init__(self, filters):
         super().__init__()
         self._filters = filters
@@ -103,3 +88,113 @@ class FilterSequence(Filter):
         for f in self._filters:
             process_df = f.filter(process_df)
         return process_df
+
+
+class GroupByConditionalFilter(Filter):
+
+    def __init__(self, groupby_list, main_filter, alternative_filter):
+        super().__init__()
+        self.groupby_list = groupby_list
+        self.main_filter = main_filter
+        self.alternative_filter = alternative_filter
+
+    def merge_dataframes(self, target_df, src_df):
+        if target_df is None:
+            return src_df
+        else:
+            return pd.concat([target_df, src_df])
+
+    def filter(self, df):
+        results_df = None
+
+        df_copy = df.copy()
+        grouped = df_copy.groupby(self.groupby_list)
+
+        for name, group_df in grouped:
+            filtered_df = self.main_filter.filter(group_df)
+            if filtered_df is not None and len(filtered_df) > 0:
+                print("Processing main filter, group={}:\nNumber of best rows: {}\n".format(name, len(filtered_df)))
+                results_df = self.merge_dataframes(results_df, filtered_df)
+            else:
+                filtered_df = self.alternative_filter.filter(group_df)
+                print("Skipped main filter. Switched to alternative filter, group={}:\nNumber of best rows: {}\n".format(name, len(filtered_df)))
+                results_df = self.merge_dataframes(results_df, filtered_df)
+
+        return results_df
+
+
+class GroupByCombinationsFilter(Filter):
+
+    def __init__(self, groupby_list, group_sortby_variations, sequence_sort_desc_variations):
+        super().__init__()
+        self.groupby_list = groupby_list
+        self.group_sortby_variations = group_sortby_variations
+        self.sequence_sort_desc_variations = sequence_sort_desc_variations
+
+    def merge_dataframes(self, target_df, src_df):
+        if target_df is None:
+            return src_df
+        else:
+            return pd.concat([target_df, src_df])
+
+    def get_value_index(self, arr, val):
+        try:
+            result = arr.index(val)
+        except ValueError:
+            result = None
+        return result
+
+    def calc_variation(self, grouped_df, group_sortby, sequence_sort_desc):
+        result_arr = []
+        sorted_groups_arr = []
+        for name, group_df in grouped_df:
+            group_sorted = group_df.sort_values(by=group_sortby, ascending=False)
+            sorted_groups_arr.append(group_sorted)
+
+        sequence_df_arr = sorted(sorted_groups_arr, key=lambda x: x.head(1)[group_sortby].values[0], reverse=sequence_sort_desc)
+
+        selected_strategies_arr = []
+        selected_currencypairs_arr = []
+        for sequence_df in sequence_df_arr:
+            sequence_df_copy = sequence_df.copy().reset_index(drop=False)
+            for index, row in sequence_df_copy.iterrows():
+                strategy = row["Strategy ID"]
+                currency_pair = row["Currency Pair"]
+                if self.get_value_index(selected_strategies_arr, strategy) is None and self.get_value_index(selected_currencypairs_arr, currency_pair) is None:
+                    selected_strategies_arr.append(strategy)
+                    selected_currencypairs_arr.append(currency_pair)
+                    result_arr.append(row)
+                    break
+
+        result_pd = pd.DataFrame(result_arr)
+        return result_pd.sort_values(by='Strategy ID', ascending=True)
+
+    def get_variation_key_str(self, row):
+        return "- {}-{}-{}-{}, FwTest: Combined Net Profit={}".format(row["Strategy ID"], row["Exchange"], row["Currency Pair"], row["Timeframe"], round(row["FwTest: Combined Net Profit"]))
+
+    def get_best_variation(self, variations):
+        variations_dict = {}
+        for result_pd in variations:
+            sum_val = result_pd[['FwTest: Combined Net Profit']].sum(axis=0).values[0]
+            print("----------------------------------------------  Portolio variation: ------------------------------------------------")
+            for index, row in result_pd.iterrows():
+                print("{}".format(self.get_variation_key_str(row)))
+            print("Sum={}\n".format(round(sum_val)))
+            variations_dict[sum_val] = result_pd
+
+        sorted_arr = sorted(variations_dict.items(), key=lambda x: x[0], reverse=True)
+        print("**************************** Selected portfolio variation: Sum={}\n".format(round(sorted_arr[0][0])))
+        return sorted_arr[0][1]
+
+    def filter(self, df):
+        df_copy = df.copy()
+        grouped_df = df_copy.groupby(self.groupby_list)
+
+        variations = []
+        for group_sortby_var in self.group_sortby_variations:
+            for sequence_sort_desc_var in self.sequence_sort_desc_variations:
+                variations.append(self.calc_variation(grouped_df, group_sortby_var, sequence_sort_desc_var))
+
+        result_pd = self.get_best_variation(variations)
+
+        return result_pd

@@ -83,45 +83,16 @@ class BacktestingStep4(object):
         for row in print_list:
             writer.writerow(row)
 
-    def get_all_column_names(self, df):
-        result = []
-        df_copy = df.copy()
-        df_copy = df_copy.reset_index()
-        result.extend(list(df_copy.columns.values))
-        return result
-
-    def find_rows(self, df, strategy, exchange, symbol, timeframe):
-        try:
-            idx = pd.IndexSlice
-            result = df.loc[idx[strategy, exchange, symbol, timeframe, :], idx[:]]
-        except KeyError:
-            result = None
-        return result
+    def filter_top_records(self, df):
+        filter = StrategyOptimizationFactory.get_filters_step4()
+        return filter.filter(df)
 
     def filter_input_data(self, df):
-        column_names = self.get_all_column_names(df)
-        final_results = []
+        final_results = self.filter_top_records(df)
+        final_results = final_results.reset_index(drop=False)
 
-        strat_list = self.get_unique_index_values(df, 'Strategy ID')
-        exc_list = self.get_unique_index_values(df, 'Exchange')
-        sym_list = self.get_unique_index_values(df, 'Currency Pair')
-        tf_list = self.get_unique_index_values(df, 'Timeframe')
-
-        for strategy in strat_list:
-            for exchange in exc_list:
-                for symbol in sym_list:
-                    for timeframe in tf_list:
-                        candidates_data_df = self.find_rows(df, strategy, exchange, symbol, timeframe)
-                        if candidates_data_df is not None:
-                            if self._ENABLE_FILTERING is True:
-                                candidates_data_df = self.filter_top_records(candidates_data_df)
-                            if candidates_data_df is not None and len(candidates_data_df) > 0:
-                                print("Processing: {}/{}/{}/{}:\nNumber of best rows: {}\n".format(strategy, exchange, symbol, timeframe, len(candidates_data_df.values)))
-                                candidates_data_df = candidates_data_df.reset_index()
-                                final_results.extend(candidates_data_df.values.tolist())  # print("candidates_data_df.values={}\n".format(candidates_data_df.values))
-
-        print("==========================\nFinal number of rows: {}".format(len(final_results)))
-        return pd.DataFrame(final_results, columns=column_names)
+        print("==========================\nProcessing: Final number of best rows: {}".format(len(final_results)))
+        return final_results
 
     def sort_results(self, df):
         df_sorted = df.sort_values(by=["Strategy ID", "Exchange", "Currency Pair", "Timeframe"])
