@@ -194,7 +194,7 @@ class EquityCurvePlotter(object):
         if self.is_possible_to_draw_sma(x_data, self._EQUITY_CURVE_SMA2_LENGTH):
             equity_curve_sma2_y_data = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA2_LENGTH, y_data)
             equity_curve_plot.line(x_data, equity_curve_sma2_y_data, color='magenta', line_width=1, alpha=0.5, legend='{} equity curve SMA({})'.format(plot_name_prefix, self._EQUITY_CURVE_SMA2_LENGTH))
-        equity_curve_plot.legend.location = "bottom_right"
+        equity_curve_plot.legend.location = "top_left"
 
         return column(description, equity_curve_plot)
 
@@ -233,7 +233,7 @@ class EquityCurvePlotter(object):
         lr_points = self.get_linear_regression_line_points(combined_x_data, equitycurveslope, equitycurveintercept, 0)
         equity_curve_plot.line(lr_points[0], lr_points[1], line_width=1, line_color="red", alpha=0.5, legend='Combined linear regression')
 
-        equity_curve_plot.legend.location = "bottom_right"
+        equity_curve_plot.legend.location = "top_left"
 
         return column(description, equity_curve_plot)
 

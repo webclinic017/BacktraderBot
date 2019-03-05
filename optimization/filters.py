@@ -92,11 +92,10 @@ class FilterSequence(Filter):
 
 class GroupByConditionalFilter(Filter):
 
-    def __init__(self, groupby_list, main_filter, alternative_filter):
+    def __init__(self, groupby_list, main_filter):
         super().__init__()
         self.groupby_list = groupby_list
         self.main_filter = main_filter
-        self.alternative_filter = alternative_filter
 
     def merge_dataframes(self, target_df, src_df):
         if target_df is None:
@@ -116,9 +115,7 @@ class GroupByConditionalFilter(Filter):
                 print("Processing main filter, group={}:\nNumber of best rows: {}\n".format(name, len(filtered_df)))
                 results_df = self.merge_dataframes(results_df, filtered_df)
             else:
-                filtered_df = self.alternative_filter.filter(group_df)
-                print("Skipped main filter. Switched to alternative filter, group={}:\nNumber of best rows: {}\n".format(name, len(filtered_df)))
-                results_df = self.merge_dataframes(results_df, filtered_df)
+                print("Skipped main filter, group={}:\n".format(name))
 
         return results_df
 
