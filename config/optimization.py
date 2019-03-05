@@ -60,7 +60,9 @@ class StrategyOptimizationFactory(object):
     # Step5 configuration
     _STEP5_FILTERS = GroupByCombinationsFilter(
         ["Currency Pair"],
-        ["FwTest: Combined Net Profit", "FwTest: Combined Equity Curve R-value"],
+        ["Net Profit", "Avg Monthly Net Profit, %", "Max Drawdown, %", "Win Rate, %", "Winning Months, %", "Profit Factor", "SQN", "Equity Curve Angle",
+         "Equity Curve R-value", "FwTest: Net Profit", "FwTest: Avg Monthly Net Profit, %", "FwTest: Max Drawdown, %", "FwTest: Win Rate, %", "FwTest: Winning Months, %",
+         "FwTest: Profit Factor", "FwTest: SQN", "FwTest: Equity Curve Angle", "FwTest: Equity Curve R-value", "FwTest: Combined Net Profit", "FwTest: Combined Equity Curve Angle", "FwTest: Combined Equity Curve R-value"],
         [False, True]
     )
 

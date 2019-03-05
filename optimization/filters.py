@@ -144,7 +144,13 @@ class GroupByCombinationsFilter(Filter):
             result = None
         return result
 
-    def calc_variation(self, grouped_df, group_sortby, sequence_sort_desc):
+    def get_combination_key_str(self, group_sortby, sequence_sort_desc):
+        return "group_sortby={}, sequence_sort_desc={}".format(group_sortby, sequence_sort_desc)
+
+    def get_combination_str(self, row):
+        return "- {}-{}-{}-{}, FwTest: Combined Net Profit={}".format(row["Strategy ID"], row["Exchange"], row["Currency Pair"], row["Timeframe"], round(row["FwTest: Combined Net Profit"]))
+
+    def calc_portfolio_combination(self, grouped_df, group_sortby, sequence_sort_desc):
         result_arr = []
         sorted_groups_arr = []
         for name, group_df in grouped_df:
@@ -167,34 +173,40 @@ class GroupByCombinationsFilter(Filter):
                     break
 
         result_pd = pd.DataFrame(result_arr)
-        return result_pd.sort_values(by='Strategy ID', ascending=True)
+        result_pd = result_pd.sort_values(by='Strategy ID', ascending=True)
 
-    def get_variation_key_str(self, row):
-        return "- {}-{}-{}-{}, FwTest: Combined Net Profit={}".format(row["Strategy ID"], row["Exchange"], row["Currency Pair"], row["Timeframe"], round(row["FwTest: Combined Net Profit"]))
+        sum_val = result_pd[['FwTest: Combined Net Profit']].sum(axis=0).values[0]
+        combination_key = self.get_combination_key_str(group_sortby, sequence_sort_desc)
+        print("----------------------------------------------  Portolio combination: Key: {}  ----------------------".format(combination_key))
+        for index, row in result_pd.iterrows():
+            print("{}".format(self.get_combination_str(row)))
+        print("Portfolio Combined Net Profit={}\n".format(round(sum_val)))
 
-    def get_best_variation(self, variations):
-        variations_dict = {}
-        for result_pd in variations:
-            sum_val = result_pd[['FwTest: Combined Net Profit']].sum(axis=0).values[0]
-            print("----------------------------------------------  Portolio variation: ------------------------------------------------")
-            for index, row in result_pd.iterrows():
-                print("{}".format(self.get_variation_key_str(row)))
-            print("Sum={}\n".format(round(sum_val)))
-            variations_dict[sum_val] = result_pd
+        return combination_key, sum_val, result_pd
 
-        sorted_arr = sorted(variations_dict.items(), key=lambda x: x[0], reverse=True)
-        print("**************************** Selected portfolio variation: Sum={}\n".format(round(sorted_arr[0][0])))
-        return sorted_arr[0][1]
+    def get_best_combination(self, combinations):
+        combinations_dict = {}
+        for combination_key, sum_val, result_pd in combinations:
+            combinations_dict[combination_key] = [sum_val, result_pd]
+
+        sorted_arr = sorted(combinations_dict.items(), key=lambda x: x[1][0], reverse=True)
+        print("**************************** Total number of portfolio combinations: {}\n".format(len(sorted_arr)))
+        best_combination = sorted_arr[0]
+        key = best_combination[0]
+        net_profit = round(best_combination[1][0])
+        best_result_pd = best_combination[1][1]
+        print("**************************** Best portfolio combination: Key: {}, Portfolio Combined Net Profit: {}\n".format(key, net_profit))
+        return best_result_pd
 
     def filter(self, df):
         df_copy = df.copy()
         grouped_df = df_copy.groupby(self.groupby_list)
 
-        variations = []
+        combinations = []
         for group_sortby_var in self.group_sortby_variations:
             for sequence_sort_desc_var in self.sequence_sort_desc_variations:
-                variations.append(self.calc_variation(grouped_df, group_sortby_var, sequence_sort_desc_var))
+                combinations.append(self.calc_portfolio_combination(grouped_df, group_sortby_var, sequence_sort_desc_var))
 
-        result_pd = self.get_best_variation(variations)
+        result_pd = self.get_best_combination(combinations)
 
         return result_pd

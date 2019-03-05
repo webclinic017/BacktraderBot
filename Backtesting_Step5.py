@@ -69,29 +69,6 @@ class BacktestingStep5(object):
         filter = StrategyOptimizationFactory.get_filters_step5()
         return filter.filter(df)
 
-    def get_value_index(self, arr, val):
-        try:
-            result = arr.index(val)
-        except ValueError:
-            result = None
-        return result
-
-    def get_top_rows_per_strategy(self, df):
-        result = []
-        selected_strategies_arr = []
-        selected_currencypairs_arr = []
-        df_copy = df.copy().reset_index(drop=False).sort_values(by='FwTest: Combined Net Profit', ascending=False)
-        for index, row in df_copy.iterrows():
-            strategy = row["Strategy ID"]
-            currency_pair = row["Currency Pair"]
-            if self.get_value_index(selected_strategies_arr, strategy) is None and self.get_value_index(selected_currencypairs_arr, currency_pair) is None:
-                selected_strategies_arr.append(strategy)
-                selected_currencypairs_arr.append(currency_pair)
-                result.append(row)
-        result_pd = pd.DataFrame(result)
-        result_pd = result_pd.sort_values(by='Strategy ID', ascending=True)
-        return result_pd
-
     def create_model(self, df, args):
         generator = Step5ModelGenerator()
         model = generator.generate_model(df, args)
@@ -172,6 +149,7 @@ class BacktestingStep5(object):
         bktest_equity_curve_df = self.read_csv_data(self.get_bktest_equity_curve_filename(args))
         fwtest_equity_curve_df = self.read_csv_data(self.get_fwtest_equity_curve_filename(args))
         self._equity_curve_plotter.generate_combined_top_results_images_step5(top_rows_df, bktest_equity_curve_df, fwtest_equity_curve_df, args)
+        self._equity_curve_plotter.generate_combined_images_step4(top_rows_df, bktest_equity_curve_df, fwtest_equity_curve_df, args)
 
         self.cleanup()
 
