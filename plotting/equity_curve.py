@@ -122,16 +122,17 @@ class EquityCurvePlotter(object):
             text_lines_arr.append("Parameters: {}".format(parameters_str))
 
         daterange_str        = self.get_column_value_by_name(row, 'Date Range', prefix, is_fwtest)
-        startcash_str        = self.get_column_value_by_name(row, 'Start Cash', prefix, is_fwtest)
+        startcash_str        = round(self.get_column_value_by_name(row, 'Start Cash', prefix, is_fwtest))
         total_closed_trades  = self.get_column_value_by_name(row, 'Total Closed Trades', prefix, is_fwtest)
+        net_profit           = round(self.get_column_value_by_name(row, 'Net Profit', prefix, is_fwtest))
         net_profit_pct       = self.get_column_value_by_name(row, 'Net Profit, %', prefix, is_fwtest)
         max_drawdown_pct     = self.get_column_value_by_name(row, 'Max Drawdown, %', prefix, is_fwtest)
         max_drawdown_length  = self.get_column_value_by_name(row, 'Max Drawdown Length', prefix, is_fwtest)
-        text_lines_arr.append("{} Date Range: {}, {} Start Cash: {}, {} Total Closed Trades: {}, {} Net Profit,%: {}%, {} Max Drawdown,%: {}%, {} Max Drawdown Length: {}".format(prefix, daterange_str, prefix, startcash_str, prefix, total_closed_trades, prefix, net_profit_pct, prefix, max_drawdown_pct, prefix, max_drawdown_length))
+        text_lines_arr.append("{} Date Range: {}, {} Start Cash: {}, {} Total Closed Trades: {}, {} Net Profit: {}, {} Net Profit,%: {}%, {} Max Drawdown,%: {}%, {} Max Drawdown Length: {}".format(prefix, daterange_str, prefix, startcash_str, prefix, total_closed_trades, prefix, net_profit, prefix, net_profit_pct, prefix, max_drawdown_pct, prefix, max_drawdown_length))
 
         win_rate_pct         = self.get_column_value_by_name(row, 'Win Rate, %', prefix, is_fwtest)
         winning_months_pct   = self.get_column_value_by_name(row, 'Winning Months, %', prefix, is_fwtest)
-        profit_factor        = self.get_column_value_by_name(row, 'Profit Factor', prefix, is_fwtest)
+        profit_factor        = round(self.get_column_value_by_name(row, 'Profit Factor', prefix, is_fwtest), 3)
         sqn                  = self.get_column_value_by_name(row, 'SQN', prefix, is_fwtest)
         text_lines_arr.append("{} Win Rate,%: {}, {} Winning Months,%: {}%, {} Profit Factor: {}, {} SQN: {}".format(prefix, win_rate_pct, prefix, winning_months_pct, prefix, profit_factor, prefix, sqn))
 

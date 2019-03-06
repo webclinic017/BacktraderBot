@@ -18,7 +18,7 @@ class StrategyOptimizationFactory(object):
 
     _STEP2_MAX_DRAWDOWN_PCT_VALUE_FILTER = ValueFilter("Max Drawdown, %", -50, False)
 
-    _STEP2_NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 50, False)
+    _STEP2_NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 10, False)
 
     _STEP2_EQUITY_CURVE_ANGLE_VALUE_FILTER = ValueFilter("Equity Curve Angle", 5, False)
 

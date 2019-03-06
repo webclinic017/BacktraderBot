@@ -99,8 +99,7 @@ class BacktestingStep3(object):
 
         parser.add_argument('-l', '--lottype',
                             type=str,
-                            default="Fixed",
-                            required=True,
+                            default=AppConfig.get_global_lot_type(),
                             choices=["Percentage", "Fixed"],
                             help='Lot type')
 

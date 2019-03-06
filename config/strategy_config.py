@@ -5,7 +5,8 @@ class AppConfig(object):
 
     _GLOBAL_STRATEGY_PARAMS_DICT = {
             "DEFAULT_START_CASH_VALUE": 15000,
-            "DEFAULT_LOT_SIZE": 1500,
+            "DEFAULT_LOT_SIZE": 10,
+            "DEFAULT_LOT_TYPE": "Percentage",
             "STEP1_ENABLE_FILTERING": True,
             "STEP2_ENABLE_FILTERING": True,
             "STEP4_ENABLE_FILTERING": True,
@@ -106,7 +107,8 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000
+                "lotsize": 98000,
+                "lottype": "Fixed"
             },
             {
                 "needlong": True,
@@ -132,7 +134,8 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000
+                "lotsize": 98000,
+                "lottype": "Fixed"
             },
             {
                 "sensup": 0,
@@ -159,7 +162,8 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000
+                "lotsize": 98000,
+                "lottype": "Fixed"
             },
             {
                 "needlong": True,
@@ -189,7 +193,8 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000
+                "lotsize": 98000,
+                "lottype": "Fixed"
             },
             {
                 "needlong": True,
@@ -213,7 +218,8 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000
+                "lotsize": 98000,
+                "lottype": "Fixed"
             },  {
                 "needlong": True,
                 "needshort": True,
@@ -234,7 +240,8 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000
+                "lotsize": 98000,
+                "lottype": "Fixed"
             },  {
                 "needlong": True,
                 "needshort": True,
@@ -257,7 +264,8 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000
+                "lotsize": 98000,
+                "lottype": "Fixed"
             },  {
                 "needlong": True,
                 "needshort": True,
@@ -280,6 +288,7 @@ class AppConfig(object):
                 "timeframe": "1h",
                 "startcash": 100000,
                 "lotsize": 98000,
+                "lottype": "Fixed"
             },  {
                 "needlong": True,
                 "needshort": False,
@@ -302,6 +311,10 @@ class AppConfig(object):
     @classmethod
     def get_global_lot_size(cls):
         return cls._GLOBAL_STRATEGY_PARAMS_DICT["DEFAULT_LOT_SIZE"]
+
+    @classmethod
+    def get_global_lot_type(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["DEFAULT_LOT_TYPE"]
 
     @classmethod
     def is_global_step1_enable_filtering(cls):

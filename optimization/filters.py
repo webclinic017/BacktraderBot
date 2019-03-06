@@ -169,21 +169,27 @@ class GroupByCombinationsFilter(Filter):
                     result_arr.append(row)
                     break
 
+        if len(selected_currencypairs_arr) < len(sequence_df_arr):  # Skip this combination if number of selected currencies less than the number of original grouped currencies
+            return []
+
         result_pd = pd.DataFrame(result_arr)
         result_pd = result_pd.sort_values(by='Strategy ID', ascending=True)
 
         sum_val = result_pd[['FwTest: Combined Net Profit']].sum(axis=0).values[0]
         combination_key = self.get_combination_key_str(group_sortby, sequence_sort_desc)
-        print("----------------------------------------------  Portolio combination: Key: {}  ----------------------".format(combination_key))
+        print("----------------------------------------------  Portfolio combination: Key: {}  ----------------------".format(combination_key))
         for index, row in result_pd.iterrows():
             print("{}".format(self.get_combination_str(row)))
         print("Portfolio Combined Net Profit={}\n".format(round(sum_val)))
 
-        return combination_key, sum_val, result_pd
+        return [combination_key, sum_val, result_pd]
 
     def get_best_combination(self, combinations):
         combinations_dict = {}
-        for combination_key, sum_val, result_pd in combinations:
+        for combination in combinations:
+            combination_key = combination[0]
+            sum_val = combination[1]
+            result_pd = combination[2]
             combinations_dict[combination_key] = [sum_val, result_pd]
 
         sorted_arr = sorted(combinations_dict.items(), key=lambda x: x[1][0], reverse=True)
@@ -202,7 +208,9 @@ class GroupByCombinationsFilter(Filter):
         combinations = []
         for group_sortby_var in self.group_sortby_variations:
             for sequence_sort_desc_var in self.sequence_sort_desc_variations:
-                combinations.append(self.calc_portfolio_combination(grouped_df, group_sortby_var, sequence_sort_desc_var))
+                combination = self.calc_portfolio_combination(grouped_df, group_sortby_var, sequence_sort_desc_var)
+                if len(combination) > 0:
+                    combinations.append(combination)
 
         result_pd = self.get_best_combination(combinations)
 

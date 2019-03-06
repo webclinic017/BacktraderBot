@@ -9,4 +9,4 @@ declare exchange=bitfinex
 pkill python
 pkill python
 
-python Backtesting_Step3.py -r $runid -l Fixed -d $testdaterange -p $columnnameprefix
+python Backtesting_Step3.py -r $runid -d $testdaterange -p $columnnameprefix

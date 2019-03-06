@@ -29,6 +29,7 @@ class DebugStrategy(object):
         self._timeframe = None
         self._startcash = None
         self._lotsize = None
+        self._lottype = None
         self._cerebro = None
         self._strategy_enum = None
         self._params = None
@@ -75,7 +76,7 @@ class DebugStrategy(object):
 
         return parser.parse_args()
 
-    def init_cerebro(self, args, startcash, lotsize):
+    def init_cerebro(self, args, startcash, lotsize, lottype):
         # Create an instance of cerebro
         self._cerebro = bt.Cerebro(cheat_on_open=True)
 
@@ -88,7 +89,7 @@ class DebugStrategy(object):
         self._cerebro.addanalyzer(TVTradeAnalyzer, _name="ta", cash=startcash)
 
         # add the sizer
-        if args.lottype != "" and args.lottype == "Percentage":
+        if lottype != "" and lottype == "Percentage":
             self._cerebro.addsizer(VariablePercentSizer, percents=lotsize, debug=args.debug)
         else:
             self._cerebro.addsizer(FixedCashSizer, cashamount=lotsize, commission=args.commission)
@@ -108,6 +109,7 @@ class DebugStrategy(object):
         self._timeframe = base_params["timeframe"]
         self._startcash = base_params["startcash"]
         self._lotsize = base_params["lotsize"]
+        self._lottype = base_params["lottype"]
         self._params = params_dict.copy()
         self._params.update({("debug", args.debug)})
 
@@ -290,8 +292,9 @@ class DebugStrategy(object):
 
         startcash = self._startcash
         lotsize = self._lotsize
+        lottype = self._lottype
 
-        self.init_cerebro(args, startcash, lotsize)
+        self.init_cerebro(args, startcash, lotsize, lottype)
 
         self.add_strategy()
 
