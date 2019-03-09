@@ -5,12 +5,14 @@ class AppConfig(object):
 
     _GLOBAL_STRATEGY_PARAMS_DICT = {
             "DEFAULT_START_CASH_VALUE": 15000,
-            "DEFAULT_LOT_SIZE": 10,
-            "DEFAULT_LOT_TYPE": "Percentage",
+            "DEFAULT_LOT_SIZE": 1500,
+            "DEFAULT_LOT_TYPE": "Fixed",
             "STEP1_ENABLE_FILTERING": True,
             "STEP2_ENABLE_FILTERING": True,
             "STEP4_ENABLE_FILTERING": True,
             "STEP5_ENABLE_FILTERING": True,
+            "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
+            "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
         }
 
     _STEP1_STRATEGY_PARAMS_DICT = {
@@ -106,26 +108,26 @@ class AppConfig(object):
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
-                "startcash": 100000,
-                "lotsize": 98000,
-                "lottype": "Fixed"
+                "startcash": 15000,
+                "lotsize": 50,
+                "lottype": "Percentage"
             },
             {
                 "needlong": True,
-                "needshort": True,
+                "needshort": False,
                 "needstops": False,
                 "stoppercent": 5,
                 "usefastsma": True,
-                "fastlen": 5,
-                "slowlen": 23,
+                "fastlen": 4,
+                "slowlen": 21,
                 "bars": 1,
                 "needex": False,
                 "fromyear": 2014,
-                "toyear": 2019,
+                "toyear": 2017,
                 "frommonth": 1,
-                "tomonth": 1,
+                "tomonth": 6,
                 "fromday": 1,
-                "today": 31,
+                "today": 30,
             }
         ],
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: [
@@ -238,9 +240,9 @@ class AppConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
-                "timeframe": "1h",
-                "startcash": 100000,
-                "lotsize": 98000,
+                "timeframe": "3h",
+                "startcash": 18255,
+                "lotsize": 1500,
                 "lottype": "Fixed"
             },  {
                 "needlong": True,
@@ -249,14 +251,14 @@ class AppConfig(object):
                 "mult": 2.0,
                 "lengthKC": 20,
                 "multKC": 1.5,
-                "usecolor": True,
-                "usebody": True,
+                "usecolor": False,
+                "usebody": False,
                 "fromyear": 2018,
-                "toyear": 2018,
-                "frommonth": 10,
-                "tomonth": 10,
+                "toyear": 2019,
+                "frommonth": 8,
+                "tomonth": 2,
                 "fromday": 1,
-                "today": 31,
+                "today": 28,
             }],
         BTStrategyEnum.S007_ALEX_NORO_MULTIMA_STRATEGY_ID: [
             {
@@ -331,6 +333,14 @@ class AppConfig(object):
     @classmethod
     def is_global_step5_enable_filtering(cls):
         return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP5_ENABLE_FILTERING"]
+
+    @classmethod
+    def is_global_step2_enable_equitycurve_img_generation(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION"]
+
+    @classmethod
+    def is_global_step4_enable_equitycurve_img_generation(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION"]
 
     @classmethod
     def get_step1_strategy_params(cls, strategy_enum):

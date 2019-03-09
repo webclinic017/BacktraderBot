@@ -45,10 +45,10 @@ class BacktestModelGenerator(object):
                 num_positive_netprofit_months += 1
         return round(num_positive_netprofit_months * 100 / float(num_months) if num_months > 0 else 0, 2)
 
-    def getlotsize(self, args):
-        return "Lot{}{}".format(args.lotsize, "Pct" if args.lottype == "Percentage" else "")
+    def getlotsize(self, lotsize, lottype):
+        return "Lot{}{}".format(lotsize, "Pct" if lottype == "Percentage" else "")
 
-    def populate_model_data(self, model, backtest_run_results, strategy_id, exchange, symbol, timeframe, args, proc_daterange):
+    def populate_model_data(self, model, backtest_run_results, strategy_id, exchange, symbol, timeframe, args, lotsize, lottype, proc_daterange):
         # Generate backtesting model data
         for run in backtest_run_results:
             for strategy in run:
@@ -84,7 +84,7 @@ class BacktestModelGenerator(object):
                 equitycurvestderr = round(ta_analysis.total.equity.stats.std_err, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'std_err']) else 0
 
                 if self._needfiltering is False or self._needfiltering is True and net_profit > 0 and total_closed > 0:
-                    model.add_result_row(strategy_id, exchange, symbol, timeframe, parameters, proc_daterange, startcash, self.getlotsize(args),
+                    model.add_result_row(strategy_id, exchange, symbol, timeframe, parameters, proc_daterange, startcash, self.getlotsize(lotsize, lottype),
                                          total_closed, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, strike_rate,
                                          num_winning_months, profitfactor, buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle,
                                          equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)

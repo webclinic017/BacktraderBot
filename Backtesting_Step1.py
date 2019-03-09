@@ -401,7 +401,7 @@ class BacktestingStep1(object):
     def create_model(self, run_results, args):
         model = BacktestModel(args.fromyear, args.frommonth, args.toyear, args.tomonth)
         generator = BacktestModelGenerator(self._ENABLE_FILTERING)
-        generator.populate_model_data(model, run_results, args.strategy, args.exchange, args.symbol, args.timeframe, args, self.getdaterange(args))
+        generator.populate_model_data(model, run_results, args.strategy, args.exchange, args.symbol, args.timeframe, args, args.lotsize, args.lottype, self.getdaterange(args))
         return model
 
     def printfinalresultsheader(self, writer, model):

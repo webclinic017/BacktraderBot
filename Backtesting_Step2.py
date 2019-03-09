@@ -14,6 +14,7 @@ from config.strategy_config import AppConfig
 class BacktestingStep2(object):
 
     _ENABLE_FILTERING = AppConfig.is_global_step2_enable_filtering()
+    _GENERATE_EQUITYCURVE_IMAGES = AppConfig.is_global_step2_enable_filtering()
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
@@ -112,6 +113,10 @@ class BacktestingStep2(object):
             writer.writerow(item)
         self._ofile1.flush()
 
+    def generate_equitycurve_images(self, step2_results_df, bktest_equity_curve_df, args):
+        if AppConfig.is_global_step2_enable_equitycurve_img_generation():
+            self._equity_curve_plotter.generate_images(step2_results_df, bktest_equity_curve_df, args)
+
     def cleanup(self):
         self._ofile1.close()
 
@@ -142,7 +147,7 @@ class BacktestingStep2(object):
 
         bktest_equity_curve_df = self.read_csv_data(self._bktest_equity_curve_filename)
 
-        self._equity_curve_plotter.generate_images(step2_results_df, bktest_equity_curve_df, args)
+        self.generate_equitycurve_images(step2_results_df, bktest_equity_curve_df, args)
 
         self.cleanup()
 

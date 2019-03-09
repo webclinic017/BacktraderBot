@@ -427,7 +427,7 @@ class BacktestingStep3(object):
 
                             run_results = self.run_strategies(runner)
                             bktest_model = step3_model.get_backtest_model()
-                            generator.populate_model_data(bktest_model, run_results, strategy, exchange, symbol, timeframe, args, args.testdaterange)
+                            generator.populate_model_data(bktest_model, run_results, strategy, exchange, symbol, timeframe, args, args.lotsize, args.lottype, args.testdaterange)
 
         return step3_model
 

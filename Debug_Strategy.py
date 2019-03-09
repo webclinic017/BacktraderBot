@@ -54,12 +54,6 @@ class DebugStrategy(object):
                             choices=["Percentage", "Fixed"],
                             help='The type of commission to apply to a trade')
 
-        parser.add_argument('-l', '--lottype',
-                            type=str,
-                            default="Fixed",
-                            choices=["Percentage", "Fixed"],
-                            help='Lot type')
-
         parser.add_argument('--commission',
                             default=0.0015,
                             type=float,
@@ -111,7 +105,12 @@ class DebugStrategy(object):
         self._lotsize = base_params["lotsize"]
         self._lottype = base_params["lottype"]
         self._params = params_dict.copy()
-        self._params.update({("debug", args.debug)})
+        self._params.update(
+            {
+                ("debug", args.debug),
+                ("startcash", self._startcash)
+            }
+        )
 
     def get_marketdata_filename(self, exchange, symbol, timeframe):
         return './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(exchange, symbol, timeframe, exchange, symbol, timeframe)
@@ -271,11 +270,10 @@ class DebugStrategy(object):
         debug_params = self._params
         model = BacktestModel(debug_params["fromyear"], debug_params["frommonth"], debug_params["toyear"], debug_params["tomonth"])
         generator = BacktestModelGenerator(False)
-        generator.populate_model_data(model, run_results, args.strategy, self._exchange, self._currency_pair, self._timeframe, args, self.getdaterange(debug_params))
+        generator.populate_model_data(model, run_results, args.strategy, self._exchange, self._currency_pair, self._timeframe, args, self._lotsize, self._lottype, self.getdaterange(debug_params))
         return model
 
-    def render_equity_curve_image(self, strategies, args):
-        bktest_model = self.create_model([strategies], args)
+    def render_equity_curve_image(self, bktest_model, args):
         bktest_results = bktest_model.get_model_data_arr()
         bktest_results_df = pd.DataFrame(bktest_results, columns=bktest_model.get_header_names())
         equity_curve = bktest_model.get_equitycurvedata_model().get_model_data_arr()
@@ -290,11 +288,7 @@ class DebugStrategy(object):
         self._strategy_enum = self.get_strategy_enum(args)
         self.init_params(self._strategy_enum, args)
 
-        startcash = self._startcash
-        lotsize = self._lotsize
-        lottype = self._lottype
-
-        self.init_cerebro(args, startcash, lotsize, lottype)
+        self.init_cerebro(args, self._startcash, self._lotsize, self._lottype)
 
         self.add_strategy()
 
@@ -304,9 +298,10 @@ class DebugStrategy(object):
         strategies = self._cerebro.run()
         executed_strat = strategies[0]
 
-        self.print_all_results(executed_strat, startcash)
+        self.print_all_results(executed_strat, self._startcash)
 
-        self.render_equity_curve_image(strategies, args)
+        bktest_model = self.create_model([strategies], args)
+        self.render_equity_curve_image(bktest_model, args)
 
 
 def main():

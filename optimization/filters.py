@@ -163,14 +163,14 @@ class GroupByCombinationsFilter(Filter):
             for index, row in sequence_df_copy.iterrows():
                 strategy = row["Strategy ID"]
                 currency_pair = row["Currency Pair"]
-                if self.get_value_index(selected_strategies_arr, strategy) is None and self.get_value_index(selected_currencypairs_arr, currency_pair) is None:
+                if self.get_value_index(selected_currencypairs_arr, currency_pair) is None: #self.get_value_index(selected_strategies_arr, strategy) is None:
                     selected_strategies_arr.append(strategy)
                     selected_currencypairs_arr.append(currency_pair)
                     result_arr.append(row)
                     break
 
-        if len(selected_currencypairs_arr) < len(sequence_df_arr):  # Skip this combination if number of selected currencies less than the number of original grouped currencies
-            return []
+        #if len(selected_currencypairs_arr) < len(sequence_df_arr):  # Skip this combination if number of selected currencies less than the number of original grouped currencies
+        #    return []
 
         result_pd = pd.DataFrame(result_arr)
         result_pd = result_pd.sort_values(by='Strategy ID', ascending=True)

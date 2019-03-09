@@ -18,16 +18,16 @@ class StrategyOptimizationFactory(object):
 
     _STEP2_MAX_DRAWDOWN_PCT_VALUE_FILTER = ValueFilter("Max Drawdown, %", -50, False)
 
-    _STEP2_NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 10, False)
+    _STEP2_NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 20, False)
 
-    _STEP2_EQUITY_CURVE_ANGLE_VALUE_FILTER = ValueFilter("Equity Curve Angle", 5, False)
+    _STEP2_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("Equity Curve R-value", 0.8, False)
 
-    _STEP2_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("Equity Curve R-value", 0.7, False)
+    _STEP2_TOTAL_CLOSED_TRADES_TOP_N_PCT_VALUE_FILTER = TopNPercentFilter("Total Closed Trades", 50, False)
 
-    _STEP2_MAX_DRAWDOWN_PCT_TOP_N_PCT_VALUE_FILTER = TopNPercentFilter("Max Drawdown, %", 25, False)
+    _STEP2_NET_PROFIT_PCT_TOP_N_PCT_VALUE_FILTER = TopNPercentFilter("Net Profit, %", 50, False)
 
-    _STEP2_MAIN_FILTER_PART = FilterSequence([_STEP2_TOTAL_CLOSED_TRADES_VALUE_FILTER, _STEP2_MAX_DRAWDOWN_PCT_VALUE_FILTER, _STEP2_NET_PROFIT_VALUE_FILTER, _STEP2_EQUITY_CURVE_ANGLE_VALUE_FILTER,
-                                                _STEP2_EQUITY_CURVE_R_VALUE_FILTER, _STEP2_MAX_DRAWDOWN_PCT_TOP_N_PCT_VALUE_FILTER])
+    _STEP2_MAIN_FILTER_PART = FilterSequence([_STEP2_TOTAL_CLOSED_TRADES_VALUE_FILTER, _STEP2_MAX_DRAWDOWN_PCT_VALUE_FILTER, _STEP2_NET_PROFIT_VALUE_FILTER, _STEP2_TOTAL_CLOSED_TRADES_TOP_N_PCT_VALUE_FILTER,
+                                              _STEP2_NET_PROFIT_PCT_TOP_N_PCT_VALUE_FILTER, _STEP2_EQUITY_CURVE_R_VALUE_FILTER])
 
     _STEP2_FILTERS = GroupByConditionalFilter(
         ["Strategy ID", "Currency Pair"],

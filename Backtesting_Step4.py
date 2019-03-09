@@ -106,6 +106,12 @@ class BacktestingStep4(object):
         for item in print_list:
             writer.writerow(item)
 
+    def generate_equitycurve_images(self, step4_results_df, args):
+        if AppConfig.is_global_step4_enable_equitycurve_img_generation():
+            bktest_equity_curve_df = self.read_csv_data(self.get_bktest_equity_curve_filename(args))
+            fwtest_equity_curve_df = self.read_csv_data(self.get_fwtest_equity_curve_filename(args))
+            self._equity_curve_plotter.generate_combined_images_step4(step4_results_df, bktest_equity_curve_df, fwtest_equity_curve_df, args)
+
     def cleanup(self):
         self._ofile1.close()
 
@@ -132,9 +138,7 @@ class BacktestingStep4(object):
 
         self.printfinalresults(self._writer1, step4_results_df)
 
-        bktest_equity_curve_df = self.read_csv_data(self.get_bktest_equity_curve_filename(args))
-        fwtest_equity_curve_df = self.read_csv_data(self.get_fwtest_equity_curve_filename(args))
-        self._equity_curve_plotter.generate_combined_images_step4(step4_results_df, bktest_equity_curve_df, fwtest_equity_curve_df, args)
+        self.generate_equitycurve_images(step4_results_df, args)
 
         self.cleanup()
 
