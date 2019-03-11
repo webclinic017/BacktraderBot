@@ -198,7 +198,7 @@ class TVTradeAnalyzer(Analyzer):
             self.rets.total.open += 1
             if self.buyandholdcalcbegin is False:
                 self.buyandholdcalcbegin = True
-                self.buyandholdnumshares = int(self.p.cash / trade.price)
+                self.buyandholdnumshares = self.p.cash / trade.price
                 self.buyandholdstartvalue = self.buyandholdnumshares * trade.price         
 
         elif trade.status == trade.Closed:

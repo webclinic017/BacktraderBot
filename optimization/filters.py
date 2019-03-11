@@ -122,11 +122,10 @@ class GroupByConditionalFilter(Filter):
 
 class GroupByCombinationsFilter(Filter):
 
-    def __init__(self, groupby_list, group_sortby_variations, sequence_sort_desc_variations):
+    def __init__(self, groupby_list, group_sortby_variations):
         super().__init__()
         self.groupby_list = groupby_list
         self.group_sortby_variations = group_sortby_variations
-        self.sequence_sort_desc_variations = sequence_sort_desc_variations
 
     def merge_dataframes(self, target_df, src_df):
         if target_df is None:
@@ -141,20 +140,20 @@ class GroupByCombinationsFilter(Filter):
             result = None
         return result
 
-    def get_combination_key_str(self, group_sortby, sequence_sort_desc):
-        return "group_sortby={}, sequence_sort_desc={}".format(group_sortby, sequence_sort_desc)
+    def get_combination_key_str(self, group_sortby):
+        return "group_sortby={}".format(group_sortby)
 
     def get_combination_str(self, row):
         return "- {}-{}-{}-{}, FwTest: Combined Net Profit={}".format(row["Strategy ID"], row["Exchange"], row["Currency Pair"], row["Timeframe"], round(row["FwTest: Combined Net Profit"]))
 
-    def calc_portfolio_combination(self, grouped_df, group_sortby, sequence_sort_desc):
+    def calc_portfolio_combination(self, grouped_df, group_sortby):
         result_arr = []
         sorted_groups_arr = []
         for name, group_df in grouped_df:
             group_sorted = group_df.sort_values(by=group_sortby, ascending=False)
             sorted_groups_arr.append(group_sorted)
 
-        sequence_df_arr = sorted(sorted_groups_arr, key=lambda x: x.head(1)[group_sortby].values[0], reverse=sequence_sort_desc)
+        sequence_df_arr = sorted(sorted_groups_arr, key=lambda x: x.head(1)[group_sortby].values[0], reverse=False)
 
         selected_strategies_arr = []
         selected_currencypairs_arr = []
@@ -163,7 +162,7 @@ class GroupByCombinationsFilter(Filter):
             for index, row in sequence_df_copy.iterrows():
                 strategy = row["Strategy ID"]
                 currency_pair = row["Currency Pair"]
-                if self.get_value_index(selected_currencypairs_arr, currency_pair) is None: #self.get_value_index(selected_strategies_arr, strategy) is None:
+                if self.get_value_index(selected_currencypairs_arr, currency_pair) is None: #and self.get_value_index(selected_strategies_arr, strategy) is None:
                     selected_strategies_arr.append(strategy)
                     selected_currencypairs_arr.append(currency_pair)
                     result_arr.append(row)
@@ -176,7 +175,7 @@ class GroupByCombinationsFilter(Filter):
         result_pd = result_pd.sort_values(by='Strategy ID', ascending=True)
 
         sum_val = result_pd[['FwTest: Combined Net Profit']].sum(axis=0).values[0]
-        combination_key = self.get_combination_key_str(group_sortby, sequence_sort_desc)
+        combination_key = self.get_combination_key_str(group_sortby)
         print("----------------------------------------------  Portfolio combination: Key: {}  ----------------------".format(combination_key))
         for index, row in result_pd.iterrows():
             print("{}".format(self.get_combination_str(row)))
@@ -207,10 +206,9 @@ class GroupByCombinationsFilter(Filter):
 
         combinations = []
         for group_sortby_var in self.group_sortby_variations:
-            for sequence_sort_desc_var in self.sequence_sort_desc_variations:
-                combination = self.calc_portfolio_combination(grouped_df, group_sortby_var, sequence_sort_desc_var)
-                if len(combination) > 0:
-                    combinations.append(combination)
+            combination = self.calc_portfolio_combination(grouped_df, group_sortby_var)
+            if len(combination) > 0:
+                combinations.append(combination)
 
         result_pd = self.get_best_combination(combinations)
 

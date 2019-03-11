@@ -29,13 +29,13 @@ class BacktestModel(object):
 
     def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
                        total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
-                       max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
+                       max_drawdown_length, net_profit_to_maxdd, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
                        sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope,
                        equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr):
         self._monthlystatsprefix = monthlystatsprefix
         row = BacktestReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
                                 total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct,
-                                max_drawdown_pct, max_drawdown_length, win_rate_pct, num_winning_months,
+                                max_drawdown_pct, max_drawdown_length, net_profit_to_maxdd, win_rate_pct, num_winning_months,
                                 profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats,
                                 equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue,
                                 equitycurvestderr)
@@ -60,7 +60,7 @@ class BacktestModel(object):
     def get_header_names(self):
         result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Date Range', 'Start Cash', 'Lot Size',
                   'Total Closed Trades', 'Net Profit',
-                  'Net Profit, %', 'Avg Monthly Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length', 'Win Rate, %',
+                  'Net Profit, %', 'Avg Monthly Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length', 'Net Profit To Max Drawdown', 'Win Rate, %',
                   'Winning Months, %', 'Profit Factor', 'Buy & Hold Return, %', 'SQN', 'Equity Curve Angle',
                   'Equity Curve Slope', 'Equity Curve Intercept', 'Equity Curve R-value', 'Equity Curve P-value',
                   'Equity Curve Stderr']
@@ -106,7 +106,7 @@ class BacktestModel(object):
 class BacktestReportRow(object):
     def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
                  total_closed_trades, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
-                 max_drawdown_length, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
+                 max_drawdown_length, net_profit_to_maxdd, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
                  sqn_number, monthly_stats, equitycurveangle, equitycurveslope, equitycurveintercept,
                  equitycurvervalue, equitycurvepvalue, equitycurvestderr):
         self.strategyid = strategyid
@@ -123,6 +123,7 @@ class BacktestReportRow(object):
         self.avg_monthly_net_profit_pct = avg_monthly_net_profit_pct
         self.max_drawdown_pct = max_drawdown_pct
         self.max_drawdown_length = max_drawdown_length
+        self.net_profit_to_maxdd = net_profit_to_maxdd
         self.win_rate_pct = win_rate_pct
         self.num_winning_months = num_winning_months
         self.profit_factor = profit_factor
@@ -152,6 +153,7 @@ class BacktestReportRow(object):
             self.avg_monthly_net_profit_pct,
             self.max_drawdown_pct,
             self.max_drawdown_length,
+            self.net_profit_to_maxdd,
             self.win_rate_pct,
             self.num_winning_months,
             self.profit_factor,

@@ -84,6 +84,9 @@ class BacktestingStep4(object):
             writer.writerow(row)
 
     def filter_top_records(self, df):
+        if self._ENABLE_FILTERING is False:
+            return df
+
         filter = StrategyOptimizationFactory.get_filters_step4()
         return filter.filter(df)
 

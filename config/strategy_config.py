@@ -4,8 +4,8 @@ from config.strategy_enum import BTStrategyEnum
 class AppConfig(object):
 
     _GLOBAL_STRATEGY_PARAMS_DICT = {
-            "DEFAULT_START_CASH_VALUE": 15000,
-            "DEFAULT_LOT_SIZE": 1500,
+            "DEFAULT_START_CASH_VALUE": 1500,
+            "DEFAULT_LOT_SIZE": 1470,
             "DEFAULT_LOT_TYPE": "Fixed",
             "STEP1_ENABLE_FILTERING": True,
             "STEP2_ENABLE_FILTERING": True,
@@ -108,9 +108,9 @@ class AppConfig(object):
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
-                "startcash": 15000,
-                "lotsize": 50,
-                "lottype": "Percentage"
+                "startcash": 1500,
+                "lotsize": 1470,
+                "lottype": "Fixed"
             },
             {
                 "needlong": True,

@@ -130,11 +130,12 @@ class EquityCurvePlotter(object):
         max_drawdown_length  = self.get_column_value_by_name(row, 'Max Drawdown Length', prefix, is_fwtest)
         text_lines_arr.append("{} Date Range: {}, {} Start Cash: {}, {} Total Closed Trades: {}, {} Net Profit: {}, {} Net Profit,%: {}%, {} Max Drawdown,%: {}%, {} Max Drawdown Length: {}".format(prefix, daterange_str, prefix, startcash_str, prefix, total_closed_trades, prefix, net_profit, prefix, net_profit_pct, prefix, max_drawdown_pct, prefix, max_drawdown_length))
 
+        net_profit_to_maxdd  = self.get_column_value_by_name(row, 'Net Profit To Max Drawdown', prefix, is_fwtest)
         win_rate_pct         = self.get_column_value_by_name(row, 'Win Rate, %', prefix, is_fwtest)
         winning_months_pct   = self.get_column_value_by_name(row, 'Winning Months, %', prefix, is_fwtest)
         profit_factor        = round(self.get_column_value_by_name(row, 'Profit Factor', prefix, is_fwtest), 3)
         sqn                  = self.get_column_value_by_name(row, 'SQN', prefix, is_fwtest)
-        text_lines_arr.append("{} Win Rate,%: {}, {} Winning Months,%: {}%, {} Profit Factor: {}, {} SQN: {}".format(prefix, win_rate_pct, prefix, winning_months_pct, prefix, profit_factor, prefix, sqn))
+        text_lines_arr.append("{} Net Profit To Max Drawdown: {}, {} Win Rate,%: {}, {} Winning Months,%: {}%, {} Profit Factor: {}, {} SQN: {}".format(prefix, net_profit_to_maxdd, prefix, win_rate_pct, prefix, winning_months_pct, prefix, profit_factor, prefix, sqn))
 
         equitycurveangle     = self.get_column_value_by_name(row, 'Equity Curve Angle', prefix, is_fwtest)
         equitycurveslope     = round(self.get_column_value_by_name(row, 'Equity Curve Slope', prefix, is_fwtest), 3)

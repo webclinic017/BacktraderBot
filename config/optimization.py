@@ -16,18 +16,11 @@ class StrategyOptimizationFactory(object):
     # Step 2 (Back testing) configuration
     _STEP2_TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("Total Closed Trades", 100, False)
 
-    _STEP2_MAX_DRAWDOWN_PCT_VALUE_FILTER = ValueFilter("Max Drawdown, %", -50, False)
+    _STEP2_MAX_DRAWDOWN_PCT_VALUE_FILTER = ValueFilter("Max Drawdown, %", -30, False)
 
-    _STEP2_NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 20, False)
+    _STEP2_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("Equity Curve R-value", 0.7, False)
 
-    _STEP2_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("Equity Curve R-value", 0.8, False)
-
-    _STEP2_TOTAL_CLOSED_TRADES_TOP_N_PCT_VALUE_FILTER = TopNPercentFilter("Total Closed Trades", 50, False)
-
-    _STEP2_NET_PROFIT_PCT_TOP_N_PCT_VALUE_FILTER = TopNPercentFilter("Net Profit, %", 50, False)
-
-    _STEP2_MAIN_FILTER_PART = FilterSequence([_STEP2_TOTAL_CLOSED_TRADES_VALUE_FILTER, _STEP2_MAX_DRAWDOWN_PCT_VALUE_FILTER, _STEP2_NET_PROFIT_VALUE_FILTER, _STEP2_TOTAL_CLOSED_TRADES_TOP_N_PCT_VALUE_FILTER,
-                                              _STEP2_NET_PROFIT_PCT_TOP_N_PCT_VALUE_FILTER, _STEP2_EQUITY_CURVE_R_VALUE_FILTER])
+    _STEP2_MAIN_FILTER_PART = FilterSequence([_STEP2_TOTAL_CLOSED_TRADES_VALUE_FILTER, _STEP2_MAX_DRAWDOWN_PCT_VALUE_FILTER, _STEP2_EQUITY_CURVE_R_VALUE_FILTER])
 
     _STEP2_FILTERS = GroupByConditionalFilter(
         ["Strategy ID", "Currency Pair"],
@@ -35,11 +28,13 @@ class StrategyOptimizationFactory(object):
     )
 
     # Step 4 (Forward testing) configuration
-    _STEP4_TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("FwTest: Total Closed Trades", 20, False)
+    _STEP4_TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("FwTest: Total Closed Trades", 100, False)
 
-    _STEP4_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("FwTest: Equity Curve R-value", 0.4, False)
+    _STEP4_NET_PROFIT_VALUE_FILTER = ValueFilter("FwTest: Net Profit, %", 1, False)
 
-    _STEP4_MAIN_FILTER_PART = FilterSequence([_STEP4_TOTAL_CLOSED_TRADES_VALUE_FILTER, _STEP4_EQUITY_CURVE_R_VALUE_FILTER])
+    _STEP4_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("FwTest: Equity Curve R-value", 0.7, False)
+
+    _STEP4_MAIN_FILTER_PART = FilterSequence([_STEP4_TOTAL_CLOSED_TRADES_VALUE_FILTER, _STEP4_EQUITY_CURVE_R_VALUE_FILTER, _STEP4_NET_PROFIT_VALUE_FILTER])
 
     _STEP4_FILTERS = GroupByConditionalFilter(
         ["Strategy ID", "Currency Pair"],
@@ -48,13 +43,18 @@ class StrategyOptimizationFactory(object):
 
 
     # Step5 configuration
-    _STEP5_FILTERS = GroupByCombinationsFilter(
+    _STEP5_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("FwTest: Equity Curve R-value", 0.85, False)
+
+    _STEP5_COMBINED_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("FwTest: Combined Equity Curve R-value", 0.7, False)
+
+    _STEP5_GROUPBY_FILTER = GroupByCombinationsFilter(
         ["Currency Pair"],
-        ["Net Profit", "Avg Monthly Net Profit, %", "Max Drawdown, %", "Win Rate, %", "Winning Months, %", "Profit Factor", "SQN", "Equity Curve Angle",
-         "Equity Curve R-value", "FwTest: Net Profit", "FwTest: Avg Monthly Net Profit, %", "FwTest: Max Drawdown, %", "FwTest: Win Rate, %", "FwTest: Winning Months, %",
-         "FwTest: Profit Factor", "FwTest: SQN", "FwTest: Equity Curve Angle", "FwTest: Equity Curve R-value", "FwTest: Combined Net Profit", "FwTest: Combined Equity Curve Angle", "FwTest: Combined Equity Curve R-value"],
-        [False, True]
+        ["Net Profit", "Avg Monthly Net Profit, %", "Winning Months, %", "Profit Factor",
+         "Equity Curve R-value", "FwTest: Net Profit", "FwTest: Avg Monthly Net Profit, %", "FwTest: Winning Months, %",
+         "FwTest: Profit Factor", "FwTest: Equity Curve R-value", "FwTest: Combined Net Profit", "FwTest: Combined Equity Curve R-value"],
     )
+
+    _STEP5_FILTERS = FilterSequence([_STEP5_EQUITY_CURVE_R_VALUE_FILTER, _STEP5_COMBINED_EQUITY_CURVE_R_VALUE_FILTER, _STEP5_GROUPBY_FILTER])
 
 
     @classmethod
