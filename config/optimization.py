@@ -32,9 +32,11 @@ class StrategyOptimizationFactory(object):
 
     _STEP4_NET_PROFIT_VALUE_FILTER = ValueFilter("FwTest: Net Profit, %", 1, False)
 
+    _STEP4_NET_PROFIT_TO_MAXDD_VALUE_FILTER = ValueFilter("FwTest: Net Profit To Max Drawdown", 2.0, False)
+
     _STEP4_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("FwTest: Equity Curve R-value", 0.7, False)
 
-    _STEP4_MAIN_FILTER_PART = FilterSequence([_STEP4_TOTAL_CLOSED_TRADES_VALUE_FILTER, _STEP4_EQUITY_CURVE_R_VALUE_FILTER, _STEP4_NET_PROFIT_VALUE_FILTER])
+    _STEP4_MAIN_FILTER_PART = FilterSequence([_STEP4_TOTAL_CLOSED_TRADES_VALUE_FILTER, _STEP4_EQUITY_CURVE_R_VALUE_FILTER, _STEP4_NET_PROFIT_VALUE_FILTER, _STEP4_NET_PROFIT_TO_MAXDD_VALUE_FILTER])
 
     _STEP4_FILTERS = GroupByConditionalFilter(
         ["Strategy ID", "Currency Pair"],
