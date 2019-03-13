@@ -57,10 +57,6 @@ class BacktestingStep4(object):
     def get_unique_index_values(self, df, name):
         return df.index.get_level_values(name).unique()
 
-    def filter_top_records(self, df):
-        filter = StrategyOptimizationFactory.get_filters_step4()
-        return filter.filter(df)
-
     def get_output_path(self, base_dir, args):
         return '{}/strategyrun_results/{}'.format(base_dir, args.runid)
 
@@ -141,9 +137,9 @@ class BacktestingStep4(object):
 
         self.printfinalresults(self._writer1, step4_results_df)
 
-        self.generate_equitycurve_images(step4_results_df, args)
-
         self.cleanup()
+
+        self.generate_equitycurve_images(step4_results_df, args)
 
 
 def main():

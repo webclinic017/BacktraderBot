@@ -133,11 +133,11 @@ class GroupByCombinationsFilter(Filter):
         else:
             return pd.concat([target_df, src_df])
 
-    def get_value_index(self, arr, val):
-        try:
-            result = arr.index(val)
-        except ValueError:
-            result = None
+    def get_items_by_value(self, arr, val):
+        result = []
+        for item in arr:
+            if item == val:
+                result.append(item)
         return result
 
     def get_combination_key_str(self, group_sortby):
@@ -146,30 +146,30 @@ class GroupByCombinationsFilter(Filter):
     def get_combination_str(self, row):
         return "- {}-{}-{}-{}, FwTest: Combined Net Profit={}".format(row["Strategy ID"], row["Exchange"], row["Currency Pair"], row["Timeframe"], round(row["FwTest: Combined Net Profit"]))
 
-    def calc_portfolio_combination(self, grouped_df, group_sortby):
+    def calc_portfolio_combination(self, grouped_df, group_sortby, max_number_strategies_in_portfolio):
         result_arr = []
         sorted_groups_arr = []
         for name, group_df in grouped_df:
             group_sorted = group_df.sort_values(by=group_sortby, ascending=False)
             sorted_groups_arr.append(group_sorted)
 
-        sequence_df_arr = sorted(sorted_groups_arr, key=lambda x: x.head(1)[group_sortby].values[0], reverse=False)
+        group_sequence_df_arr = sorted(sorted_groups_arr, key=lambda x: x.head(1)[group_sortby].values[0], reverse=True)
+        #group_sequence_df_arr = sorted(sorted_groups_arr, key=lambda x: len(x), reverse=True)
 
         selected_strategies_arr = []
         selected_currencypairs_arr = []
-        for sequence_df in sequence_df_arr:
-            sequence_df_copy = sequence_df.copy().reset_index(drop=False)
-            for index, row in sequence_df_copy.iterrows():
+        for sequence_item_df in group_sequence_df_arr:
+            sequence_item_df_copy = sequence_item_df.copy().reset_index(drop=False)
+            print("len(sequence_item_df_copy)={}, sequence_item_df_copy.head(1)={}\n".format(len(sequence_item_df_copy), sequence_item_df_copy.head(1).values))
+            for index, row in sequence_item_df_copy.iterrows():
                 strategy = row["Strategy ID"]
                 currency_pair = row["Currency Pair"]
-                if self.get_value_index(selected_currencypairs_arr, currency_pair) is None: #and self.get_value_index(selected_strategies_arr, strategy) is None:
+                selected_curr_num = len(self.get_items_by_value(selected_currencypairs_arr, currency_pair))
+                selected_strat_num = len(self.get_items_by_value(selected_strategies_arr, strategy))
+                if selected_curr_num == 0:# and selected_strat_num < max_number_strategies_in_portfolio:
                     selected_strategies_arr.append(strategy)
                     selected_currencypairs_arr.append(currency_pair)
                     result_arr.append(row)
-                    break
-
-        #if len(selected_currencypairs_arr) < len(sequence_df_arr):  # Skip this combination if number of selected currencies less than the number of original grouped currencies
-        #    return []
 
         result_pd = pd.DataFrame(result_arr)
         result_pd = result_pd.sort_values(by='Strategy ID', ascending=True)
@@ -200,13 +200,21 @@ class GroupByCombinationsFilter(Filter):
         print("**************************** Best portfolio combination: Key: {}, Portfolio Combined Net Profit: {}\n".format(key, net_profit))
         return best_result_pd
 
+    def get_max_number_strategies_in_portfolio(self, df):
+        df_copy = df.copy()
+        num_strategies = len(df_copy.groupby("Strategy ID"))
+        df_copy = df.copy()
+        num_currencies = len(df_copy.groupby("Currency Pair"))
+        return int(1.0 * num_currencies/num_strategies) + 1
+
     def filter(self, df):
         df_copy = df.copy()
         grouped_df = df_copy.groupby(self.groupby_list)
 
         combinations = []
+        strat_num_selected_per_curr = self.get_max_number_strategies_in_portfolio(df_copy)
         for group_sortby_var in self.group_sortby_variations:
-            combination = self.calc_portfolio_combination(grouped_df, group_sortby_var)
+            combination = self.calc_portfolio_combination(grouped_df, group_sortby_var, strat_num_selected_per_curr)
             if len(combination) > 0:
                 combinations.append(combination)
 

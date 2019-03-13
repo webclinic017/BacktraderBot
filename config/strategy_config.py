@@ -12,7 +12,7 @@ class AppConfig(object):
             "STEP4_ENABLE_FILTERING": True,
             "STEP5_ENABLE_FILTERING": True,
             "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
-            "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
+            "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
         }
 
     _STEP1_STRATEGY_PARAMS_DICT = {
