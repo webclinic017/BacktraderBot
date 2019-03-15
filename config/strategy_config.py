@@ -7,7 +7,7 @@ class AppConfig(object):
             "DEFAULT_START_CASH_VALUE": 1500,
             "DEFAULT_LOT_SIZE": 1470,
             "DEFAULT_LOT_TYPE": "Fixed",
-            "STEP1_ENABLE_FILTERING": True,
+            "STEP1_ENABLE_FILTERING": False,
             "STEP2_ENABLE_FILTERING": True,
             "STEP4_ENABLE_FILTERING": True,
             "STEP5_ENABLE_FILTERING": True,
@@ -100,6 +100,31 @@ class AppConfig(object):
             "Factor": range(1, 11),
             "ATR": 7,
         },
+        BTStrategyEnum.S009_RSI_MIN_MAX_STRATEGY_ID: {
+            "needlong": (True, False),
+            "needshort": (True, False),
+            "rsiperiod": (14, 21),
+            "rsilongopenvalue": range(25, 35, 3),
+            "rsilongclosevalue": range(65, 75, 3),
+            "rsishortopenvalue": range(65, 75, 3),
+            "rsishortclosevalue": range(25, 35, 3),
+        },
+        BTStrategyEnum.S010_ALEX_AROON_TREND_STRATEGY_ID: {
+            "needlong": (True, False),
+            "needshort": (True, False),
+            "aroon_length": range(50, 251, 25),
+            "cross_r1_start": (10, 15, 20, 25, 30),
+            "cross_r1_end": 80,
+            "cross_r2_start": (80, 85, 90),
+            "cross_r2_end": 100,
+        },
+        BTStrategyEnum.S011_EMA_CROSS_OVER_STRATEGY_ID: {
+            "needlong": (True, False),
+            "needshort": (True, False),
+            "ema_ratio": (0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99),
+            "slow_ema_period": range(60, 401, 20),
+        }
+
     }
 
     _DEBUG_STRATEGY_PARAMS_DICT = {
@@ -136,7 +161,7 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000,
+                "lotsize": 10000,
                 "lottype": "Fixed"
             },
             {
@@ -164,7 +189,7 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000,
+                "lotsize": 10000,
                 "lottype": "Fixed"
             },
             {
@@ -195,7 +220,7 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000,
+                "lotsize": 10000,
                 "lottype": "Fixed"
             },
             {
@@ -220,7 +245,7 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000,
+                "lotsize": 10000,
                 "lottype": "Fixed"
             },  {
                 "needlong": True,
@@ -266,7 +291,7 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000,
+                "lotsize": 10000,
                 "lottype": "Fixed"
             },  {
                 "needlong": True,
@@ -289,7 +314,7 @@ class AppConfig(object):
                 "currency_pair": "BTCUSDT",
                 "timeframe": "1h",
                 "startcash": 100000,
-                "lotsize": 98000,
+                "lotsize": 10000,
                 "lottype": "Fixed"
             },  {
                 "needlong": True,
@@ -303,6 +328,72 @@ class AppConfig(object):
                 "tomonth": 6,
                 "fromday": 1,
                 "today": 30,
+            }],
+        BTStrategyEnum.S009_RSI_MIN_MAX_STRATEGY_ID: [
+            {
+                "exchange": "bitfinex",
+                "currency_pair": "BTCUSDT",
+                "timeframe": "1h",
+                "startcash": 100000,
+                "lotsize": 10000,
+                "lottype": "Fixed"
+            },  {
+                "needlong": True,
+                "needshort": True,
+                "rsiperiod": 14,
+                "rsilongopenvalue": 28,
+                "rsilongclosevalue": 69,
+                "rsishortopenvalue": 72,
+                "rsishortclosevalue": 31,
+                "fromyear": 2018,
+                "toyear": 2018,
+                "frommonth": 1,
+                "tomonth": 12,
+                "fromday": 1,
+                "today": 31,
+            }],
+        BTStrategyEnum.S010_ALEX_AROON_TREND_STRATEGY_ID: [
+            {
+                "exchange": "bitfinex",
+                "currency_pair": "BTCUSDT",
+                "timeframe": "3h",
+                "startcash": 100000,
+                "lotsize": 10000,
+                "lottype": "Fixed"
+            },  {
+                "needlong": True,
+                "needshort": True,
+                "aroon_length": 200,
+                "cross_r1_start": 20,
+                "cross_r1_end": 80,
+                "cross_r2_start": 90,
+                "cross_r2_end": 100,
+                "fromyear": 2018,
+                "toyear": 2018,
+                "frommonth": 1,
+                "tomonth": 12,
+                "fromday": 1,
+                "today": 31,
+            }],
+        BTStrategyEnum.S011_EMA_CROSS_OVER_STRATEGY_ID: [
+            {
+                "exchange": "bitfinex",
+                "currency_pair": "BTCUSDT",
+                "timeframe": "1h",
+                "startcash": 100000,
+                "lotsize": 10000,
+                "lottype": "Fixed"
+            },  {
+                "needlong": True,
+                "needshort": True,
+                "ema_ratio": 0.5,
+                "slow_ema_period": 200,
+                "fromyear": 2018,
+                "toyear": 2018,
+                "frommonth": 6,
+                "tomonth": 12,
+                "fromday": 1,
+                "today": 31,
             }],
     }
 

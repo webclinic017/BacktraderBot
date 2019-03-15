@@ -7,6 +7,9 @@ from strategies.S005_triplersi import S005_AlexNoroTripleRSIStrategy
 from strategies.S006_sqmomentum import S006_AlexNoroSqueezeMomentumStrategy
 from strategies.S007_multima import S007_AlexNoroMultimaStrategy
 from strategies.S008_supertrend import S008_AlexNoroSuperTrendStrategy
+from strategies.S009_rsiminmax import S009_RSIMinMaxStrategy
+from strategies.S010_aroontrend import S010_AlexAroonTrendStrategy
+from strategies.S011_emacrossover import S011_EMACrossOverStrategy
 
 
 class BTStrategy(object):
@@ -28,6 +31,9 @@ class BTStrategyEnum(Enum):
     S006_ALEX_NORO_SQUEEZE_MOMENTUM_STRATEGY_ID = BTStrategy(S006_AlexNoroSqueezeMomentumStrategy, "S006_AlexNoroSqueezeMomentumStrategy")
     S007_ALEX_NORO_MULTIMA_STRATEGY_ID = BTStrategy(S007_AlexNoroMultimaStrategy, "S007_AlexNoroMultimaStrategy")
     S008_ALEX_NORO_SUPERTREND_STRATEGY_ID = BTStrategy(S008_AlexNoroSuperTrendStrategy, "S008_AlexNoroSuperTrendStrategy")
+    S009_RSI_MIN_MAX_STRATEGY_ID = BTStrategy(S009_RSIMinMaxStrategy, "S009_RSIMinMaxStrategy")
+    S010_ALEX_AROON_TREND_STRATEGY_ID = BTStrategy(S010_AlexAroonTrendStrategy, "S010_AlexAroonTrendStrategy")
+    S011_EMA_CROSS_OVER_STRATEGY_ID = BTStrategy(S011_EMACrossOverStrategy, "S011_EMACrossOverStrategy")
 
     @classmethod
     def get_strategy_enum_by_str(cls, strategy_str):
