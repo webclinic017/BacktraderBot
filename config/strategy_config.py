@@ -11,8 +11,8 @@ class AppConfig(object):
             "STEP2_ENABLE_FILTERING": True,
             "STEP4_ENABLE_FILTERING": True,
             "STEP5_ENABLE_FILTERING": True,
-            "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
-            "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
+            "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
+            "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
         }
 
     _STEP1_STRATEGY_PARAMS_DICT = {
@@ -332,25 +332,25 @@ class AppConfig(object):
         BTStrategyEnum.S009_RSI_MIN_MAX_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "BTCUSDT",
-                "timeframe": "1h",
-                "startcash": 100000,
-                "lotsize": 10000,
+                "currency_pair": "LTCUSDT",
+                "timeframe": "3h",
+                "startcash": 1500,
+                "lotsize": 1470,
                 "lottype": "Fixed"
             },  {
-                "needlong": True,
+                "needlong": False,
                 "needshort": True,
                 "rsiperiod": 14,
-                "rsilongopenvalue": 28,
-                "rsilongclosevalue": 69,
-                "rsishortopenvalue": 72,
+                "rsilongopenvalue": 25,
+                "rsilongclosevalue": 65,
+                "rsishortopenvalue": 74,
                 "rsishortclosevalue": 31,
-                "fromyear": 2018,
+                "fromyear": 2014,
                 "toyear": 2018,
                 "frommonth": 1,
-                "tomonth": 12,
+                "tomonth": 6,
                 "fromday": 1,
-                "today": 31,
+                "today": 30,
             }],
         BTStrategyEnum.S010_ALEX_AROON_TREND_STRATEGY_ID: [
             {
