@@ -13,6 +13,7 @@ class AppConfig(object):
             "STEP5_ENABLE_FILTERING": True,
             "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
             "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
+            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": True,    # True: generating equity curve images with closed trades as x-axis, False: otherwise use closed trade dates as x-axis
         }
 
     _STEP1_STRATEGY_PARAMS_DICT = {
@@ -432,6 +433,10 @@ class AppConfig(object):
     @classmethod
     def is_global_step4_enable_equitycurve_img_generation(cls):
         return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION"]
+
+    @classmethod
+    def is_global_equitycurve_img_x_axis_trades(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES"]
 
     @classmethod
     def get_step1_strategy_params(cls, strategy_enum):

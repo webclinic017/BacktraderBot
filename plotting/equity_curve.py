@@ -8,6 +8,7 @@ import itertools as it
 from datetime import datetime
 from bokeh.models import DatetimeTickFormatter
 from bokeh.models import NumeralTickFormatter
+from config.strategy_config import AppConfig
 from datetime import timedelta
 import json
 import os
@@ -41,36 +42,74 @@ class EquityCurvePlotter(object):
     def build_y_axis_zero_line(self):
         return Span(location=0, dimension='width', line_color='blue', line_dash='dashed', line_width=1, line_alpha=0.8)
 
+    def get_x_axis_formatter(self, x_axis_flag):
+        if x_axis_flag is True:
+            return NumeralTickFormatter(format="0")
+        else:
+            return DatetimeTickFormatter(
+                days=["%Y-%m-%d"],
+                months=["%Y-%m-%d"],
+                hours=["%Y-%m-%d"],
+                minutes=["%Y-%m-%d"]
+            )
+
+    def get_x_axis_label(self, x_axis_flag):
+        if x_axis_flag is True:
+            return "Trade Number"
+        else:
+            return "Trade Date"
+
     def build_equity_curve_plot_figure(self):
-        equity_curve_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="datetime",
-                                   toolbar_location=None, x_axis_label="Trade Date", x_axis_location="below",
+        x_axis_flag = AppConfig.is_global_equitycurve_img_x_axis_trades()
+        equity_curve_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="auto",
+                                   toolbar_location=None, x_axis_label=self.get_x_axis_label(x_axis_flag), x_axis_location="below",
                                    y_axis_label="Equity", background_fill_color="#efefef")
-        equity_curve_plot.xaxis.formatter = DatetimeTickFormatter(
-            days=["%Y-%m-%d"],
-            months=["%Y-%m-%d"],
-            hours=["%Y-%m-%d"],
-            minutes=["%Y-%m-%d"]
-        )
+        equity_curve_plot.xaxis.formatter = self.get_x_axis_formatter(x_axis_flag)
         equity_curve_plot.yaxis.formatter = NumeralTickFormatter(format="0")
         equity_curve_plot.title.text_font_style = "normal"
         equity_curve_plot.add_layout(self.build_y_axis_zero_line())
         return equity_curve_plot
 
-    def get_equity_curve_dates(self, dates_arr, prepend_start_date):
+    def build_equity_curve_plot_figure_step5(self):
+        equity_curve_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="auto",
+                                   toolbar_location=None, x_axis_label=self.get_x_axis_label(False), x_axis_location="below",
+                                   y_axis_label="Equity", background_fill_color="#efefef")
+        equity_curve_plot.xaxis.formatter = self.get_x_axis_formatter(False)
+        equity_curve_plot.yaxis.formatter = NumeralTickFormatter(format="0")
+        equity_curve_plot.title.text_font_style = "normal"
+        equity_curve_plot.add_layout(self.build_y_axis_zero_line())
+        return equity_curve_plot
+
+    def get_equity_data_x_axis(self, arr, prepend_data):
+        if AppConfig.is_global_equitycurve_img_x_axis_trades() is True:
+            return self.get_equity_data_x_axis_as_trades(arr, prepend_data)
+        else:
+            return self.get_equity_data_x_axis_as_dates(arr, prepend_data)
+
+    def get_equity_data_x_axis_as_dates(self, arr, prepend_data):
         counter = 1
-        dates_arr = list(dates_arr)
-        first_date = datetime.strptime(dates_arr[0], '%y%m%d%H%M')
+        process_arr = list(arr)
+        first_date = datetime.strptime(process_arr[0], '%y%m%d%H%M')
         first_date = pd.to_datetime(first_date)
         start_date = first_date - timedelta(days=1)
-        result = [prepend_start_date] if prepend_start_date is not None else [start_date]
-        for eq_date_str in dates_arr:
+        result = [prepend_data] if prepend_data is not None else [start_date]
+        for eq_date_str in process_arr:
             eq_date = datetime.strptime(eq_date_str, '%y%m%d%H%M')
             eq_date = pd.to_datetime(eq_date)
             result.append(eq_date)
             counter += 1
         return result
 
-    def get_equity_data(self, equity_data_arr, prepend_value):
+    def get_equity_data_x_axis_as_trades(self, arr, prepend_data):
+        counter = prepend_data + 1 if prepend_data is not None else 1
+        process_arr = list(arr)
+        result = [prepend_data] if prepend_data is not None else [0]
+        for item in process_arr:
+            result.append(counter)
+            counter += 1
+        return result
+
+    def get_equity_data_y_axis(self, equity_data_arr, prepend_value):
         result = [prepend_value] if prepend_value is not None else []
         result.extend(list(equity_data_arr))
         return result
@@ -182,8 +221,8 @@ class EquityCurvePlotter(object):
         description = self.build_description(row, False)
 
         equity_curve_data_points_dict = json.loads(equity_curve_data_points_str)
-        x_data = self.get_equity_curve_dates(equity_curve_data_points_dict.keys(), None)
-        y_data = self.get_equity_data(equity_curve_data_points_dict.values(), 0)
+        x_data = self.get_equity_data_x_axis(equity_curve_data_points_dict.keys(), None)
+        y_data = self.get_equity_data_y_axis(equity_curve_data_points_dict.values(), 0)
         equity_curve_plot.line(x_data, y_data, line_width=3, alpha=0.7, legend='{} equity curve'.format(plot_name_prefix))
 
         lr_points = self.get_linear_regression_line_points(x_data, equitycurveslope, equitycurveintercept, 0)
@@ -207,13 +246,13 @@ class EquityCurvePlotter(object):
         description = self.build_description(row, True)
 
         bktest_equity_curve_data_points_dict = json.loads(bktest_equity_curve_data_points_str)
-        bktest_x_data = self.get_equity_curve_dates(bktest_equity_curve_data_points_dict.keys(), None)
-        bktest_y_data = self.get_equity_data(bktest_equity_curve_data_points_dict.values(), 0)
+        bktest_x_data = self.get_equity_data_x_axis(bktest_equity_curve_data_points_dict.keys(), None)
+        bktest_y_data = self.get_equity_data_y_axis(bktest_equity_curve_data_points_dict.values(), 0)
         equity_curve_plot.line(bktest_x_data, bktest_y_data, line_width=3, alpha=0.7, legend='{} equity curve'.format("BkTest"))
 
         fwtest_equity_curve_data_points_dict = json.loads(fwtest_equity_curve_data_points_str)
-        fwtest_x_data = self.get_equity_curve_dates(fwtest_equity_curve_data_points_dict.keys(), bktest_x_data[-1])
-        fwtest_y_data = self.get_equity_data(fwtest_equity_curve_data_points_dict.values(), 0)
+        fwtest_x_data = self.get_equity_data_x_axis(fwtest_equity_curve_data_points_dict.keys(), bktest_x_data[-1])
+        fwtest_y_data = self.get_equity_data_y_axis(fwtest_equity_curve_data_points_dict.values(), 0)
         fwtest_startcash = bktest_y_data[-1]
         fwtest_y_data = self.adjust_fwtest_data_by_startcash(fwtest_y_data, fwtest_startcash)
         equity_curve_plot.line(fwtest_x_data, fwtest_y_data, line_width=3, alpha=1, legend='{} equity curve'.format(plot_name_prefix), color="mediumseagreen")
@@ -272,16 +311,16 @@ class EquityCurvePlotter(object):
 
     def draw_portfolio_strategy_equity_curve(self, df, bktest_equity_curve_data_points_list, fwtest_equity_curve_data_points_list):
         counter = it.count()
-        equity_curve_plot = self.build_equity_curve_plot_figure()
+        equity_curve_plot = self.build_equity_curve_plot_figure_step5()
         combined_data_dict = {}
         for index, value in df.iterrows():
             idx = next(counter)
             bktest_equity_curve_data_points_dict = json.loads(bktest_equity_curve_data_points_list[idx])
-            bktest_x_data = self.get_equity_curve_dates(bktest_equity_curve_data_points_dict.keys(), None)
-            bktest_y_data = self.get_equity_data(bktest_equity_curve_data_points_dict.values(), 0)
+            bktest_x_data = self.get_equity_data_x_axis_as_dates(bktest_equity_curve_data_points_dict.keys(), None)
+            bktest_y_data = self.get_equity_data_y_axis(bktest_equity_curve_data_points_dict.values(), 0)
             fwtest_equity_curve_data_points_dict = json.loads(fwtest_equity_curve_data_points_list[idx])
-            fwtest_x_data = self.get_equity_curve_dates(fwtest_equity_curve_data_points_dict.keys(), bktest_x_data[-1])
-            fwtest_y_data = self.get_equity_data(fwtest_equity_curve_data_points_dict.values(), 0)
+            fwtest_x_data = self.get_equity_data_x_axis_as_dates(fwtest_equity_curve_data_points_dict.keys(), bktest_x_data[-1])
+            fwtest_y_data = self.get_equity_data_y_axis(fwtest_equity_curve_data_points_dict.values(), 0)
             fwtest_startcash = bktest_y_data[-1]
             fwtest_y_data = self.adjust_fwtest_data_by_startcash(fwtest_y_data, fwtest_startcash)
             strategy_str = value['Strategy ID']
@@ -319,12 +358,12 @@ class EquityCurvePlotter(object):
             equitycurveslope = round(row['Equity Curve Slope'], 3)
             equitycurveintercept = round(row['Equity Curve Intercept'], 3)
             equity_curve_data_points_str = self.get_equity_curve_data_points(equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str)
-            draw_column = self.draw_equity_curve(row, equity_curve_data_points_str, equitycurveslope, equitycurveintercept)
+            img = self.draw_equity_curve(row, equity_curve_data_points_str, equitycurveslope, equitycurveintercept)
             image_counter += 1
             if image_counter % 10 == 0 or image_counter == len(results_df):
                 print("Rendered {} equity curve images...".format(image_counter))
             image_filename = self.get_output_image_filename(output_path, strategy_str, exchange_str, symbol_str, timeframe_str, image_counter)
-            export_png(draw_column, filename=image_filename)
+            export_png(img, filename=image_filename)
 
     def generate_combined_images_step4(self, results_df, bktest_equity_curve_df, fwtest_equity_curve_df, args):
         image_counter = 0
@@ -340,12 +379,12 @@ class EquityCurvePlotter(object):
             parameters_str = row['Parameters']
             bktest_equity_curve_data_points_str = self.get_equity_curve_data_points(bktest_equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str)
             fwtest_equity_curve_data_points_str = self.get_equity_curve_data_points(fwtest_equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str)
-            draw_column = self.draw_combined_equity_curves(row, bktest_equity_curve_data_points_str, fwtest_equity_curve_data_points_str)
+            img = self.draw_combined_equity_curves(row, bktest_equity_curve_data_points_str, fwtest_equity_curve_data_points_str)
             image_counter += 1
             if image_counter % 10 == 0 or image_counter == len(results_df):
                 print("Rendered {} equity curve images...".format(image_counter))
             image_filename = self.get_output_image_filename(output_path, strategy_str, exchange_str, symbol_str, timeframe_str, image_counter)
-            export_png(draw_column, filename=image_filename)
+            export_png(img, filename=image_filename)
 
     def generate_combined_top_results_images_step5(self, top_rows_df, bktest_equity_curve_df, fwtest_equity_curve_df, args):
         df = top_rows_df.reset_index(drop=False)
@@ -366,7 +405,7 @@ class EquityCurvePlotter(object):
             fwtest_equity_curve_data_points_str = self.get_equity_curve_data_points(fwtest_equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str)
             fwtest_equity_curve_data_points_list.append(fwtest_equity_curve_data_points_str)
 
-        draw_column = self.draw_portfolio_strategy_equity_curve(df, bktest_equity_curve_data_points_list, fwtest_equity_curve_data_points_list)
+        img = self.draw_portfolio_strategy_equity_curve(df, bktest_equity_curve_data_points_list, fwtest_equity_curve_data_points_list)
         image_filename = self.get_portfolio_output_image_filename(output_path)
-        export_png(draw_column, filename=image_filename)
+        export_png(img, filename=image_filename)
         print("Finished.")
