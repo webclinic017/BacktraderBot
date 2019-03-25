@@ -94,7 +94,7 @@ class BacktestingStep2(object):
 
     def filter_input_data(self, df):
         if self._ENABLE_FILTERING is False:
-            return df
+            return df.reset_index(drop=False)
 
         final_results = self.filter_top_records(df)
         final_results = final_results.reset_index(drop=False)
