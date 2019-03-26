@@ -142,10 +142,12 @@ class TVTradeAnalyzer(Analyzer):
                 curr_equity_date = npd[0]
                 curr_equity_val += npd[1]
 
-                monthly_pnl_pct = ((curr_equity_val - monthbegin_equity_val) * 100 / monthbegin_equity_val) if monthbegin_equity_val != 0 else 0
+                monthly_pnl = curr_equity_val - monthbegin_equity_val
+                monthly_pnl_pct = (monthly_pnl * 100 / monthbegin_equity_val) if monthbegin_equity_val != 0 else 0
                 curr_month_daterange_str = self.get_month_daterange(curr_equity_date)
                 curr_month_arr = self.get_monthly_stats_entry(curr_month_daterange_str)
-                curr_month_arr.pnl.netprofit.total = monthly_pnl_pct
+                curr_month_arr.pnl.netprofit.total = monthly_pnl
+                curr_month_arr.pnl.netprofit.pct = monthly_pnl_pct
 
     def update_equitycurve_data(self):
         trades = self.rets
@@ -174,7 +176,7 @@ class TVTradeAnalyzer(Analyzer):
 
         print("\n!!!!! self.rets.monthly_stats={}\n".format(self.rets.monthly_stats))
         for key, val in self.rets.monthly_stats.items():
-            print("Month {}: pnl.netprofit.total={}, total.closed={}, won.total={}".format(key, val.pnl.netprofit.total, val.total.closed, val.won.total))
+            print("Month {}: pnl.netprofit.total={}, pnl.netprofit.pct={}, total.closed={}, won.total={}".format(key, val.pnl.netprofit.total, val.pnl.netprofit.pct, val.total.closed, val.won.total))
 
     def stop(self):
         self.update_netprofit_monthly_stats()

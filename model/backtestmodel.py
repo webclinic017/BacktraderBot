@@ -75,10 +75,11 @@ class BacktestModel(object):
         self._report_rows = sorted(arr, key=lambda x: (x.net_profit_pct, x.max_drawdown_pct), reverse=True)
 
     def get_monthly_stats_data(self, entry):
-        monthly_netprofit_pct = round(entry.pnl.netprofit.total, 2) if entry else 0
+        monthly_netprofit = round(entry.pnl.netprofit.total) if entry else 0
+        monthly_netprofit_pct = round(entry.pnl.netprofit.pct, 2) if entry else 0
         monthly_won_pct = round(entry.won.total * 100 / entry.total.closed, 2) if entry else 0
         monthly_total_closed = entry.total.closed if entry else 0
-        return "{}% | {}% | {}".format(monthly_netprofit_pct, monthly_won_pct, monthly_total_closed)
+        return "{} | {}% | {}% | {}".format(monthly_netprofit, monthly_netprofit_pct, monthly_won_pct, monthly_total_closed)
 
     def get_monthly_stats_data_arr(self, report_row, column_names):
         result = []

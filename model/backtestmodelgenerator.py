@@ -33,7 +33,7 @@ class BacktestModelGenerator(object):
     def get_avg_monthly_net_profit_pct(self, monthly_stats, num_months):
         sum_netprofits = 0
         for key, val in monthly_stats.items():
-            curr_netprofit = val.pnl.netprofit.total
+            curr_netprofit = val.pnl.netprofit.pct
             sum_netprofits += curr_netprofit
         return round(sum_netprofits / float(num_months) if num_months > 0 else 0, 2)
 

@@ -16,12 +16,13 @@ class Step5ModelGenerator(object):
             daterange_regex = "(\d{8}-\d{8})"
             month_range = re.search(daterange_regex, column)
             if month_range:
+                month_key = month_range.group(1)
                 month_value = df[column]
-                net_profit_pct = re.match("[-+]?[0-9]*\.?[0-9]+", month_value)
-                if net_profit_pct:
-                    net_profit_pct = float(net_profit_pct.group())
-                    month_key = month_range.group(1)
-                    result[month_key] = net_profit_pct
+                month_value_splitted = month_value.split(" | ")
+                if len(month_value_splitted) == 4:
+                    net_profit = float(month_value_splitted[0])
+                    net_profit_pct = float(month_value_splitted[1][:-1])
+                    result[month_key] = {"net_profit": net_profit, "net_profit_pct": net_profit_pct}
         return result
 
     def generate_model(self, df, args):
