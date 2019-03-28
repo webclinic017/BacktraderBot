@@ -65,23 +65,28 @@ class Step5Model(object):
 
         return result
 
+    def get_combined_amount_with_pct_value(self, val, val_pct):
+        return "{} | {}%".format(val, val_pct)
+
     def get_vert_sum_footer_column(self):
-        result = ['', '', '', '', '', '', '', 'Portfolio Monthly Net Profit, %', '', '', '', '']
+        result = ['', '', '', '', '', '', '', 'Portfolio Monthly Net Profit', '', '', '', '']
         result.append(Step5Model.EMPTY_VALUE)
 
         monthly_equity_change_pct_list = []
         accum_equity_list = [x.startcash for x in self._result_columns]
         for daterange_val in self._dateranges_arr:
+            cum_monthly_netprofit = 0
             counter = itertools.count()
             prev_month_accum_equity = sum(accum_equity_list)
             for column in self._result_columns:
                 idx = next(counter)
-                monthly_netprofit_pct = column.monthly_stats[daterange_val]["net_profit_pct"]
-                accum_equity_list[idx] = accum_equity_list[idx] * (1 + monthly_netprofit_pct/100)
+                monthly_netprofit = column.monthly_stats[daterange_val]["net_profit"]
+                cum_monthly_netprofit += monthly_netprofit
+                accum_equity_list[idx] = accum_equity_list[idx] + monthly_netprofit
             curr_month_accum_equity = sum(accum_equity_list)
             monthly_equity_change_pct = round((curr_month_accum_equity - prev_month_accum_equity) * 100 / prev_month_accum_equity, 2)
             monthly_equity_change_pct_list.append(monthly_equity_change_pct)
-            result.append(self.get_pct_val(monthly_equity_change_pct))
+            result.append(self.get_combined_amount_with_pct_value(cum_monthly_netprofit, monthly_equity_change_pct))
 
         result.append(Step5Model.EMPTY_VALUE)
 
@@ -160,8 +165,8 @@ class Step5Column(object):
     def get_pct_val(self, val):
         return "{}%".format(val)
 
-    def get_netprofit_cell_value(self, netprofit, netprofit_pct):
-        return "{} | {}%".format(netprofit, netprofit_pct)
+    def get_combined_amount_with_pct_value(self, val, val_pct):
+        return "{} | {}%".format(val, val_pct)
 
     def get_data(self):
         result = [
@@ -178,7 +183,7 @@ class Step5Column(object):
             self.max_drawdown_pct,
             self.total_closed_trades]
         result.append(Step5Model.EMPTY_VALUE)
-        result.extend([self.get_netprofit_cell_value(x["net_profit"], x["net_profit_pct"]) for x in self.monthly_stats.values()])
+        result.extend([self.get_combined_amount_with_pct_value(x["net_profit"], x["net_profit_pct"]) for x in self.monthly_stats.values()])
         result.append(Step5Model.EMPTY_VALUE)
         result.extend([
             self.get_pct_val(self.simple_sum_net_profit_pct_monthly),

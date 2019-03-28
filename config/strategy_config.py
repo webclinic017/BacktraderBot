@@ -11,7 +11,7 @@ class AppConfig(object):
             "STEP2_ENABLE_FILTERING": True,
             "STEP4_ENABLE_FILTERING": True,
             "STEP5_ENABLE_FILTERING": True,
-            "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
+            "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
             "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
             "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": True,    # True: generating equity curve images with closed trades as x-axis, False: otherwise use closed trade dates as x-axis
         }
