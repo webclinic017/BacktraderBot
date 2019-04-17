@@ -18,8 +18,8 @@ class AppConfig(object):
 
     _STEP1_STRATEGY_PARAMS_DICT = {
         BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: {
-            "needlong": (True, False),
-            "needshort": (True, False),
+            "needlong": True,
+            "needshort": True,
             "needstops": False,
             "stoppercent": 5,
             "usefastsma": True,
@@ -42,8 +42,8 @@ class AppConfig(object):
             "uselocoentry": (False, True),
         },
         BTStrategyEnum.S003_ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
-            "needlong": (True, False),
-            "needshort": (True, False),
+            "needlong": True,
+            "needshort": True,
             "rsiperiod": 7,
             "rsibars": range(1, 5),
             "rsilong": 30, #range(15, 31, 3),
@@ -58,8 +58,8 @@ class AppConfig(object):
             "closebody": range(20, 51, 5),
         },
         BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
-            "needlong": (True, False),
-            "needshort": (True, False),
+            "needlong": True,
+            "needshort": True,
             "takepercent": range(0, 5),
             "needbe": (False, True),
             "needct": (False, True),
@@ -68,16 +68,16 @@ class AppConfig(object):
             "len": 20,
         },
         BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: {
-            "needlong": (True, False),
-            "needshort": (True, False),
+            "needlong": True,
+            "needshort": True,
             "leverage": 1,
             "indi": (2, 3),
             "accuracy": range(1, 11),
             "isreversive": (False, True),
         },
         BTStrategyEnum.S006_ALEX_NORO_SQUEEZE_MOMENTUM_STRATEGY_ID: {
-            "needlong": (True, False),
-            "needshort": (True, False),
+            "needlong": True,
+            "needshort": True,
             "length": 20,
             "mult": 2.0,
             "lengthKC": 20,
@@ -86,8 +86,8 @@ class AppConfig(object):
             "usebody": (False, True),
         },
         BTStrategyEnum.S007_ALEX_NORO_MULTIMA_STRATEGY_ID: {
-            "needlong": (True, False),
-            "needshort": (True, False),
+            "needlong": True,
+            "needshort": True,
             "usema1": True,
             "usema2": True,
             "lenma1": (10, 20, 40, 80, 100, 120, 150, 180, 200),
@@ -95,15 +95,15 @@ class AppConfig(object):
             "usecf": (False, True),
         },
         BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: {
-            "needlong": (True, False),
-            "needshort": (True, False),
+            "needlong": True,
+            "needshort": True,
             "cloud": 25,
             "Factor": range(1, 11),
             "ATR": 7,
         },
         BTStrategyEnum.S009_RSI_MIN_MAX_STRATEGY_ID: {
-            "needlong": (True, False),
-            "needshort": (True, False),
+            "needlong": True,
+            "needshort": True,
             "rsiperiod": (14, 21),
             "rsilongopenvalue": range(25, 35, 3),
             "rsilongclosevalue": range(65, 75, 3),
@@ -111,8 +111,8 @@ class AppConfig(object):
             "rsishortclosevalue": range(25, 35, 3),
         },
         BTStrategyEnum.S010_ALEX_AROON_TREND_STRATEGY_ID: {
-            "needlong": (True, False),
-            "needshort": (True, False),
+            "needlong": True,
+            "needshort": True,
             "aroon_length": range(50, 251, 25),
             "cross_r1_start": (10, 15, 20, 25, 30),
             "cross_r1_end": 80,
@@ -120,8 +120,8 @@ class AppConfig(object):
             "cross_r2_end": 100,
         },
         BTStrategyEnum.S011_EMA_CROSS_OVER_STRATEGY_ID: {
-            "needlong": (True, False),
-            "needshort": (True, False),
+            "needlong": True,
+            "needshort": True,
             "ema_ratio": (0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99),
             "slow_ema_period": range(60, 401, 20),
         }
