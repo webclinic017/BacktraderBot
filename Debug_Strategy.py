@@ -95,7 +95,7 @@ class DebugStrategy(object):
         return BTStrategyEnum.get_strategy_enum_by_str(args.strategy)
 
     def init_params(self, strategy_enum, args):
-        debug_strategy_config = AppConfig.get_debug_strategy_params(strategy_enum)
+        debug_strategy_config = AppConfig.get_default_strategy_params(strategy_enum)
         base_params = debug_strategy_config[0]
         params_dict = debug_strategy_config[1]
         self._exchange = base_params["exchange"]

@@ -128,7 +128,7 @@ class AppConfig(object):
 
     }
 
-    _DEBUG_STRATEGY_PARAMS_DICT = {
+    _DEFAULT_STRATEGY_PARAMS_DICT = {
         BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
@@ -443,5 +443,5 @@ class AppConfig(object):
         return cls._STEP1_STRATEGY_PARAMS_DICT[strategy_enum]
 
     @classmethod
-    def get_debug_strategy_params(cls, strategy_enum):
-        return cls._DEBUG_STRATEGY_PARAMS_DICT[strategy_enum]
+    def get_default_strategy_params(cls, strategy_enum):
+        return cls._DEFAULT_STRATEGY_PARAMS_DICT[strategy_enum]
