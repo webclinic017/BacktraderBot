@@ -1,7 +1,5 @@
 import backtrader.indicators as btind
 from datetime import datetime
-import itertools
-import pytz
 from strategies.abstractstrategy import AbstractStrategy
 
 
@@ -37,17 +35,8 @@ class S007_AlexNoroMultimaStrategy(AbstractStrategy):
         self.signal1 = 0
         self.signal2 = 0
         self.lots = 0
-        self.is_up = 0
-        self.is_down = 0
-        self.exit = 0
 
-        # To alternate amongst different tradeids
-        self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
-    def next(self):
-        # print("next(): id(self)={}".format(id(self)))
-        # print("next() - Quick!")
-
+    def calculate_signals(self):
         if self.p.usema1 is False:
             self.signal1 = 0
         else:
@@ -67,59 +56,14 @@ class S007_AlexNoroMultimaStrategy(AbstractStrategy):
         self.lots = self.signal1 + self.signal2
 
         # Signals
-        self.is_up = True if self.lots > 0 and (self.data.close[0] < self.data.open[0] or self.p.usecf is False) else False
-        self.is_down = True if self.lots < 0 and (self.data.close[0] > self.data.open[0] or self.p.usecf is False) else False
-        self.exit = True if self.lots == 0 else False
+        up = True if self.lots > 0 and (self.data.close[0] < self.data.open[0] or self.p.usecf is False) else False
+        down = True if self.lots < 0 and (self.data.close[0] > self.data.open[0] or self.p.usecf is False) else False
+        sig_exit = True if self.lots == 0 else False
 
-        # Trading
-        self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
-        self.todt = datetime(self.p.toyear, self.p.tomonth, self.p.today, 23, 59, 59)
-        self.currdt = self.data.datetime.datetime()
-
-        self.gmt3_tz = pytz.timezone('Etc/GMT-3')
-        self.fromdt = pytz.utc.localize(self.fromdt)
-        self.todt = pytz.utc.localize(self.todt)
-        self.currdt = self.gmt3_tz.localize(self.currdt, is_dst=True)
-
-        self.printdebuginfonextinner()
-
-        if self.currdt > self.fromdt and self.currdt < self.todt:
-            if self.curr_position < 0 and (self.is_up is True or self.exit is True):
-                self.log('!!! BEFORE CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.close(tradeid=self.curtradeid)
-                self.curr_position = 0
-                ddanalyzer = self.analyzers.dd
-                ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
-                self.log('!!! AFTER CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-            if self.curr_position == 0 and self.is_up is True and self.p.needlong is True:
-                self.log('!!! BEFORE OPEN LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.curtradeid = next(self.tradeid)
-                self.buy(tradeid=self.curtradeid)
-                self.curr_position = 1
-                self.log('!!! AFTER OPEN LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-            if self.curr_position > 0 and (self.is_down is True or self.exit is True):
-                self.log('!!! BEFORE CLOSE LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.close(tradeid=self.curtradeid)
-                self.curr_position = 0
-                ddanalyzer = self.analyzers.dd
-                ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
-                self.log('!!! AFTER CLOSE LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-            if self.curr_position == 0 and self.is_down is True and self.p.needshort is True:
-                self.log('!!! BEFORE OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.curtradeid = next(self.tradeid)
-                self.sell(tradeid=self.curtradeid)
-                self.curr_position = -1
-                self.log('!!! AFTER OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-        if self.currdt > self.todt:
-            self.log('!!! Time passed beyond date range')
-            if self.curr_position != 0:  # if 'curtradeid' in self:
-                self.log('!!! Closing trade prematurely')
-                self.close(tradeid=self.curtradeid)
-            self.curr_position = 0
+        self.is_open_long = True if up is True else False
+        self.is_close_long = True if self.position.size > 0 and (down is True or sig_exit is True) else False
+        self.is_open_short = True if down is True else False
+        self.is_close_short = True if self.position.size < 0 and (up is True or sig_exit is True) else False
 
     def printdebuginfonextinner(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
@@ -140,7 +84,8 @@ class S007_AlexNoroMultimaStrategy(AbstractStrategy):
         self.log('self.signal1 = {}'.format(self.signal1))
         self.log('self.signal2 = {}'.format(self.signal2))
         self.log('self.lots = {}'.format(self.lots))
-        self.log('self.is_up = {}'.format(self.is_up))
-        self.log('self.is_down = {}'.format(self.is_down))
-        self.log('self.exit = {}'.format(self.exit))
+        self.log('self.is_open_long = {}'.format(self.is_open_long))
+        self.log('self.is_close_long = {}'.format(self.is_close_long))
+        self.log('self.is_open_short = {}'.format(self.is_open_short))
+        self.log('self.is_close_short = {}'.format(self.is_close_short))
         self.log('----------------------')

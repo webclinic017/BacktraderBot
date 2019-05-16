@@ -2,4 +2,4 @@
 
 runid=$1
 
-python ./steps/Backtesting_Step5.py -r $runid
+ python Backtesting_Step5.py -r $runid

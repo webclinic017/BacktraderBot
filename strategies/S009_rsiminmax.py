@@ -1,7 +1,4 @@
 import backtrader.indicators as btind
-from datetime import datetime
-import itertools
-import pytz
 from strategies.abstractstrategy import AbstractStrategy
 
 
@@ -42,12 +39,6 @@ class S009_RSIMinMaxStrategy(AbstractStrategy):
         self.closeLongPositionCriteria = False
         self.closeShortPositionCriteria = False
         self.signalClosePosition = None
-        self.is_up = False
-        self.is_dn = False
-        self.exit = False
-
-        # To alternate amongst different tradeids
-        self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     def isPreOpenLong(self):
         return self.preOpenLongFlag[-1] is True
@@ -82,111 +73,60 @@ class S009_RSIMinMaxStrategy(AbstractStrategy):
     def hasReachedShortPositionTarget(self):
         return self.isPreCloseShort() and self.isRsiEnteredAboveLevel(self.p.rsishortclosevalue)
 
-    def next(self):
-        # print("next(): id(self)={}".format(id(self)))
-        # print("next() - Quick!")
+    def calculate_signals(self):
+        # Determine if pre-open criteria is met and set the flag
+        if self.isPositionClosed() and not self.isPreOpenLong() and self.isRsiEnteredBelowLevel(self.p.rsilongopenvalue):
+            self.preOpenLongFlag.append(True)
+        else:
+            self.preOpenLongFlag.append(self.preOpenLongFlag[-1])
+        if self.isPositionClosed() and not self.isPreOpenShort() and self.isRsiEnteredAboveLevel(self.p.rsishortopenvalue):
+            self.preOpenShortFlag.append(True)
+        else:
+            self.preOpenShortFlag.append(self.preOpenShortFlag[-1])
 
-        self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
-        self.todt = datetime(self.p.toyear, self.p.tomonth, self.p.today, 23, 59, 59)
-        self.currdt = self.data.datetime.datetime()
+        # Determine if pre-close criteria is met and set the flag
+        if self.isLongPositionOpen() and not self.isPreCloseLong() and self.isRsiEnteredAboveLevel(self.p.rsilongclosevalue):
+            self.preCloseLongFlag.append(True)
+        else:
+            self.preCloseLongFlag.append(self.preCloseLongFlag[-1])
+        if self.isShortPositionOpen() and not self.isPreCloseShort() and self.isRsiEnteredBelowLevel(self.p.rsishortclosevalue):
+            self.preCloseShortFlag.append(True)
+        else:
+            self.preCloseShortFlag.append(self.preCloseShortFlag[-1])
 
-        self.gmt3_tz = pytz.timezone('Etc/GMT-3')
-        self.fromdt = pytz.utc.localize(self.fromdt)
-        self.todt = pytz.utc.localize(self.todt)
-        self.currdt = self.gmt3_tz.localize(self.currdt, is_dst=True)
-        if self.currdt > self.fromdt and self.currdt < self.todt:
-            # Determine if pre-open criteria is met and set the flag
-            if self.isPositionClosed() and not self.isPreOpenLong() and self.isRsiEnteredBelowLevel(self.p.rsilongopenvalue):
-                self.preOpenLongFlag.append(True)
+        # Calculate signal to determine whether eligible to open a new position
+        self.openLongPositionCriteria  = self.isPositionClosed() and self.isPreOpenLong()  and self.isRsiEnteredAboveLevel(self.p.rsilongopenvalue)
+        self.openShortPositionCriteria = self.isPositionClosed() and self.isPreOpenShort() and self.isRsiEnteredBelowLevel(self.p.rsishortopenvalue)
+        if self.openLongPositionCriteria is True:
+            self.signalOpenPosition = 1
+        else:
+            if self.openShortPositionCriteria is True:
+                self.signalOpenPosition = -1
             else:
-                self.preOpenLongFlag.append(self.preOpenLongFlag[-1])
-            if self.isPositionClosed() and not self.isPreOpenShort() and self.isRsiEnteredAboveLevel(self.p.rsishortopenvalue):
-                self.preOpenShortFlag.append(True)
+                self.signalOpenPosition = None
+
+        # Calculate signal to determine whether eligible to close existing position
+        self.closeLongPositionCriteria = self.isLongPositionOpen() and self.hasReachedLongPositionTarget()
+        self.closeShortPositionCriteria = self.isShortPositionOpen() and self.hasReachedShortPositionTarget()
+        if self.closeLongPositionCriteria is True:
+            self.signalClosePosition = 1
+        else:
+            if self.closeShortPositionCriteria is True:
+                self.signalClosePosition = -1
             else:
-                self.preOpenShortFlag.append(self.preOpenShortFlag[-1])
+                self.signalClosePosition = None
 
-            # Determine if pre-close criteria is met and set the flag
-            if self.isLongPositionOpen() and not self.isPreCloseLong() and self.isRsiEnteredAboveLevel(self.p.rsilongclosevalue):
-                self.preCloseLongFlag.append(True)
-            else:
-                self.preCloseLongFlag.append(self.preCloseLongFlag[-1])
-            if self.isShortPositionOpen() and not self.isPreCloseShort() and self.isRsiEnteredBelowLevel(self.p.rsishortclosevalue):
-                self.preCloseShortFlag.append(True)
-            else:
-                self.preCloseShortFlag.append(self.preCloseShortFlag[-1])
+        if self.signalClosePosition == 1 or self.signalClosePosition == -1:
+            self.preOpenLongFlag.append(False)
+            self.preOpenShortFlag.append(False)
+            self.preCloseLongFlag.append(False)
+            self.preCloseShortFlag.append(False)
 
-            # Calculate signal to determine whether eligible to open a new position
-            self.openLongPositionCriteria  = self.isPositionClosed() and self.isPreOpenLong()  and self.isRsiEnteredAboveLevel(self.p.rsilongopenvalue)
-            self.openShortPositionCriteria = self.isPositionClosed() and self.isPreOpenShort() and self.isRsiEnteredBelowLevel(self.p.rsishortopenvalue)
-            if self.openLongPositionCriteria is True:
-                self.signalOpenPosition = 1
-            else:
-                if self.openShortPositionCriteria is True:
-                    self.signalOpenPosition = -1
-                else:
-                    self.signalOpenPosition = None
-
-            # Calculate signal to determine whether eligible to close existing position
-            self.closeLongPositionCriteria = self.isLongPositionOpen() and self.hasReachedLongPositionTarget()
-            self.closeShortPositionCriteria = self.isShortPositionOpen() and self.hasReachedShortPositionTarget()
-            if self.closeLongPositionCriteria is True:
-                self.signalClosePosition = 1
-            else:
-                if self.closeShortPositionCriteria is True:
-                    self.signalClosePosition = -1
-                else:
-                    self.signalClosePosition = None
-
-            if self.signalClosePosition == 1 or self.signalClosePosition == -1:
-                self.preOpenLongFlag.append(False)
-                self.preOpenShortFlag.append(False)
-                self.preCloseLongFlag.append(False)
-                self.preCloseShortFlag.append(False)
-
-            # Signals
-            self.is_up = True if self.signalOpenPosition == 1 else False
-            self.is_dn = True if self.signalOpenPosition == -1 else False
-            self.exit = True if self.signalClosePosition == -1 or self.signalClosePosition == 1 else False
-
-            # Trading
-            self.printdebuginfonextinner()
-
-            if self.curr_position < 0 and (self.is_up is True or self.exit is True):
-                self.log('!!! BEFORE CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.close(tradeid=self.curtradeid)
-                self.curr_position = 0
-                ddanalyzer = self.analyzers.dd
-                ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
-                self.log('!!! AFTER CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-            if self.curr_position == 0 and self.is_up is True and self.p.needlong is True:
-                self.log('!!! BEFORE OPEN LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.curtradeid = next(self.tradeid)
-                self.buy(tradeid=self.curtradeid)
-                self.curr_position = 1
-                self.log('!!! AFTER OPEN LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-            if self.curr_position > 0 and (self.is_dn is True or self.exit is True):
-                self.log('!!! BEFORE CLOSE LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.close(tradeid=self.curtradeid)
-                self.curr_position = 0
-                ddanalyzer = self.analyzers.dd
-                ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
-                self.log('!!! AFTER CLOSE LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-            if self.curr_position == 0 and self.is_dn is True and self.p.needshort is True:
-                self.log('!!! BEFORE OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.curtradeid = next(self.tradeid)
-                self.sell(tradeid=self.curtradeid)
-                self.curr_position = -1
-                self.log('!!! AFTER OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-        if self.currdt > self.todt:
-            self.log('!!! Time passed beyond date range')
-            if self.curr_position != 0:  # if 'curtradeid' in self:
-                self.log('!!! Closing trade prematurely')
-                self.close(tradeid=self.curtradeid)
-            self.curr_position = 0
+        # Signals
+        self.is_open_long = True if self.signalOpenPosition == 1 else False
+        self.is_close_long = True if self.signalClosePosition == 1 else False
+        self.is_open_short = True if self.signalOpenPosition == -1 else False
+        self.is_close_short = True if self.signalClosePosition == -1 else False
 
     def printdebuginfonextinner(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
@@ -213,7 +153,8 @@ class S009_RSIMinMaxStrategy(AbstractStrategy):
         self.log('self.closeLongPositionCriteria = {}'.format(self.closeLongPositionCriteria))
         self.log('self.closeShortPositionCriteria = {}'.format(self.closeShortPositionCriteria))
         self.log('self.signalClosePosition = {}'.format(self.signalClosePosition))
-        self.log('self.is_up = {}'.format(self.is_up))
-        self.log('self.is_dn = {}'.format(self.is_dn))
-        self.log('self.exit = {}'.format(self.exit))
+        self.log('self.is_open_long = {}'.format(self.is_open_long))
+        self.log('self.is_close_long = {}'.format(self.is_close_long))
+        self.log('self.is_open_short = {}'.format(self.is_open_short))
+        self.log('self.is_close_short = {}'.format(self.is_close_short))
         self.log('----------------------')

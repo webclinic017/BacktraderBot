@@ -1,8 +1,5 @@
 import backtrader as bt
 import backtrader.indicators as btind
-from datetime import datetime
-import itertools
-import pytz
 from strategies.abstractstrategy import AbstractStrategy
 
 
@@ -14,6 +11,8 @@ class S002_AlexNoroSILAStrategy(AbstractStrategy):
     params = (
         ("debug", False),
         ("startcash", 100000),
+        ("needlong", True),
+        ("needshort", True),
         ("sensup", 5),
         ("sensdn", 5),
         ("usewow", True),
@@ -40,12 +39,6 @@ class S002_AlexNoroSILAStrategy(AbstractStrategy):
 
     def __init__(self):
         super().__init__()
-
-        self.curr_position = 0
-        self.curtradeid = -1
-
-        self.tradesopen = {}
-        self.tradesclosed = {}
 
         # WOW 1.0 method
         self.lasthigh = btind.Highest(self.data.close, period=30)
@@ -116,12 +109,7 @@ class S002_AlexNoroSILAStrategy(AbstractStrategy):
         self.locobot = [0, 0]
         self.entry = [0, 0]
 
-        # To alternate amongst different tradeids
-        self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
-    def next(self):
-        # print("next(): id(self)={}".format(id(self)))
-
+    def calculate_signals(self):
         # WOW 1.0 method
         self.center.append((self.lasthigh[0] + self.lastlow[0]) / 2)
         self.body = (self.data.open[0] + self.data.close[0]) / 2
@@ -325,77 +313,24 @@ class S002_AlexNoroSILAStrategy(AbstractStrategy):
 
         self.uploco = True if self.locobot[-1] == 1 and self.entry[-2] == 0 and self.posi[-1] == 1 else False
         self.dnloco = True if self.locotop[-1] == 1 and self.entry[-2] == 0 and self.posi[-1] == -1 else False
-        long_condition = False
         if self.p.uselocoentry is True:
             long_condition = self.uploco
         else:
             long_condition = True if self.arr[-1] == 1 else False
 
-        short_condition = False
         if self.p.uselocoentry is True:
             short_condition = self.dnloco
         else:
             short_condition = True if self.arr[-1] == -1 else False
 
         # Signals
-        self.up1 = long_condition
-        self.dn1 = short_condition
-        self.is_up = True if self.up1 else False
-        self.is_down = True if self.dn1 else False
+        self.is_open_long = True if long_condition else False
+        self.is_close_long = True if short_condition else False
+        self.is_open_short = True if short_condition else False
+        self.is_close_short = True if long_condition else False
 
-        if self.is_up and self.is_down:
-            self.log('!!! Signals in opposite directions produced! is_up={}, is_down={}'.format(self.is_up, self.is_down))
-
-        # Trading
-        self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
-        self.todt = datetime(self.p.toyear, self.p.tomonth, self.p.today, 23, 59, 59)
-        self.currdt = self.data.datetime.datetime()
-
-        self.gmt3_tz = pytz.timezone('Etc/GMT-3')
-        self.fromdt = pytz.utc.localize(self.fromdt)
-        self.todt = pytz.utc.localize(self.todt)
-        self.currdt = self.gmt3_tz.localize(self.currdt, is_dst=True)
-
-        self.printdebuginfonextinner()
-
-        if self.is_up and self.currdt > self.fromdt and self.currdt < self.todt:
-            if self.curr_position < 0:
-                self.log('!!! BEFORE CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.close(tradeid=self.curtradeid)
-                self.curr_position = 0
-                ddanalyzer = self.analyzers.dd
-                ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
-                self.log('!!! AFTER CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-            if self.curr_position == 0:
-                self.log('!!! BEFORE OPEN LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.curtradeid = next(self.tradeid)
-                self.buy(tradeid=self.curtradeid)
-                self.curr_position = 1
-                self.log('!!! AFTER OPEN LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-        if self.is_down and self.currdt > self.fromdt and self.currdt < self.todt:
-            if self.curr_position > 0:
-                self.log('!!! BEFORE CLOSE LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.close(tradeid=self.curtradeid)
-                self.curr_position = 0
-                ddanalyzer = self.analyzers.dd
-                ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
-                self.log('!!! AFTER CLOSE LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-            if self.curr_position == 0:
-                self.log('!!! BEFORE OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-                self.curtradeid = next(self.tradeid)
-                self.sell(tradeid=self.curtradeid)
-                self.curr_position = -1
-                self.log('!!! AFTER OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
-
-        if self.currdt > self.todt:
-            self.log('!!! Time passed beyond date range')
-            if self.curr_position != 0:  # if 'curtradeid' in self:
-                self.log('!!! Closing trade prematurely')
-                self.close(tradeid=self.curtradeid)
-            self.curr_position = 0
+        if self.is_open_long is True and self.is_open_short is True:
+            self.log('!!! Signals in opposite directions produced! is_open_long={}, is_open_short={}'.format(self.is_open_long, self.is_open_short))
 
     def printdebuginfonextinner(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
@@ -462,8 +397,8 @@ class S002_AlexNoroSILAStrategy(AbstractStrategy):
         self.log('self.curtradeid = {}'.format(self.curtradeid))
         self.log('self.uploco = {}'.format(self.uploco))
         self.log('self.dnloco = {}'.format(self.dnloco))
-        self.log('self.up1 = {}'.format(self.up1))
-        self.log('self.dn1 = {}'.format(self.dn1))
-        self.log('self.is_up = {}'.format(self.is_up))
-        self.log('self.is_down = {}'.format(self.is_down))
+        self.log('self.is_open_long = {}'.format(self.is_open_long))
+        self.log('self.is_close_long = {}'.format(self.is_close_long))
+        self.log('self.is_open_short = {}'.format(self.is_open_short))
+        self.log('self.is_close_short = {}'.format(self.is_close_short))
         self.log('----------------------')
