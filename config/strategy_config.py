@@ -7,7 +7,7 @@ class AppConfig(object):
             "DEFAULT_START_CASH_VALUE": 1500,
             "DEFAULT_LOT_SIZE": 1470,
             "DEFAULT_LOT_TYPE": "Fixed",
-            "STEP1_ENABLE_FILTERING": False,
+            "STEP1_ENABLE_FILTERING": True,
             "STEP2_ENABLE_FILTERING": True,
             "STEP4_ENABLE_FILTERING": True,
             "STEP5_ENABLE_FILTERING": True,
