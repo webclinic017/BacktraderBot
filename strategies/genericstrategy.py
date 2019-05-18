@@ -3,8 +3,31 @@ from abc import abstractmethod
 import itertools
 from datetime import datetime
 import pytz
+from strategies.livetradingprocessor import LiveTradingProcessor
+
 
 class AbstractStrategy(bt.Strategy):
+
+    def __init__(self):
+        self.curtradeid = -1
+        self.curr_position = 0
+        self.position_avg_price = 0
+        self.tradesopen = {}
+        self.tradesclosed = {}
+
+        self.is_open_long = False
+        self.is_close_long = False
+        self.is_open_short = False
+        self.is_close_short = False
+
+        # To alternate amongst different tradeids
+        self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+        if self.islive():
+            self.livetradingprocessor = LiveTradingProcessor(self.broker, self.data, self.p.debug)
+
+    def islive(self):
+        return self.data.islive()
 
     def log(self, txt, dt=None):
         if self.p.debug:
@@ -33,27 +56,20 @@ class AbstractStrategy(bt.Strategy):
     def is_open_position(self):
         return self.curr_position != 0
 
-    def __init__(self):
-        self.curtradeid = -1
-        self.curr_position = 0
-        self.position_avg_price = 0
-        self.tradesopen = {}
-        self.tradesclosed = {}
-
-        self.is_open_long = False
-        self.is_close_long = False
-        self.is_open_short = False
-        self.is_close_short = False
-
-        # To alternate amongst different tradeids
-        self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
     def set_startcash(self, startcash):
         self.broker.setcash(startcash)
         # TODO: Workaround
         self.analyzers.dd.p.initial_cash = startcash
         self.analyzers.dd.maxportfoliovalue = startcash
         self.analyzers.ta.p.cash = startcash
+
+    def notify_data(self, data, status, *args, **kwargs):
+        if self.islive():
+            self.status = data._getstatusname(status)
+            #self.log("!!! notify_data !!!")
+            #print(self.status)
+            if status == data.LIVE:
+                self.log("LIVE DATA - Ready to trade")
 
     def start(self):
         self.set_startcash(self.p.startcash)
