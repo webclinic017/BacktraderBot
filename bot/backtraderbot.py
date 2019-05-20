@@ -6,7 +6,7 @@ import datetime as dt
 from bot.ccxtbt import CCXTStore
 import argparse
 from bot.config.bot_config import BotConfig
-from bot.config.config_parser import BotConfigParser
+from bot.config.bot_strategy_config import BotStrategyConfig
 from bot.config.broker_mappings import BrokerMappings
 from bot.utils import send_telegram_message
 from config.strategy_enum import BTStrategyEnum
@@ -81,11 +81,12 @@ class BacktraderBot(object):
         prefetch_num_minutes = 500 * timeframe
         return dt.datetime.utcnow() - dt.timedelta(minutes=prefetch_num_minutes)
 
-    def init_cerebro(self, cerebro, args, bot_config):
-        exchange = bot_config.exchange
-        broker_config = self.get_broker_config(exchange, bot_config.botid)
+    def init_cerebro(self, cerebro, args):
+        bot_strategy_config = BotStrategyConfig.get_instance(self.botid)
+        exchange = bot_strategy_config.exchange
+        broker_config = self.get_broker_config(exchange, bot_strategy_config.botid)
 
-        store = CCXTStore(exchange=exchange, currency=bot_config.reference_currency, config=broker_config, retries=5, debug=args.debug)
+        store = CCXTStore(exchange=exchange, currency=bot_strategy_config.reference_currency, config=broker_config, retries=5, debug=args.debug)
 
         broker_mapping = BrokerMappings.get_broker_mapping(exchange)
         broker = store.getbroker(broker_mapping=broker_mapping)
@@ -93,13 +94,13 @@ class BacktraderBot(object):
             broker.setcommission(args.commission)
         cerebro.setbroker(broker)
 
-        hist_start_date = self.calc_history_start_date(bot_config.timeframe)
+        hist_start_date = self.calc_history_start_date(bot_strategy_config.timeframe)
         data = store.getdata(
-            dataname='{}/{}'.format(args.target_curr, args.ref_curr),
-            name='{}{}'.format(args.target_curr, args.ref_curr),
+            dataname='{}/{}'.format(bot_strategy_config.target_currency, bot_strategy_config.reference_currency),
+            name='{}{}'.format(bot_strategy_config.target_currency, bot_strategy_config.reference_currency),
             timeframe=bt.TimeFrame.Minutes,
             fromdate=hist_start_date,
-            compression=bot_config.timeframe,
+            compression=bot_strategy_config.timeframe,
             ohlcv_limit=500,
             drop_newest=True,
             debug=True
@@ -130,13 +131,13 @@ class BacktraderBot(object):
 
         args = self.parse_args()
         self.botid = args.botid
-        bot_config = BotConfigParser.parse_bot_strategies_config(self.botid)
+        strategy = BotStrategyConfig.get_instance(self.botid)
 
-        self._strategy_enum = self.get_strategy_enum(bot_config.strategy)
+        self._strategy_enum = self.get_strategy_enum(strategy)
         self.init_strategy_params(self._strategy_enum, args)
 
         cerebro = bt.Cerebro(quicknotify=True)
-        self.init_cerebro(cerebro, args, bot_config)
+        self.init_cerebro(cerebro, args)
         self.add_strategy(cerebro)
 
         cerebro.run()

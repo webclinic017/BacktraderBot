@@ -1,9 +1,9 @@
 import backtrader as bt
 import backtrader.indicators as btind
-from strategies.abstractstrategy import AbstractStrategy
+from strategies.genericstrategy import GenericStrategy
 
 
-class S006_AlexNoroSqueezeMomentumStrategy(AbstractStrategy):
+class S006_AlexNoroSqueezeMomentumStrategy(GenericStrategy):
     '''
     This is an implementation of a strategy from TradingView - S006 Alex (Noro) Squeeze Momentum v1.1 strategy.
     '''

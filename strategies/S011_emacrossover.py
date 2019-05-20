@@ -1,8 +1,8 @@
 import backtrader.indicators as btind
-from strategies.abstractstrategy import AbstractStrategy
+from strategies.genericstrategy import GenericStrategy
 
 
-class S011_EMACrossOverStrategy(AbstractStrategy):
+class S011_EMACrossOverStrategy(GenericStrategy):
     '''
     This is an implementation of a strategy from TradingView - S011 EMA CrossOver v1.0 Strategy.
     '''

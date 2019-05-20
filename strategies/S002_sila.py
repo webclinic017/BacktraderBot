@@ -1,9 +1,9 @@
 import backtrader as bt
 import backtrader.indicators as btind
-from strategies.abstractstrategy import AbstractStrategy
+from strategies.genericstrategy import GenericStrategy
 
 
-class S002_AlexNoroSILAStrategy(AbstractStrategy):
+class S002_AlexNoroSILAStrategy(GenericStrategy):
     '''
     This is an implementation of a strategy from TradingView - S002 Alex (Noro) SILA v1.6.1L strategy.
     '''

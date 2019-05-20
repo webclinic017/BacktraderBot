@@ -1,8 +1,8 @@
 import backtrader.indicators as btind
-from strategies.abstractstrategy import AbstractStrategy
+from strategies.genericstrategy import GenericStrategy
 
 
-class S009_RSIMinMaxStrategy(AbstractStrategy):
+class S009_RSIMinMaxStrategy(GenericStrategy):
     '''
     This is an implementation of a strategy from TradingView - S009 RSI Min/Max v0.1 Strategy.
     '''

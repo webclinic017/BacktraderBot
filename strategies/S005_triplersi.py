@@ -1,8 +1,8 @@
 import backtrader.indicators as btind
-from strategies.abstractstrategy import AbstractStrategy
+from strategies.genericstrategy import GenericStrategy
 
 
-class S005_AlexNoroTripleRSIStrategy(AbstractStrategy):
+class S005_AlexNoroTripleRSIStrategy(GenericStrategy):
     '''
     This is an implementation of a strategy from TradingView - S005 Alex (Noro) Triple RSI v1.1 strategy.
     '''

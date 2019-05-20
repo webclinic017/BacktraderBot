@@ -133,7 +133,7 @@ class AppConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "XRPUSDT",
-                "timeframe": "1h",
+                "timeframe": "3h",
                 "startcash": 1500,
                 "lotsize": 1470,
                 "lottype": "Fixed"
@@ -148,10 +148,10 @@ class AppConfig(object):
                 "slowlen": 26,
                 "bars": 0,
                 "needex": False,
-                "fromyear": 2017,
+                "fromyear": 2018,
                 "toyear": 2018,
-                "frommonth": 8,
-                "tomonth": 7,
+                "frommonth": 7,
+                "tomonth": 8,
                 "fromday": 1,
                 "today": 31,
             }

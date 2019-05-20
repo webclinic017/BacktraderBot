@@ -1,18 +1,32 @@
+import backtrader as bt
 from datetime import datetime
 from bot.config.bot_config import BotConfig
+from termcolor import colored
+from bot.utils import send_telegram_message
 
 
-class LiveTradingProcessor(object):
+class LiveTradingStrategyProcessor(object):
 
-    def __init__(self, broker, data, debug):
-        self.broker = broker
-        self.data = data
+    def __init__(self, strategy, debug):
+        self.strategy = strategy
+        self.broker = strategy.broker
+        self.analyzers = strategy.analyzers
+        self.data = strategy.data
         self.debug = debug
 
-    def log(self, txt, dt=None):
-        if self.debug:
-            dt = dt or self.data.datetime.datetime()
-            print('%s  %s' % (dt, txt))
+    def log(self, txt, color=None):
+        if not self.debug:
+            return
+
+        value = datetime.now()
+
+        if color:
+            txt = colored(txt, color)
+
+        print('[%s] %s' % (value, txt))
+        send_telegram = False
+        if send_telegram:
+            send_telegram_message(txt)
 
     def check_order_expired(self, order):
         result = False
@@ -65,3 +79,33 @@ class LiveTradingProcessor(object):
             adj_tick_price *= -1
         self.log("adjusted_tick_price: {:.8f}".format(adj_tick_price))
         return round(price + adj_tick_price, significant_digits_num)
+
+    def set_startcash(self, startcash):
+        pass
+
+    def notify_data(self, data, status, *args, **kwargs):
+        self.status = data._getstatusname(status)
+        self.log("notify_data - status= {}".format(self.status))
+        if status == data.LIVE:
+            self.log("LIVE DATA - Ready to trade")
+
+    def buy(self):
+        amount = 33 #0.004
+        ticker = self.get_ticker(self.data.symbol)
+        self.log("Last ticker data: {}".format(ticker))
+        price = self.get_limit_price_order(ticker, True)
+        self.strategy.curtradeid = next(self.strategy.tradeid)
+        self.log("BUY LIMIT order submitted: Symbol={}, Amount={}, Price={}, TradeId={}".format(self.data.symbol, amount, price, self.strategy.curtradeid))
+        return self.strategy.buy(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "limit"})
+
+    def sell(self):
+        amount = 33 #0.004
+        ticker = self.get_ticker(self.data.symbol)
+        self.log("Last ticker data: {}".format(ticker))
+        price = self.get_limit_price_order(ticker, False)
+        self.log("SELL LIMIT order submitted: Symbol={}, Amount={}, Price={}, TradeId={}".format(self.data.symbol, amount, price, self.strategy.curtradeid))
+        return self.strategy.sell(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "limit"})
+
+    def close(self):
+        self.log("Closing open position by MARKET order: Symbol={}, TradeId={}".format(self.data.symbol, self.strategy.curtradeid))
+        self.strategy.close(tradeid=self.strategy.curtradeid, params={"type": "market"})

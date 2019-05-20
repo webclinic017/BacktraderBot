@@ -1,9 +1,9 @@
 import backtrader as bt
 import backtrader.indicators as btind
-from strategies.abstractstrategy import AbstractStrategy
+from strategies.genericstrategy import GenericStrategy
 
 
-class S001_AlexNoroTrendMAsStrategy(AbstractStrategy):
+class S001_AlexNoroTrendMAsStrategy(GenericStrategy):
     '''
     This is an implementation of a strategy from TradingView - S001 Alex (Noro) TrendMAs v2.3 strategy.
     '''

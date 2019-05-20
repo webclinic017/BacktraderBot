@@ -1,8 +1,8 @@
 import backtrader.indicators as btind
-from strategies.abstractstrategy import AbstractStrategy
+from strategies.genericstrategy import GenericStrategy
 
 
-class S008_AlexNoroSuperTrendStrategy(AbstractStrategy):
+class S008_AlexNoroSuperTrendStrategy(GenericStrategy):
     '''
     This is an implementation of a strategy from TradingView - S008 Alex (Noro) SuperTrend v1.0 Strategy.
     '''

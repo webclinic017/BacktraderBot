@@ -1,8 +1,8 @@
 import backtrader.indicators as btind
-from strategies.abstractstrategy import AbstractStrategy
+from strategies.genericstrategy import GenericStrategy
 
 
-class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
+class S004_AlexNoroBandsScalperStrategy(GenericStrategy):
     '''
     This is an implementation of a strategy from TradingView - S004 Alex (Noro) Bands Sclaper v1.6 strategy.
     '''
@@ -129,8 +129,8 @@ class S004_AlexNoroBandsScalperStrategy(AbstractStrategy):
 
         # Signals
         self.up7 = 1 if self.trend[-1] == 1  and ((self.bar[-1] == -1 and self.bar[-2] == -1) or (self.body[0] > self.smabody[0] and self.bar[-1] == -1)) else 0
-        self.dn7 = 1 if self.trend[-1] == 1  and ((self.bar[-1] == 1  and self.bar[-2] == 1)  or (self.data.close[0] > self.hd[-1] and self.p.needbe is True)) and self.is_open_position() and self.data.close[0] > self.position_avg_price * (100 + self.p.takepercent) / 100 else 0
-        self.up8 = 1 if self.trend[-1] == -1 and ((self.bar[-1] == -1 and self.bar[-2] == -1) or (self.data.close[0] < self.ld2[-1] and self.p.needbe is True)) and self.is_open_position() and self.data.close[0] < self.position_avg_price * (100 - self.p.takepercent) / 100 else 0
+        self.dn7 = 1 if self.trend[-1] == 1  and ((self.bar[-1] == 1  and self.bar[-2] == 1)  or (self.data.close[0] > self.hd[-1] and self.p.needbe is True)) and self.curr_position != 0 and self.data.close[0] > self.position_avg_price * (100 + self.p.takepercent) / 100 else 0
+        self.up8 = 1 if self.trend[-1] == -1 and ((self.bar[-1] == -1 and self.bar[-2] == -1) or (self.data.close[0] < self.ld2[-1] and self.p.needbe is True)) and self.curr_position != 0 and self.data.close[0] < self.position_avg_price * (100 - self.p.takepercent) / 100 else 0
         self.dn8 = 1 if self.trend[-1] == -1 and ((self.bar[-1] == 1  and self.bar[-2] == 1)  or (self.body[0] > self.smabody[0] and self.bar[-1] == 1)) else 0
 
         self.is_open_long = True if (self.up7 == 1 or self.up8 == 1) and not (self.trend[-1] == -1 and self.p.needct is False) else False

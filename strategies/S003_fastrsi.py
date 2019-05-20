@@ -1,8 +1,8 @@
 import backtrader.indicators as btind
-from strategies.abstractstrategy import AbstractStrategy
+from strategies.genericstrategy import GenericStrategy
 
 
-class S003_AlexNoroRobotBitMEXFastRSIStrategy(AbstractStrategy):
+class S003_AlexNoroRobotBitMEXFastRSIStrategy(GenericStrategy):
     '''
     This is an implementation of a strategy from TradingView - S003 Alex (Noro) Robot BitMEX Fast RSI v1.0 strategy.
     '''

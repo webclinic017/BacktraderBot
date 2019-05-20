@@ -1,9 +1,9 @@
 import backtrader.indicators as btind
 from datetime import datetime
-from strategies.abstractstrategy import AbstractStrategy
+from strategies.genericstrategy import GenericStrategy
 
 
-class S007_AlexNoroMultimaStrategy(AbstractStrategy):
+class S007_AlexNoroMultimaStrategy(GenericStrategy):
     '''
     This is an implementation of a strategy from TradingView - S007 Alex (Noro) Multima v1.0 strategy.
     '''
