@@ -1,3 +1,3 @@
 #! /bin/sh
 
-python -m bot.backtraderbot
+python -m bot.backtraderbot --botid $1

@@ -15,6 +15,7 @@ import atexit
 import signal
 import sys
 import os
+import ast
 
 
 class BacktraderBot(object):
@@ -23,6 +24,7 @@ class BacktraderBot(object):
         self.botid = None
         self._strategy_enum = None
         self._strategy_params = None
+        self.bot_strategy_config = None
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Backtrader Bot')
@@ -45,7 +47,7 @@ class BacktraderBot(object):
 
         parser.add_argument('--debug',
                             action='store_true',
-                            default=False,
+                            default=True,
                             help=('Print Debug logs'))
 
         return parser.parse_args()
@@ -81,12 +83,15 @@ class BacktraderBot(object):
         prefetch_num_minutes = 500 * timeframe
         return dt.datetime.utcnow() - dt.timedelta(minutes=prefetch_num_minutes)
 
-    def init_cerebro(self, cerebro, args):
-        bot_strategy_config = BotStrategyConfig.get_instance(self.botid)
-        exchange = bot_strategy_config.exchange
-        broker_config = self.get_broker_config(exchange, bot_strategy_config.botid)
+    def init_bot_strategy_config(self, botid):
+        self.botid = botid
+        self.bot_strategy_config = BotStrategyConfig.create_instance(self.botid)
 
-        store = CCXTStore(exchange=exchange, currency=bot_strategy_config.reference_currency, config=broker_config, retries=5, debug=args.debug)
+    def init_cerebro(self, cerebro, args):
+        exchange = self.bot_strategy_config.exchange
+        broker_config = self.get_broker_config(exchange, self.bot_strategy_config.botid)
+
+        store = CCXTStore(exchange=exchange, currency=self.bot_strategy_config.reference_currency, config=broker_config, retries=5, debug=args.debug)
 
         broker_mapping = BrokerMappings.get_broker_mapping(exchange)
         broker = store.getbroker(broker_mapping=broker_mapping)
@@ -94,13 +99,13 @@ class BacktraderBot(object):
             broker.setcommission(args.commission)
         cerebro.setbroker(broker)
 
-        hist_start_date = self.calc_history_start_date(bot_strategy_config.timeframe)
+        hist_start_date = self.calc_history_start_date(self.bot_strategy_config.timeframe)
         data = store.getdata(
-            dataname='{}/{}'.format(bot_strategy_config.target_currency, bot_strategy_config.reference_currency),
-            name='{}{}'.format(bot_strategy_config.target_currency, bot_strategy_config.reference_currency),
+            dataname='{}/{}'.format(self.bot_strategy_config.target_currency, self.bot_strategy_config.reference_currency),
+            name='{}{}'.format(self.bot_strategy_config.target_currency, self.bot_strategy_config.reference_currency),
             timeframe=bt.TimeFrame.Minutes,
             fromdate=hist_start_date,
-            compression=bot_strategy_config.timeframe,
+            compression=self.bot_strategy_config.timeframe,
             ohlcv_limit=500,
             drop_newest=True,
             debug=True
@@ -111,10 +116,19 @@ class BacktraderBot(object):
     def get_strategy_enum(self, strategy):
         return BTStrategyEnum.get_strategy_enum_by_str(strategy)
 
+    def get_parameters_map(self, parameters_json):
+        return ast.literal_eval(parameters_json)
+
+    def get_bot_strategy_params(self):
+        params_json = self.bot_strategy_config.strategy_params_json
+        return self.get_parameters_map(params_json)
+
     def init_strategy_params(self, strategy_enum, args):
         default_strategy_config = AppConfig.get_default_strategy_params(strategy_enum)
-        params_dict = default_strategy_config[1]
-        self._strategy_params = params_dict.copy()
+        default_params_dict = default_strategy_config[1]
+        bot_strategy_params_dict = self.get_bot_strategy_params()
+        self._strategy_params = default_params_dict.copy()
+        self._strategy_params.update(bot_strategy_params_dict)
         self._strategy_params.update(
             {
                 ("debug", args.debug),
@@ -130,9 +144,9 @@ class BacktraderBot(object):
         signal.signal(signal.SIGTERM, exit)
 
         args = self.parse_args()
-        self.botid = args.botid
-        strategy = BotStrategyConfig.get_instance(self.botid)
+        self.init_bot_strategy_config(args.botid)
 
+        strategy = BotStrategyConfig.get_instance().strategy
         self._strategy_enum = self.get_strategy_enum(strategy)
         self.init_strategy_params(self._strategy_enum, args)
 

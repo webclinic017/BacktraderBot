@@ -113,7 +113,7 @@ class CCXTFeed(with_metaclass(MetaCCXTFeed, DataBase)):
                     ret = self._load_ohlcv()
                     if self.p.debug:
                         print('----     LOAD    ----')
-                        print('{} Load OHLCV Returning: {}'.format(datetime.utcnow(), ret))
+                        print('{} Load OHLCV Returning: {}'.format(datetime.now(), ret))
                     return ret
 
             elif self._state == self._ST_HISTORBACK:
@@ -150,13 +150,13 @@ class CCXTFeed(with_metaclass(MetaCCXTFeed, DataBase)):
             since_dt = datetime.utcfromtimestamp(since // 1000) if since is not None else 'NA'
             print('---- NEW REQUEST ----')
             print('{} - Requesting: Since TS {} Since date {} granularity {}, limit {}, params'.format(
-                datetime.utcnow(), since, since_dt, granularity, limit, self.p.fetch_ohlcv_params))
+                datetime.now(), since, since_dt, granularity, limit, self.p.fetch_ohlcv_params))
             data = sorted(self.store.fetch_ohlcv(self.symbol, timeframe=granularity,
                                                  since=since, limit=limit, params=self.p.fetch_ohlcv_params))
             try:
                 for i, ohlcv in enumerate(data):
                     tstamp, open_, high, low, close, volume = ohlcv
-                    print('{} - Data {}: {} - TS {}'.format(datetime.utcnow(), i, datetime.utcfromtimestamp(tstamp // 1000), tstamp))
+                    print('{} - Data {}: {} - TS {}'.format(datetime.now(), i, datetime.utcfromtimestamp(tstamp // 1000), tstamp))
                     # ------------------------------------------------------------------
             except IndexError:
                 print('Index Error: Data = {}'.format(data))

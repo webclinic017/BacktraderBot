@@ -139,14 +139,16 @@ class S001_AlexNoroTrendMAsStrategy(GenericStrategy):
 
     def printdebuginfonextinner(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
-        ddanalyzer = self.analyzers.dd.get_analysis()
-        self.log('Drawdown: {}'.format(round(ddanalyzer.moneydown, 8)))
-        self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
+        if not self.islivedata():
+            ddanalyzer = self.analyzers.dd.get_analysis()
+            self.log('Drawdown: {}'.format(round(ddanalyzer.moneydown, 8)))
+            self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
+            self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
+            self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
         self.log('self.curr_position = {}'.format(self.curr_position))
         self.log('self.position.size = {}'.format(self.position.size))
-        self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
-        self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
         self.log('self.rsi = {}'.format(self.rsi[0]))
+        self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
         self.log('self.data.open[0] = {}'.format(self.data.open[0]))
         self.log('self.data.high[0]= {}'.format(self.data.high[0]))
         self.log('self.data.low[0] = {}'.format(self.data.low[0]))

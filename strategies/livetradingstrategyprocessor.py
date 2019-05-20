@@ -3,6 +3,7 @@ from datetime import datetime
 from bot.config.bot_config import BotConfig
 from termcolor import colored
 from bot.utils import send_telegram_message
+from bot.config.bot_strategy_config import BotStrategyConfig
 
 
 class LiveTradingStrategyProcessor(object):
@@ -24,7 +25,7 @@ class LiveTradingStrategyProcessor(object):
             txt = colored(txt, color)
 
         print('[%s] %s' % (value, txt))
-        send_telegram = False
+        send_telegram = BotConfig.get_send_to_telegram()
         if send_telegram:
             send_telegram_message(txt)
 
@@ -82,15 +83,24 @@ class LiveTradingStrategyProcessor(object):
 
     def set_startcash(self, startcash):
         pass
+        #self.broker.setcash(startcash)
 
     def notify_data(self, data, status, *args, **kwargs):
-        self.status = data._getstatusname(status)
-        self.log("notify_data - status= {}".format(self.status))
+        self.strategy.status = self.strategy.data._getstatusname(status)
+        self.log("notify_data - status={}".format(self.strategy.status))
         if status == data.LIVE:
+            self.log("=" * 120)
             self.log("LIVE DATA - Ready to trade")
+            self.log("=" * 120)
+
+    def notify_analyzers(self):
+        pass
+
+    def get_order_size(self):
+        return BotStrategyConfig.get_instance().order_size
 
     def buy(self):
-        amount = 33 #0.004
+        amount = self.get_order_size()
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
         price = self.get_limit_price_order(ticker, True)
@@ -99,7 +109,7 @@ class LiveTradingStrategyProcessor(object):
         return self.strategy.buy(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "limit"})
 
     def sell(self):
-        amount = 33 #0.004
+        amount = self.get_order_size()
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
         price = self.get_limit_price_order(ticker, False)

@@ -3,6 +3,7 @@ from abc import abstractmethod
 import itertools
 from datetime import datetime
 import pytz
+from bot.config.bot_strategy_config import BotStrategyConfig
 from strategies.livetradingstrategyprocessor import LiveTradingStrategyProcessor
 from strategies.backtestingstrategyprocessor import BacktestingStrategyProcessor
 from termcolor import colored
@@ -11,7 +12,7 @@ from termcolor import colored
 class StrategyProcessorFactory(object):
     @classmethod
     def build_strategy_processor(cls, strategy, debug):
-        if strategy.data.islive():
+        if strategy.islivedata():
             return LiveTradingStrategyProcessor(strategy, debug)
         else:
             return BacktestingStrategyProcessor(strategy, debug)
@@ -20,6 +21,7 @@ class StrategyProcessorFactory(object):
 class GenericStrategy(bt.Strategy):
 
     def __init__(self):
+        self.order = None
         self.curtradeid = -1
         self.curr_position = 0
         self.position_avg_price = 0
@@ -36,13 +38,11 @@ class GenericStrategy(bt.Strategy):
 
         self.strategyprocessor = StrategyProcessorFactory.build_strategy_processor(self, self.p.debug)
 
-    def islive(self):
+    def islivedata(self):
         return self.data.islive()
 
     def log(self, txt, dt=None):
-        if self.p.debug:
-            dt = dt or self.data.datetime.datetime()
-            print('%s  %s' % (dt, txt))
+        self.strategyprocessor.log(txt)
 
     def check_arr_equal(self, arr, val, last_num):
         cmp_arr = arr[len(arr) - last_num:len(arr)]
@@ -64,7 +64,11 @@ class GenericStrategy(bt.Strategy):
         return self.strategyprocessor.notify_data(data, status, args, kwargs)
 
     def start(self):
-        self.strategyprocessor.set_startcash(self.p.startcash)
+        if not self.islivedata():
+            start_cash = self.p.startcash
+        else:
+            start_cash = BotStrategyConfig.get_instance().start_cash
+        self.strategyprocessor.set_startcash(start_cash)
 
     @abstractmethod
     def calculate_signals(self):
@@ -75,10 +79,20 @@ class GenericStrategy(bt.Strategy):
         pass
 
     def next(self):
-        if self.islive():
-            print("next(): id(self)={}".format(id(self)))
+        if self.islivedata():
+            self.log("BEGIN next(): status={}".format(self.status))
 
         self.calculate_signals()
+
+        self.printdebuginfonextinner()
+
+        if self.islivedata() and self.status != "LIVE":
+            self.log("%s - %.8f" % (self.status, self.data0.close[0]))
+            return
+
+        if self.order:
+            if self.strategyprocessor.handle_pending_order(self.order) is False:
+                return
 
         # Trading
         self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
@@ -90,16 +104,13 @@ class GenericStrategy(bt.Strategy):
         self.todt = pytz.utc.localize(self.todt)
         self.currdt = self.gmt3_tz.localize(self.currdt, is_dst=True)
 
-        self.printdebuginfonextinner()
-
-        if self.currdt > self.fromdt and self.currdt < self.todt:
+        if self.islivedata() or self.currdt > self.fromdt and self.currdt < self.todt:
             if self.curr_position < 0 and self.is_close_short is True:
                 self.log('!!! BEFORE CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
                 self.strategyprocessor.close()
                 self.curr_position = 0
                 self.position_avg_price = 0
-                ddanalyzer = self.analyzers.dd
-                ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
+                self.strategyprocessor.notify_analyzers()
                 self.log('!!! AFTER CLOSE SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
             if self.curr_position == 0 and self.p.needlong is True and self.is_open_long is True:
@@ -115,8 +126,7 @@ class GenericStrategy(bt.Strategy):
                 self.strategyprocessor.close()
                 self.curr_position = 0
                 self.position_avg_price = 0
-                ddanalyzer = self.analyzers.dd
-                ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
+                self.strategyprocessor.notify_analyzers()
                 self.log('!!! AFTER CLOSE LONG !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
             if self.curr_position == 0 and self.p.needshort is True and self.is_open_short is True:
@@ -127,7 +137,7 @@ class GenericStrategy(bt.Strategy):
                 self.position_avg_price = self.data.close[0]
                 self.log('!!! AFTER OPEN SHORT !!!, self.curr_position={}, cash={}'.format(self.curr_position, self.broker.getcash()))
 
-        if self.currdt > self.todt:
+        if not self.islivedata() and self.currdt > self.todt:
             self.log('!!! Time passed beyond date range')
             if self.curr_position != 0:  # if 'curtradeid' in self:
                 self.log('!!! Closing trade prematurely')
@@ -138,6 +148,7 @@ class GenericStrategy(bt.Strategy):
     def notify_order(self, order):
         self.log('notify_order() - Order Ref={}, Status={}, order.size={}, Broker Cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], order.size, self.broker.getcash(), self.position.size))
         if order.status in [bt.Order.Created, bt.Order.Submitted, bt.Order.Accepted]:
+            self.order = order
             return  # Await further notifications
 
         if order.status == order.Completed:
@@ -147,9 +158,11 @@ class GenericStrategy(bt.Strategy):
             else:
                 selltxt = 'SELL COMPLETE, Order Ref={}, {} - at {}'.format(order.ref, order.executed.price, bt.num2date(order.executed.dt))
                 self.log(selltxt)
-        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
-            self.log('Order Canceled/Margin/Rejected: Status {}'.format(order.Status[order.status]))
+            self.order = None
+        elif order.status in [order.Canceled, order.Expired, order.Margin, order.Rejected]:
+            self.log('Order has Canceled/Expired/Margin/Rejected: Status {}'.format(order.Status[order.status]))
             self.curr_position = 0
+            self.order = None
             if order.status == order.Margin:
                 self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********')
 

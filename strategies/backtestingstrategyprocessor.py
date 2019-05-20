@@ -8,6 +8,9 @@ class BacktestingStrategyProcessor(object):
         self.data = strategy.data
         self.debug = debug
 
+    def handle_pending_order(self, order):
+        return True
+
     def set_startcash(self, startcash):
         self.broker.setcash(startcash)
         # TODO: Workaround
@@ -16,12 +19,16 @@ class BacktestingStrategyProcessor(object):
         self.analyzers.ta.p.cash = startcash
 
     def log(self, txt, dt=None):
-        if self.p.debug:
-            dt = dt or self.data.datetime.datetime()
+        if self.debug:
+            dt = dt or self.strategy.data.datetime.datetime()
             print('%s  %s' % (dt, txt))
 
     def notify_data(self, data, status, *args, **kwargs):
         pass
+
+    def notify_analyzers(self):
+        ddanalyzer = self.strategy.analyzers.dd
+        ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
 
     def buy(self):
         self.strategy.buy(tradeid=self.strategy.curtradeid)
