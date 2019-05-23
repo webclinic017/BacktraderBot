@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import configparser
-from bot.utils import whereAmI
+import os
 
 SECTION_NAME = 'Config'
 
@@ -20,8 +20,12 @@ class BotStrategyConfig(object):
         self.order_size = order_size
 
     @classmethod
+    def whereAmI(cls):
+        return os.path.dirname(os.path.realpath(__import__("__main__").__file__))
+
+    @classmethod
     def get_bot_config_file_path(cls):
-        return "{}/{}".format(whereAmI(), "config/bot_strategy_config.ini")
+        return "{}/{}".format(cls.whereAmI(), "config/bot_strategy_config.ini")
 
     @classmethod
     def get_prop_name(cls, botid, prop):

@@ -24,9 +24,7 @@ class LiveTradingStrategyProcessor(object):
         print(log_text)
         send_telegram_cfg = BotConfig.get_send_to_telegram()
         if send_telegram_flag is True and send_telegram_cfg is True:
-            bot_id = BotStrategyConfig.get_instance().botid.upper()
-            telegram_txt = "{}: {}".format(bot_id, log_text)
-            send_telegram_message(telegram_txt)
+            send_telegram_message(txt)
 
     def check_order_expired(self, order):
         result = False
@@ -87,6 +85,7 @@ class LiveTradingStrategyProcessor(object):
         self.strategy.status = self.strategy.data._getstatusname(status)
         self.log("notify_data - status={}".format(self.strategy.status))
         if status == data.LIVE:
+            self.log("**** Started {} in LIVE mode ****".format(BotStrategyConfig.get_instance().botid.upper()), True)
             self.log("=" * 120)
             self.log("LIVE DATA - Ready to trade")
             self.log("=" * 120)
