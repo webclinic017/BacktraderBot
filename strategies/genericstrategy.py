@@ -21,7 +21,7 @@ class StrategyProcessorFactory(object):
 class GenericStrategy(bt.Strategy):
 
     def __init__(self):
-        self.order = None
+        self.pending_order = None
         self.curtradeid = -1
         self.curr_position = 0
         self.position_avg_price = 0
@@ -34,7 +34,7 @@ class GenericStrategy(bt.Strategy):
         self.is_close_short = False
 
         # To alternate amongst different tradeids
-        self.tradeid = itertools.cycle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        self.tradeid = itertools.cycle(range(1, 10000000))
 
         self.strategyprocessor = StrategyProcessorFactory.build_strategy_processor(self, self.p.debug)
 
@@ -90,8 +90,8 @@ class GenericStrategy(bt.Strategy):
             self.log("%s - %.8f" % (self.status, self.data0.close[0]))
             return
 
-        if self.order:
-            if self.strategyprocessor.handle_pending_order(self.order) is False:
+        if self.pending_order:
+            if self.strategyprocessor.handle_pending_order(self.pending_order) is False:
                 return
 
         # Trading
@@ -145,10 +145,25 @@ class GenericStrategy(bt.Strategy):
             self.curr_position = 0
             self.position_avg_price = 0
 
+    def mark_pending_order(self, order):
+        if not self.pending_order and order and order.ccxt_order and order.ccxt_order["type"] == "limit":
+            self.log('Marked pending order: order.ref={}'.format(order.ref))
+            self.pending_order = order
+
+    def complete_pending_order(self, order):
+        if self.pending_order and order and self.pending_order.ref == order.ref:
+            self.log('Completed pending order: order.ref={}'.format(order.ref))
+            self.unmark_pending_order()
+
+    def unmark_pending_order(self):
+        if self.pending_order:
+            self.log('Unmarked pending order: pending_order.ref={}'.format(self.pending_order.ref))
+            self.pending_order = None
+
     def notify_order(self, order):
         self.log('notify_order() - Order Ref={}, Status={}, order.size={}, Broker Cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], order.size, self.broker.getcash(), self.position.size))
         if order.status in [bt.Order.Created, bt.Order.Submitted, bt.Order.Accepted]:
-            self.order = order
+            self.mark_pending_order(order)
             return  # Await further notifications
 
         if order.status == order.Completed:
@@ -158,11 +173,11 @@ class GenericStrategy(bt.Strategy):
             else:
                 selltxt = 'SELL COMPLETE, Order Ref={}, {} - at {}'.format(order.ref, order.executed.price, bt.num2date(order.executed.dt))
                 self.log(selltxt)
-            self.order = None
+            self.complete_pending_order(order)
         elif order.status in [order.Canceled, order.Expired, order.Margin, order.Rejected]:
             self.log('Order has Canceled/Expired/Margin/Rejected: Status {}'.format(order.Status[order.status]))
             self.curr_position = 0
-            self.order = None
+            self.unmark_pending_order()
             if order.status == order.Margin:
                 self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********')
 
@@ -188,3 +203,5 @@ class GenericStrategy(bt.Strategy):
             self.log(colored('OPERATION PROFIT, GROSS {:.8f}, NET {:.8f}'.format(trade.pnl, trade.pnlcomm), self.get_trade_log_profit_color(trade)))
             self.log('--------------------------------------------------------------------')
 
+    def get_pending_order_ref(self):
+        return self.pending_order.ref if self.pending_order is not None else None
