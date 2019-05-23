@@ -1,7 +1,6 @@
 import backtrader as bt
 from datetime import datetime
 from bot.config.bot_config import BotConfig
-from termcolor import colored
 from bot.utils import send_telegram_message
 from bot.config.bot_strategy_config import BotStrategyConfig
 
@@ -15,19 +14,19 @@ class LiveTradingStrategyProcessor(object):
         self.data = strategy.data
         self.debug = debug
 
-    def log(self, txt, color=None):
+    def log(self, txt, send_telegram_flag=False):
         if not self.debug:
             return
 
-        value = datetime.now()
+        timestamp = datetime.now()
 
-        if color:
-            txt = colored(txt, color)
-
-        print('[%s] %s' % (value, txt))
-        send_telegram = BotConfig.get_send_to_telegram()
-        if send_telegram:
-            send_telegram_message(txt)
+        log_text = '[{}] {}'.format(timestamp, txt)
+        print(log_text)
+        send_telegram_cfg = BotConfig.get_send_to_telegram()
+        if send_telegram_flag is True and send_telegram_cfg is True:
+            bot_id = BotStrategyConfig.get_instance().botid.upper()
+            telegram_txt = "{}: {}".format(bot_id, log_text)
+            send_telegram_message(telegram_txt)
 
     def check_order_expired(self, order):
         result = False
@@ -42,11 +41,11 @@ class LiveTradingStrategyProcessor(object):
 
     def handle_pending_order(self, order):
         result = False
-        self.log("An order is pending: order.ref={}, status={}".format(order.ref, order.status))
+        self.log("An order is pending: order.ref={}, status={}".format(order.ref, order.status), True)
         # A limit order is pending
         # Check if the limit order has expired
         if self.check_order_expired(order):
-            self.log("Limit order has expired after {} seconds. The order will be cancelled.".format(BotConfig.get_limit_order_timeout_seconds()))
+            self.log("Limit order has expired after {} seconds. The order will be cancelled. order.ref={}".format(BotConfig.get_limit_order_timeout_seconds(), order.ref), True)
             self.broker.cancel(order)
             self.strategy.curr_position = 0
             result = True
@@ -104,7 +103,7 @@ class LiveTradingStrategyProcessor(object):
         self.log("Last ticker data: {}".format(ticker))
         price = self.get_limit_price_order(ticker, True)
         order = self.strategy.buy(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "limit"})
-        self.log("BUY LIMIT order submitted: Symbol={}, Amount={}, Price={}, curtradeid={}, order.ref={}".format(self.data.symbol, amount, price, self.strategy.curtradeid, order.ref))
+        self.log("BUY LIMIT order submitted: Symbol={}, Amount={}, Price={}, curtradeid={}, order.ref={}".format(self.data.symbol, amount, price, self.strategy.curtradeid, order.ref), True)
         return order
 
     def sell(self):
@@ -113,10 +112,10 @@ class LiveTradingStrategyProcessor(object):
         self.log("Last ticker data: {}".format(ticker))
         price = self.get_limit_price_order(ticker, False)
         order = self.strategy.sell(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "limit"})
-        self.log("SELL LIMIT order submitted: Symbol={}, Amount={}, Price={}, curtradeid={}, order.ref={}".format(self.data.symbol, amount, price, self.strategy.curtradeid, order.ref))
+        self.log("SELL LIMIT order submitted: Symbol={}, Amount={}, Price={}, curtradeid={}, order.ref={}".format(self.data.symbol, amount, price, self.strategy.curtradeid, order.ref), True)
         return order
 
     def close(self):
         order = self.strategy.close(tradeid=self.strategy.curtradeid, params={"type": "market"})
-        self.log("Closing open position by MARKET order: Symbol={}, curtradeid={}, order.ref={}".format(self.data.symbol, self.strategy.curtradeid, order.ref))
+        self.log("Closing open position by MARKET order: Symbol={}, curtradeid={}, order.ref={}".format(self.data.symbol, self.strategy.curtradeid, order.ref), True)
         return order

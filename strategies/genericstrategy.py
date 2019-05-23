@@ -41,8 +41,8 @@ class GenericStrategy(bt.Strategy):
     def islivedata(self):
         return self.data.islive()
 
-    def log(self, txt, dt=None):
-        self.strategyprocessor.log(txt)
+    def log(self, txt, send_telegram_flag=False):
+        self.strategyprocessor.log(txt, send_telegram_flag)
 
     def check_arr_equal(self, arr, val, last_num):
         cmp_arr = arr[len(arr) - last_num:len(arr)]
@@ -161,25 +161,28 @@ class GenericStrategy(bt.Strategy):
             self.pending_order = None
 
     def notify_order(self, order):
-        self.log('notify_order() - Order Ref={}, Status={}, order.size={}, Broker Cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], order.size, self.broker.getcash(), self.position.size))
+        self.log('notify_order() - order.ref={}, status={}, order.size={}, broker.cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], order.size, self.broker.getcash(), self.position.size))
         if order.status in [bt.Order.Created, bt.Order.Submitted, bt.Order.Accepted]:
             self.mark_pending_order(order)
             return  # Await further notifications
 
         if order.status == order.Completed:
             if order.isbuy():
-                buytxt = 'BUY COMPLETE, Order Ref={}, {} - at {}'.format(order.ref, order.executed.price, bt.num2date(order.executed.dt))
-                self.log(buytxt)
+                buytxt = 'BUY COMPLETE, order.ref={}, {} - at {}'.format(order.ref, order.executed.price, bt.num2date(order.executed.dt))
+                self.log(buytxt, True)
             else:
-                selltxt = 'SELL COMPLETE, Order Ref={}, {} - at {}'.format(order.ref, order.executed.price, bt.num2date(order.executed.dt))
-                self.log(selltxt)
+                selltxt = 'SELL COMPLETE, order.ref={}, {} - at {}'.format(order.ref, order.executed.price, bt.num2date(order.executed.dt))
+                self.log(selltxt, True)
             self.complete_pending_order(order)
-        elif order.status in [order.Canceled, order.Expired, order.Margin, order.Rejected]:
-            self.log('Order has Canceled/Expired/Margin/Rejected: Status {}'.format(order.Status[order.status]))
+        elif order.status == order.Canceled:
+            self.log('Order has been Cancelled: Status {}, order.ref={}'.format(order.Status[order.status], order.ref), True)
+            self.unmark_pending_order()
+        elif order.status in [order.Expired, order.Rejected]:
+            self.log('Order has been Expired/Rejected: Status {}, order.ref={}'.format(order.Status[order.status], order.ref), True)
             self.curr_position = 0
             self.unmark_pending_order()
-            if order.status == order.Margin:
-                self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********')
+        elif order.status == order.Margin:
+                self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********', True)
 
     def get_trade_log_profit_color(self, trade):
         return 'red' if trade.pnl < 0 else 'green'

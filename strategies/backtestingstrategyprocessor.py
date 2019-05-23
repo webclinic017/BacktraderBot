@@ -18,9 +18,9 @@ class BacktestingStrategyProcessor(object):
         self.analyzers.dd.maxportfoliovalue = startcash
         self.analyzers.ta.p.cash = startcash
 
-    def log(self, txt, dt=None):
+    def log(self, txt, send_telegram_flag=False):
         if self.debug:
-            dt = dt or self.strategy.data.datetime.datetime()
+            dt = self.strategy.data.datetime.datetime()
             print('%s  %s' % (dt, txt))
 
     def notify_data(self, data, status, *args, **kwargs):
