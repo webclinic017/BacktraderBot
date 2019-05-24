@@ -34,6 +34,11 @@ class BacktraderBot(object):
                             required=True,
                             help='Bot ID')
 
+        parser.add_argument('-n', '--number_of_bots',
+                            type=int,
+                            required=True,
+                            help='Number of bots')
+
         parser.add_argument('--commtype',
                             default="Percentage",
                             type=str,
@@ -65,12 +70,15 @@ class BacktraderBot(object):
             print("Unable to correctly shutting down the bot: {}".format(e))
         sys.exit()
 
-    def get_rate_limit(self):
-        return 4000
+    def get_rate_limit(self, number_of_bots):
+        if number_of_bots == 1:
+            return 4000
+        else:
+            return 4000 * number_of_bots / 2
 
-    def get_broker_config(self, exchange, botid):
+    def get_broker_config(self, exchange, botid, number_of_bots):
         exchange_rest_api_config = BotConfig.get_exchange_rest_api_config_for_bot(exchange, botid)
-        rate_limit = self.get_rate_limit()
+        rate_limit = self.get_rate_limit(number_of_bots)
         return {
             'apiKey': exchange_rest_api_config.get("apikey"),
             'secret': exchange_rest_api_config.get("secret"),
@@ -89,7 +97,7 @@ class BacktraderBot(object):
 
     def init_cerebro(self, cerebro, args):
         exchange = self.bot_strategy_config.exchange
-        broker_config = self.get_broker_config(exchange, self.bot_strategy_config.botid)
+        broker_config = self.get_broker_config(exchange, self.bot_strategy_config.botid, args.number_of_bots)
 
         store = CCXTStore(exchange=exchange, currency=self.bot_strategy_config.reference_currency, config=broker_config, retries=5, debug=args.debug)
 
