@@ -29,7 +29,9 @@ import backtrader as bt
 import ccxt
 from backtrader.metabase import MetaParams
 from backtrader.utils.py3 import with_metaclass
-from ccxt.base.errors import NetworkError, ExchangeError
+from ccxt.base.errors import NetworkError, ExchangeError, DDoSProtection
+from bot.utils import send_telegram_message
+from bot.ccxtbt.ratelimits import RateLimitConfig
 
 
 class MetaSingleton(MetaParams):
@@ -56,6 +58,8 @@ class CCXTStore(with_metaclass(MetaSingleton, object)):
     Added new private_end_point method to allow using any private non-unified end point
 
     '''
+
+    RATE_LIMIT_ERROR_RECOVER_DELAY = 90
 
     # Supported granularities
     _GRANULARITIES = {
@@ -95,10 +99,11 @@ class CCXTStore(with_metaclass(MetaSingleton, object)):
         '''Returns broker with *args, **kwargs from registered ``BrokerCls``'''
         return cls.BrokerCls(*args, **kwargs)
 
-    def __init__(self, exchange, currency, config, retries, debug=False):
+    def __init__(self, exchange, currency, config, retries, rate_limit_factor, debug=False):
         self.exchange = getattr(ccxt, exchange)(config)
         self.currency = currency
         self.retries = retries
+        self.rate_limit_factor = rate_limit_factor
         self.debug = debug
         balance = self.exchange.fetch_balance() if 'secret' in config else 0
         self._cash = 0 if balance == 0 else balance['free'][currency]
@@ -121,16 +126,28 @@ class CCXTStore(with_metaclass(MetaSingleton, object)):
 
         return granularity
 
+    def get_rate_limit_error_recover_delay(self, rateLimit):
+        return int(self.RATE_LIMIT_ERROR_RECOVER_DELAY - rateLimit / 1000)
+
     def retry(method):
         @wraps(method)
         def retry_method(self, *args, **kwargs):
+            rate_limit = RateLimitConfig.get_rate_limit(self.exchange.name, method.__name__, self.rate_limit_factor)
             for i in range(self.retries):
                 if self.debug:
                     print('{} - {} - Attempt {}'.format(datetime.now(), method.__name__, i))
-                time.sleep(self.exchange.rateLimit / 1000)
+                time.sleep(rate_limit / 1000)
                 try:
                     return method(self, *args, **kwargs)
-                except (NetworkError, ExchangeError):
+                except (NetworkError, ExchangeError) as err:
+                    print("retry_method(): catched {}".format(type(err)))
+                    if isinstance(err, DDoSProtection):
+                        # Trying to recover from DDoSProtection exception - waiting for rate_limit_recover_delay seconds
+                        rate_limit_recover_delay = self.get_rate_limit_error_recover_delay(rate_limit)
+                        error_log = 'Rate limit has been exceeded on the exchange. Waiting for {} seconds and trying to recover.'.format(rate_limit_recover_delay)
+                        print(error_log)
+                        send_telegram_message(error_log)
+                        time.sleep(rate_limit_recover_delay)
                     if i == self.retries - 1:
                         raise
 

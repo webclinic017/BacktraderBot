@@ -16,6 +16,9 @@ cleanup() {
 }
 
 delete_logs(){
+    dtime=`date "+%Y%m%d-%H%M%S"`
+    mkdir ./bot_logs/backup/${dtime}
+    cp ./bot_logs/*.log ./bot_logs/backup/${dtime}
     rm -rf ./bot_logs/*.log
 }
 

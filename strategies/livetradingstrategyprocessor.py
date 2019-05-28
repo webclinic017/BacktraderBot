@@ -85,7 +85,7 @@ class LiveTradingStrategyProcessor(object):
         self.strategy.status = self.strategy.data._getstatusname(status)
         self.log("notify_data - status={}".format(self.strategy.status))
         if status == data.LIVE:
-            self.log("**** Started {} in LIVE mode ****".format(BotStrategyConfig.get_instance().botid.upper()), True)
+            self.log("**** Started {} in LIVE mode: {} ****".format(BotStrategyConfig.get_instance().botid.upper(), self.data.symbol), True)
             self.log("=" * 120)
             self.log("LIVE DATA - Ready to trade")
             self.log("=" * 120)

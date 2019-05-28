@@ -168,17 +168,17 @@ class GenericStrategy(bt.Strategy):
 
         if order.status == order.Completed:
             if order.isbuy():
-                buytxt = 'BUY COMPLETE, order.ref={}, {} - at {}'.format(order.ref, order.executed.price, bt.num2date(order.executed.dt))
+                buytxt = 'BUY COMPLETE, symbol={}, order.ref={}, {} - at {}'.format(self.data.symbol, order.ref, order.executed.price, bt.num2date(order.executed.dt))
                 self.log(buytxt, True)
             else:
-                selltxt = 'SELL COMPLETE, order.ref={}, {} - at {}'.format(order.ref, order.executed.price, bt.num2date(order.executed.dt))
+                selltxt = 'SELL COMPLETE, symbol={}, order.ref={}, {} - at {}'.format(self.data.symbol, order.ref, order.executed.price, bt.num2date(order.executed.dt))
                 self.log(selltxt, True)
             self.complete_pending_order(order)
         elif order.status == order.Canceled:
-            self.log('Order has been Cancelled: Status {}, order.ref={}'.format(order.Status[order.status], order.ref), True)
+            self.log('Order has been Cancelled: Symbol {}, Status {}, order.ref={}'.format(self.data.symbol, order.Status[order.status], order.ref), True)
             self.unmark_pending_order()
         elif order.status in [order.Expired, order.Rejected]:
-            self.log('Order has been Expired/Rejected: Status {}, order.ref={}'.format(order.Status[order.status], order.ref), True)
+            self.log('Order has been Expired/Rejected: Symbol {}, Status {}, order.ref={}'.format(self.data.symbol, order.Status[order.status], order.ref), True)
             self.curr_position = 0
             self.unmark_pending_order()
         elif order.status == order.Margin:

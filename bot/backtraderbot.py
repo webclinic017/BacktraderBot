@@ -70,21 +70,12 @@ class BacktraderBot(object):
             print("Unable to correctly shutting down the bot: {}".format(e))
         sys.exit()
 
-    def get_rate_limit(self, number_of_bots):
-        if number_of_bots == 1:
-            return 4000
-        else:
-            return 4000 * number_of_bots / 2
-
-    def get_broker_config(self, exchange, botid, number_of_bots):
+    def get_broker_config(self, exchange, botid):
         exchange_rest_api_config = BotConfig.get_exchange_rest_api_config_for_bot(exchange, botid)
-        rate_limit = self.get_rate_limit(number_of_bots)
         return {
             'apiKey': exchange_rest_api_config.get("apikey"),
             'secret': exchange_rest_api_config.get("secret"),
             'nonce': lambda: str(int(time.time() * 1000)),
-            'rateLimit': rate_limit,
-            'enableRateLimit': True,
         }
 
     def calc_history_start_date(self, timeframe):
@@ -97,9 +88,9 @@ class BacktraderBot(object):
 
     def init_cerebro(self, cerebro, args):
         exchange = self.bot_strategy_config.exchange
-        broker_config = self.get_broker_config(exchange, self.bot_strategy_config.botid, args.number_of_bots)
+        broker_config = self.get_broker_config(exchange, self.bot_strategy_config.botid)
 
-        store = CCXTStore(exchange=exchange, currency=self.bot_strategy_config.reference_currency, config=broker_config, retries=5, debug=args.debug)
+        store = CCXTStore(exchange=exchange, currency=self.bot_strategy_config.reference_currency, config=broker_config, retries=5, rate_limit_factor=args.number_of_bots, debug=args.debug)
 
         broker_mapping = BrokerMappings.get_broker_mapping(exchange)
         broker = store.getbroker(broker_mapping=broker_mapping)
