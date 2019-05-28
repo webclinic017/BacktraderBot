@@ -45,5 +45,5 @@ run_bot_process bot_005
 run_bot_process bot_006
 run_bot_process bot_007
 run_bot_process bot_008
-#run_bot_process bot_009
-#run_bot_process bot_010
+run_bot_process bot_009
+run_bot_process bot_010
