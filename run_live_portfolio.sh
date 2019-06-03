@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 NUMBER_OF_BOTS=$1
 PROCESS_DELAY_SECONDS=30
@@ -37,13 +37,8 @@ fi
 cleanup
 delete_logs
 
-run_bot_process bot_001
-run_bot_process bot_002
-run_bot_process bot_003
-run_bot_process bot_004
-run_bot_process bot_005
-run_bot_process bot_006
-run_bot_process bot_007
-run_bot_process bot_008
-run_bot_process bot_009
-run_bot_process bot_010
+for (( i=1; i<=${NUMBER_OF_BOTS}; i++ ))
+do
+     botid=$(printf "%03d" $i)
+     run_bot_process bot_${botid}
+done

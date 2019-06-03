@@ -144,7 +144,7 @@ class CCXTStore(with_metaclass(MetaSingleton, object)):
                     if isinstance(err, DDoSProtection):
                         # Trying to recover from DDoSProtection exception - waiting for rate_limit_recover_delay seconds
                         rate_limit_recover_delay = self.get_rate_limit_error_recover_delay(rate_limit)
-                        error_log = 'Rate limit has been exceeded on the exchange. Waiting for {} seconds and trying to recover.'.format(rate_limit_recover_delay)
+                        error_log = '{}(): Rate limit has been exceeded on the exchange. Waiting for additional {} seconds and trying to recover.'.format(method.__name__, rate_limit_recover_delay)
                         print(error_log)
                         send_telegram_message(error_log)
                         time.sleep(rate_limit_recover_delay)

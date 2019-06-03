@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 runid=$1
 testdaterange=20180801-20190228
@@ -9,4 +9,4 @@ declare exchange=bitfinex
 pkill python
 pkill python
 
- python Backtesting_Step3.py -r $runid -d $testdaterange -p $columnnameprefix
+python Backtesting_Step3.py -r $runid -d $testdaterange -p $columnnameprefix

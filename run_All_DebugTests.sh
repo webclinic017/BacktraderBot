@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#! /bin/bash
 
 python Debug_Strategy.py -y S001_AlexNoroTrendMAsStrategy
 python Debug_Strategy.py -y S002_AlexNoroSILAStrategy

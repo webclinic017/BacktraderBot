@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 
 # declare -a arr_symbols=( "BTC/USDT" "ETH/USDT" "XRP/USDT" "LTC/USDT" "ETC/USDT" "IOTA/USDT" "EOS/USDT" "NEO/USDT" "ZEC/USDT" "ETP/USDT" "XMR/USDT"  "DASH/USDT")

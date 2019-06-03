@@ -7,6 +7,7 @@ from bot.config.bot_strategy_config import BotStrategyConfig
 from strategies.livetradingstrategyprocessor import LiveTradingStrategyProcessor
 from strategies.backtestingstrategyprocessor import BacktestingStrategyProcessor
 from termcolor import colored
+import re
 
 
 class StrategyProcessorFactory(object):
@@ -146,19 +147,27 @@ class GenericStrategy(bt.Strategy):
             self.position_avg_price = 0
 
     def mark_pending_order(self, order):
-        if not self.pending_order and order and order.ccxt_order and order.ccxt_order["type"] == "limit":
+        if self.islivedata() and not self.pending_order and order and order.ccxt_order and order.ccxt_order["type"] == "limit":
             self.log('Marked pending order: order.ref={}'.format(order.ref))
             self.pending_order = order
 
     def complete_pending_order(self, order):
-        if self.pending_order and order and self.pending_order.ref == order.ref:
+        if self.islivedata() and self.pending_order and order and self.pending_order.ref == order.ref:
             self.log('Completed pending order: order.ref={}'.format(order.ref))
             self.unmark_pending_order()
 
     def unmark_pending_order(self):
-        if self.pending_order:
+        if self.islivedata() and self.pending_order:
             self.log('Unmarked pending order: pending_order.ref={}'.format(self.pending_order.ref))
             self.pending_order = None
+
+    def get_data_symbol(self, data):
+        if self.islivedata():
+            return data.symbol
+        else:
+            data_symbol_regex = "marketdata\/.*\/(.*)\/.*\/.*"
+            data_symbol = re.search(data_symbol_regex, data.p.dataname)
+            return data_symbol.group(1)
 
     def notify_order(self, order):
         self.log('notify_order() - order.ref={}, status={}, order.size={}, broker.cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], order.size, self.broker.getcash(), self.position.size))
@@ -168,10 +177,10 @@ class GenericStrategy(bt.Strategy):
 
         if order.status == order.Completed:
             if order.isbuy():
-                buytxt = 'BUY COMPLETE, symbol={}, order.ref={}, {} - at {}'.format(self.data.symbol, order.ref, order.executed.price, bt.num2date(order.executed.dt))
+                buytxt = 'BUY COMPLETE, symbol={}, order.ref={}, {} - at {}'.format(self.get_data_symbol(self.data), order.ref, order.executed.price, bt.num2date(order.executed.dt))
                 self.log(buytxt, True)
             else:
-                selltxt = 'SELL COMPLETE, symbol={}, order.ref={}, {} - at {}'.format(self.data.symbol, order.ref, order.executed.price, bt.num2date(order.executed.dt))
+                selltxt = 'SELL COMPLETE, symbol={}, order.ref={}, {} - at {}'.format(self.get_data_symbol(self.data), order.ref, order.executed.price, bt.num2date(order.executed.dt))
                 self.log(selltxt, True)
             self.complete_pending_order(order)
         elif order.status == order.Canceled:
@@ -182,7 +191,11 @@ class GenericStrategy(bt.Strategy):
             self.curr_position = 0
             self.unmark_pending_order()
         elif order.status == order.Margin:
-                self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********', True)
+            self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********', True)
+            if self.position.size == 0:  # If margin call ocurred during opening a new position, just skip opened position and wait for next signals
+                self.curr_position = 0
+            else:  # If margin call occurred during closing a position, then set curr_position to the same value as it was in previous cycle to give a chance to recover
+                self.curr_position = -1 if self.position.size < 0 else 1 if self.position.size > 0 else 0
 
     def get_trade_log_profit_color(self, trade):
         return 'red' if trade.pnl < 0 else 'green'

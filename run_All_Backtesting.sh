@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 ./run_BacktestingStep1.sh $1
 ./run_BacktestingStep2.sh $1

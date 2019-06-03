@@ -1,11 +1,11 @@
-#! /bin/sh
+#! /bin/bash
 
 declare exchange="bitfinex"
 declare -a arr_months=("1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12")
 declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" "31")
 
 #declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S003_AlexNoroRobotBitMEXFastRSIStrategy" "S004_AlexNoroBandsScalperStrategy" "S005_AlexNoroTripleRSIStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy" "S010_AlexAroonTrendStrategy" "S011_EMACrossOverStrategy")
-declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S003_AlexNoroRobotBitMEXFastRSIStrategy" "S004_AlexNoroBandsScalperStrategy" "S005_AlexNoroTripleRSIStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy" "S010_AlexAroonTrendStrategy" "S011_EMACrossOverStrategy")
+declare -a arr_strategies=("S002_AlexNoroSILAStrategy")
 
 #declare -a arr_symbols=("BTCUSDT" "ETHUSDT" "XRPUSDT" "LTCUSDT" "ETCUSDT" "IOTAUSDT" "EOSUSDT" "NEOUSDT" "ZECUSDT" "ETPUSDT" "XMRUSDT" "DASHUSDT")
 declare -a arr_symbols=("XRPUSDT")
@@ -40,7 +40,7 @@ process_backtest() {
     monthlystatsprefix="BkTest"
     #echo INSIDE process_backtest: $_strategyid $_runid $_symbol $_timeframe $_fromyear $_toyear $_frommonth $_tomonth $_fromday $_today $daterange
 
-    echo "\n\n\n---------------------------------------------------------------------------------------------------"
+    echo "---------------------------------------------------------------------------------------------------"
     echo "Running backtesting Step 1 for $_strategyid/$exchange/$symbol/$timeframe/$daterange"
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
 
