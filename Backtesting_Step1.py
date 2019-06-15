@@ -136,7 +136,7 @@ class BacktestingStep1(object):
 
         parser.add_argument('-x', '--maxcpus',
                             type=int,
-                            default=8,
+                            default=2,
                             choices=[1, 2, 3, 4, 5, 7, 8],
                             help='The max number of CPUs to use for processing')
 

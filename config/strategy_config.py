@@ -356,18 +356,18 @@ class AppConfig(object):
         BTStrategyEnum.S010_ALEX_AROON_TREND_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "BTCUSDT",
+                "currency_pair": "LTCUSDT",
                 "timeframe": "3h",
-                "startcash": 100000,
-                "lotsize": 10000,
+                "startcash": 1500,
+                "lotsize": 1470,
                 "lottype": "Fixed"
             },  {
                 "needlong": True,
                 "needshort": True,
-                "aroon_length": 200,
-                "cross_r1_start": 20,
+                "aroon_length": 150,
+                "cross_r1_start": 10,
                 "cross_r1_end": 80,
-                "cross_r2_start": 90,
+                "cross_r2_start": 80,
                 "cross_r2_end": 100,
                 "fromyear": 2018,
                 "toyear": 2018,

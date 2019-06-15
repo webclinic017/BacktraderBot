@@ -50,14 +50,14 @@ class S010_AlexAroonTrendStrategy(GenericStrategy):
         return value >= minV and value <= maxV
 
     def calculate_signals(self):
-        if self.isPositionClosed() and self.crossover(self.aroon_upper, self.aroon_lower) and \
+        if self.isPositionClosed() and self.aroon_upper[0] > self.aroon_lower[0] and \
             self.inRange(self.aroon_lower[0], self.p.cross_r1_start,  self.p.cross_r1_end) and \
             self.inRange(self.aroon_upper[0], self.p.cross_r2_start, self.p.cross_r2_end):
             self.openLongCondition = True
         else:
             self.openLongCondition = False
 
-        if self.isPositionClosed() and self.crossover(self.aroon_lower, self.aroon_upper) and \
+        if self.isPositionClosed() and self.aroon_upper[0] < self.aroon_lower[0] and \
             self.inRange(self.aroon_upper[0], self.p.cross_r1_start,  self.p.cross_r1_end) and \
             self.inRange(self.aroon_lower[0], self.p.cross_r2_start, self.p.cross_r2_end):
             self.openShortCondition = True
