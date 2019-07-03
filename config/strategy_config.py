@@ -122,7 +122,7 @@ class AppConfig(object):
         BTStrategyEnum.S011_EMA_CROSS_OVER_STRATEGY_ID: {
             "needlong": True,
             "needshort": True,
-            "ema_ratio": (0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99),
+            "ema_ratio": (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
             "slow_ema_period": range(60, 401, 20),
         }
 
