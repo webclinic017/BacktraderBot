@@ -124,8 +124,17 @@ class AppConfig(object):
             "needshort": True,
             "ema_ratio": (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
             "slow_ema_period": range(60, 401, 20),
+        },
+        BTStrategyEnum.S012_GRID_MARKET_MAKER_STRATEGY_ID: {
+            "order_pairs": range(6, 21, 3),
+            "order_start_size": 10,
+            "order_step_size": range(1, 4),
+            "interval_pct": (0.002, 0.005, 0.01, 0.02),
+            "min_spread_pct": (0.002, 0.005, 0.01, 0.02),
+            "relist_interval_pct": (0.002, 0.005, 0.01, 0.02),
+            "min_position": (-75, -25),
+            "max_position": (25, 75),
         }
-
     }
 
     _DEFAULT_STRATEGY_PARAMS_DICT = {
@@ -396,6 +405,30 @@ class AppConfig(object):
                 "fromday": 1,
                 "today": 31,
             }],
+        BTStrategyEnum.S012_GRID_MARKET_MAKER_STRATEGY_ID: [
+            {
+                "exchange": "bitmex",
+                "currency_pair": "BTCUSD",
+                "timeframe": "1m",
+                "startcash": 100000000,
+                "lotsize": 1,
+                "lottype": "Fixed"
+            },  {
+                "order_pairs": 18,
+                "order_start_size": 10,
+                "order_step_size": 3,
+                "interval_pct": 0.002,
+                "min_spread_pct": 0.02,
+                "relist_interval_pct": 0.005,
+                "min_position": -25,
+                "max_position": 75,
+                "fromyear": 2019,
+                "toyear": 2019,
+                "frommonth": 6,
+                "tomonth": 6,
+                "fromday": 1,
+                "today": 30,
+            }]
     }
 
     @classmethod
