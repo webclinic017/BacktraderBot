@@ -1,6 +1,6 @@
 #! /bin/bash
 
-declare exchange="bitmex"
+declare exchange="bitfinex"
 declare -a arr_months=("1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12")
 declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" "31")
 
