@@ -104,11 +104,11 @@ class AppConfig(object):
         BTStrategyEnum.S009_RSI_MIN_MAX_STRATEGY_ID: {
             "needlong": True,
             "needshort": True,
-            "rsiperiod": 14,
-            "rsilongopenvalue": range(20, 31, 5),
-            "rsilongclosevalue": range(65, 81, 5),
-            "rsishortopenvalue": range(70, 81, 5),
-            "rsishortclosevalue": range(20, 36, 5),
+            "rsiperiod": (7, 14),
+            "rsilongopenvalue": 30,
+            "rsilongclosevalue": range(50, 71, 5),
+            "rsishortopenvalue": 70,
+            "rsishortclosevalue": range(30, 51, 5),
         },
         BTStrategyEnum.S010_ALEX_AROON_TREND_STRATEGY_ID: {
             "needlong": True,

@@ -12,7 +12,7 @@ declare -a arr_symbols=("BTCUSD" "ETHUSD" "XRPUSD" "LTCUSD" "ETCUSD" "IOTAUSD" "
 
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("1h" "3h" "6h" "12h")
+declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h")
 
 declare -a backtest_startdate="2017-08-01"
 declare -a backtest_enddate="2019-02-28"
