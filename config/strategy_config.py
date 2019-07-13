@@ -135,12 +135,6 @@ class AppConfig(object):
             "min_position": -1.5,
             "max_position": 1.5,
             "stop_quoting_if_inside_loss_range": (True, False),
-            "fromyear": 2019,
-            "toyear": 2019,
-            "frommonth": 6,
-            "tomonth": 6,
-            "fromday": 1,
-            "today": 30,
         }
     }
 
