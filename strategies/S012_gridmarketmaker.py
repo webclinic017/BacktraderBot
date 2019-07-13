@@ -22,6 +22,7 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
         ("relist_interval_pct", 0.004),
         ("min_position", -75),
         ("max_position", 75),
+        ("stop_quoting_if_inside_loss_range", True),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 1),
@@ -66,7 +67,7 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
                 orders_list[i] = order
 
     def get_desired_order_size(self, idx):
-        return round(self.p.order_start_size + idx * self.p.order_step_size)
+        return round(self.p.order_start_size + idx * self.p.order_step_size, 8)
 
     def get_desired_order_price(self, is_long, idx):
         price_bracket_pct = self.p.min_spread_pct / 2 + idx * self.p.interval_pct
@@ -75,32 +76,76 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
         else:
             return round(self.data.close[0] * (1 + price_bracket_pct))
 
+    def is_order_placement_allowed(self, is_long, order_price):
+        self.log("is_order_placement_allowed(): BEGIN")
+
+        result = True
+        position_qty = self.position.size
+        is_order_buy_side = is_long
+
+        if self.p.stop_quoting_if_inside_loss_range is False or position_qty == 0 or self.curtrade is None:
+            result = True
+        else:
+            position_avg_price = self.curtrade.price
+            if position_qty > 0:
+                if is_order_buy_side is True:
+                    result = True
+                else:
+                    if order_price >= position_avg_price:
+                        result = True
+                    else:
+                        result = False
+            else:
+                if is_order_buy_side is False:
+                    result = True
+                else:
+                    if order_price <= position_avg_price:
+                        result = True
+                    else:
+                        result = False
+
+        self.log("is_order_placement_allowed(): is_long={}, order_price={}, result={}".format(is_long, order_price, result))
+        return result
+
     def submit_new_order(self, is_long, idx):
         order_size = self.get_desired_order_size(idx)
         long_order_price = self.get_desired_order_price(True, idx)
         short_order_price = self.get_desired_order_price(False, idx)
         if is_long is True:
+            if self.is_order_placement_allowed(True, long_order_price) is False:
+                return None
             self.log('submit_order(): Submitted a new LONG order, order_size={}, self.data.close[0]={}, long_order_price={}'.format(order_size, self.data.close[0], long_order_price))
             return self.buy(size=order_size, price=long_order_price, exectype=bt.Order.Limit)
         else:
+            if self.is_order_placement_allowed(False, short_order_price) is False:
+                return None
             self.log('submit_order(): Submitted a new SHORT order, order_size={}, self.data.close[0]={}, long_order_price={}'.format(order_size, self.data.close[0], short_order_price))
             return self.sell(size=order_size, price=short_order_price, exectype=bt.Order.Limit)
 
     def converge_order(self, order, is_long, idx):
+        self.log('converge_order(): BEGIN order.ref={}, is_long={}, idx={}'.format(order.ref if order is not None else None, is_long, idx))
         if is_long is True and self.position.size >= self.p.max_position or is_long is False and self.position.size <= self.p.min_position:
-            if order is not None and order.status == bt.Order.Accepted:
-                self.log('converge_order(): self.position.size({}) has exceeded the min/max position size. Stopped quoting the {} side and cancelling existing order ref={}.'.format(self.position.size, "LONG" if self.position.size > 0 else "SHORT", order.ref))
-                self.cancel(order)
+            if order is None:
+                self.log('converge_order(): self.position.size({}) has exceeded the min/max position size. Skipped quoting the {} side.'.format(self.position.size, "LONG" if self.position.size > 0 else "SHORT"))
                 self.store_order_in_table(is_long, idx, None)
                 return
             elif order is not None and order.status == bt.Order.Completed:
                 self.log('converge_order(): self.position.size({}) has exceeded the min/max position size. Stopped quoting the {} side and skipped submitting a new order for completed order ref={}.'.format(self.position.size, "LONG" if self.position.size > 0 else "SHORT", order.ref))
                 self.store_order_in_table(is_long, idx, None)
                 return
-        elif order is None or order.status == bt.Order.Completed:
+            elif order is not None and order.status == bt.Order.Accepted:
+                self.log('converge_order(): self.position.size({}) has exceeded the min/max position size. Stopped quoting the {} side and cancelling existing order ref={}.'.format(self.position.size, "LONG" if self.position.size > 0 else "SHORT", order.ref))
+                self.cancel(order)
+                self.store_order_in_table(is_long, idx, None)
+                return
+            elif order is not None and order.status == bt.Order.Canceled:
+                self.log('converge_order(): self.position.size({}) has exceeded the min/max position size. Skipping canceled order {}, is_long={}, idx={}'.format(self.position.size, order.ref, is_long, idx))
+                self.store_order_in_table(is_long, idx, None)
+        elif order is None or order.status in [bt.Order.Completed, bt.Order.Canceled]:
             new_order = self.submit_new_order(is_long, idx)
-            self.log('converge_orders(): Submitted the new {} order, i={}, new_order.ref={}'.format("LONG" if is_long else "SHORT", idx, new_order.ref))
-            self.store_order_in_table(is_long, idx, new_order)
+            if new_order is not None:
+                self.log('converge_orders(): Submitted the new {} order, i={}, new_order.ref={}'.format("LONG" if is_long else "SHORT", idx, new_order.ref))
+                self.store_order_in_table(is_long, idx, new_order)
         elif order.status == bt.Order.Accepted:
             desired_order_price = self.get_desired_order_price(is_long, idx)
             desired_to_curr_price_diff_pct = abs((desired_order_price - order.price) / order.price)
@@ -108,8 +153,9 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
                 self.log('converge_order(): the existing order ref={} price={} has deviated from desired price={} for more than allowed relisting interval={}. The order will be cancelled and new order would be submitted.'.format(order.ref, order.price, desired_order_price, self.p.relist_interval_pct))
                 self.cancel(order)
                 new_order = self.submit_new_order(is_long, idx)
-                self.log('converge_orders(): Instead of the previous order ref={} submitted the new {} order, i={}, new_order.ref={}'.format(order.ref, "LONG" if is_long else "SHORT", idx, new_order.ref))
-                self.store_order_in_table(is_long, idx, new_order)
+                if new_order is not None:
+                    self.log('converge_orders(): Instead of the previous order ref={} submitted the new {} order, i={}, new_order.ref={}'.format(order.ref, "LONG" if is_long else "SHORT", idx, new_order.ref))
+                    self.store_order_in_table(is_long, idx, new_order)
 
     def converge_orders(self):
         for i in range(0, self.p.order_pairs):
@@ -161,9 +207,6 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
                 self.close()
                 self.status = STATUS_CLOSED
 
-            for t in  self._trades[self.data][0]:
-                self.log("Trade ref({}) status={}".format(t.ref, t.status))
-
     def notify_order(self, order):
         self.log('notify_order() - order.ref={}, status={}, order.size={}, order.price={}, broker.cash={}, self.position.size = {}'.format(order.ref, order.getstatusname(), order.size, order.price, round(self.broker.getcash(),2), self.position.size))
         if order.status in [bt.Order.Created, bt.Order.Submitted, bt.Order.Accepted]:
@@ -185,8 +228,8 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
             self.log('Order has been Expired/Rejected: Symbol {}, Status {}, order.ref={}'.format(self.get_data_symbol(self.data), order.Status[order.status], order.ref), True)
             self.curr_position = 0
         elif order.status == order.Margin:
-            self.log('notify_order() - ********** MARGIN CALL!! EXITING!! **********', True)
-            exit(1)
+            self.log('notify_order() - ********** MARGIN CALL!! SKIPPING!! **********', True)
+            self.env.runstop()
 
 
     def notify_trade(self, trade):
