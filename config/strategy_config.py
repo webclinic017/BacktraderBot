@@ -134,7 +134,7 @@ class AppConfig(object):
             "relist_interval_pct": (0.002, 0.005, 0.01, 0.02),
             "min_position": -1.5,
             "max_position": 1.5,
-            "stop_quoting_if_inside_loss_range": (True, False),
+            "stop_quoting_if_inside_loss_range": True,
         }
     }
 
@@ -408,28 +408,28 @@ class AppConfig(object):
             }],
         BTStrategyEnum.S012_GRID_MARKET_MAKER_STRATEGY_ID: [
             {
-                "exchange": "bitmex",
+                "exchange": "bitfinex",
                 "currency_pair": "BTCUSD",
                 "timeframe": "1m",
-                "startcash": 10000,
+                "startcash": 100000,
                 "lotsize": 1,
                 "lottype": "Fixed"
             },  {
-                "order_pairs": 20,
+                "order_pairs": 15,
                 "order_start_size": 0.01,
                 "order_step_size": 0.001,
-                "interval_pct": 0.005,
-                "min_spread_pct": 0.01,
-                "relist_interval_pct": 0.01,
-                "min_position": -0.5,
-                "max_position": 0.5,
+                "interval_pct": 0.02,
+                "min_spread_pct": 0.005,
+                "relist_interval_pct": 0.002,
+                "min_position": -1.5,
+                "max_position": 1.5,
                 "stop_quoting_if_inside_loss_range": True,
                 "fromyear": 2019,
                 "toyear": 2019,
                 "frommonth": 6,
                 "tomonth": 6,
-                "fromday": 1,
-                "today": 30,
+                "fromday": 5,
+                "today": 9,
             }]
     }
 

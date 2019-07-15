@@ -5,17 +5,16 @@ declare -a arr_months=("1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12")
 declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" "31")
 
 #declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S004_AlexNoroBandsScalperStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy" "S010_AlexAroonTrendStrategy" "S011_EMACrossOverStrategy" "S012_GridMarketMakerStrategy")
-declare -a arr_strategies=("S009_RSIMinMaxStrategy")
+declare -a arr_strategies=("S012_GridMarketMakerStrategy")
 
 #declare -a arr_symbols=("BTCUSD" "ETHUSD" "XRPUSD" "LTCUSD" "ETCUSD" "IOTAUSD" "EOSUSD" "NEOUSD" "ZECUSD" "ETPUSD" "XMRUSD" "DASHUSD")
-declare -a arr_symbols=("BTCUSD" "ETHUSD" "XRPUSD" "LTCUSD" "ETCUSD" "IOTAUSD" "EOSUSD" "NEOUSD" "ZECUSD" "ETPUSD" "XMRUSD" "DASHUSD")
-
+declare -a arr_symbols=("BTCUSD")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h")
+declare -a arr_timeframes=("1m")
 
-declare -a backtest_startdate="2017-08-01"
-declare -a backtest_enddate="2019-02-28"
+declare -a backtest_startdate="2019-06-05"
+declare -a backtest_enddate="2019-06-09"
 
 startyear=${backtest_startdate:0:4}
 startmonth=${backtest_startdate:5:2}

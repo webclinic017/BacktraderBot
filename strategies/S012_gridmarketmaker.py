@@ -77,8 +77,6 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
             return round(self.data.close[0] * (1 + price_bracket_pct))
 
     def is_order_placement_allowed(self, is_long, order_price):
-        self.log("is_order_placement_allowed(): BEGIN")
-
         result = True
         position_qty = self.position.size
         is_order_buy_side = is_long
@@ -95,6 +93,7 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
                         result = True
                     else:
                         result = False
+                        self.log("is_order_placement_allowed(): Inside LOSS range! is_long={}, order_price={}, result={}".format(is_long, order_price, result))
             else:
                 if is_order_buy_side is False:
                     result = True
@@ -103,6 +102,7 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
                         result = True
                     else:
                         result = False
+                        self.log("is_order_placement_allowed(): Inside LOSS range! is_long={}, order_price={}, result={}".format(is_long, order_price, result))
 
         self.log("is_order_placement_allowed(): is_long={}, order_price={}, result={}".format(is_long, order_price, result))
         return result
@@ -215,11 +215,11 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
         if order.status == order.Completed and self.status != STATUS_CLOSED:
             if order.isbuy():
                 self.update_order_in_table(True, order)
-                buytxt = 'BUY COMPLETE, symbol={}, order.ref={}, order.size={}, {} - at {}'.format(self.get_data_symbol(self.data), order.ref, order.size, order.executed.price, bt.num2date(order.executed.dt))
+                buytxt = 'BUY COMPLETE, symbol={}, order.ref={}, order.size={}, {}, curtrade.pnl={}, curtrade.pnlcomm={} - at {}'.format(self.get_data_symbol(self.data), order.ref, order.size, order.executed.price, self.curtrade.pnl if self.curtrade is not None else "", self.curtrade.pnlcomm if self.curtrade is not None else "", bt.num2date(order.executed.dt))
                 self.log(buytxt, True)
             else:
                 self.update_order_in_table(False, order)
-                selltxt = 'SELL COMPLETE, symbol={}, order.ref={}, order.size={}, {} - at {}'.format(self.get_data_symbol(self.data), order.ref, order.size, order.executed.price, bt.num2date(order.executed.dt))
+                selltxt = 'SELL COMPLETE, symbol={}, order.ref={}, order.size={}, {}, curtrade.pnl={}, curtrade.pnlcomm={} - at {}'.format(self.get_data_symbol(self.data), order.ref, order.size, order.executed.price, self.curtrade.pnl if self.curtrade is not None else "", self.curtrade.pnlcomm if self.curtrade is not None else "", bt.num2date(order.executed.dt))
                 self.log(selltxt, True)
             self.converge_orders()
         elif order.status == order.Canceled:
@@ -245,7 +245,7 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
             self.log("3: Current date:                         {}".format(self.data.datetime.date()))
             self.log('4: Status:                               Trade Complete')
             self.log('5: Ref:                                  {}'.format(trade.ref))
-            self.log('6: PnL:                                  {}'.format(round(trade.pnl, 2)))
+            self.log('6: PnL Comm:                             {}'.format(trade.pnlcomm))
             self.log('--------------------------------------------------------------------')
 
     def get_order_refs_str(self, orders):
@@ -267,8 +267,10 @@ class S012_GridMarketMakerStrategy(bt.Strategy):
         if self.curtrade is not None:
             self.log('self.curtrade.ref = {}'.format(self.curtrade.ref))
             self.log('Position AvgPrice = {}'.format(self.curtrade.price))
+            self.log('self.curtrade.commission = {}'.format(self.curtrade.commission))
+            self.log('self.curtrade.pnl = {}'.format(self.curtrade.pnl))
             self.log('self.curtrade.pnlcomm = {}'.format(self.curtrade.pnlcomm))
-            self.log('self.curtrade.pnlcomm = {}'.format(self.curtrade.status))
+            self.log('self.curtrade.status = {}'.format(self.curtrade.status))
         self.log('self.position.size = {}'.format(self.position.size))
         self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
         self.log('self.data.open = {}'.format(self.data.open[0]))
