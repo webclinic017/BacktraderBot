@@ -101,8 +101,8 @@ class LiveTradingStrategyProcessor(object):
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
         price = self.get_limit_price_order(ticker, True)
-        order = self.strategy.buy(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "limit"})
-        self.log("BUY LIMIT order submitted: Symbol={}, Amount={}, Price={}, curtradeid={}, order.ref={}".format(self.data.symbol, amount, price, self.strategy.curtradeid, order.ref), True)
+        order = self.strategy.buy(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "market"})
+        self.log("BUY MARKET order submitted: Symbol={}, Amount={}, Price={}, curtradeid={}, order.ref={}".format(self.data.symbol, amount, price, self.strategy.curtradeid, order.ref), True)
         return order
 
     def sell(self):
@@ -110,8 +110,8 @@ class LiveTradingStrategyProcessor(object):
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
         price = self.get_limit_price_order(ticker, False)
-        order = self.strategy.sell(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "limit"})
-        self.log("SELL LIMIT order submitted: Symbol={}, Amount={}, Price={}, curtradeid={}, order.ref={}".format(self.data.symbol, amount, price, self.strategy.curtradeid, order.ref), True)
+        order = self.strategy.sell(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "market"})
+        self.log("SELL MARKET order submitted: Symbol={}, Amount={}, Price={}, curtradeid={}, order.ref={}".format(self.data.symbol, amount, price, self.strategy.curtradeid, order.ref), True)
         return order
 
     def close(self):

@@ -4,11 +4,11 @@ from config.strategy_enum import BTStrategyEnum
 class AppConfig(object):
 
     _GLOBAL_STRATEGY_PARAMS_DICT = {
-            "DEFAULT_START_CASH_VALUE": 100000,
+            "DEFAULT_START_CASH_VALUE": 1500,
             "DEFAULT_LOT_SIZE": 1470,
             "DEFAULT_LOT_TYPE": "Fixed",
-            "STEP1_ENABLE_FILTERING": False,
-            "STEP2_ENABLE_FILTERING": True,
+            "STEP1_ENABLE_FILTERING": True,
+            "STEP2_ENABLE_FILTERING": False,
             "STEP4_ENABLE_FILTERING": True,
             "STEP5_ENABLE_FILTERING": True,
             "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
@@ -142,7 +142,7 @@ class AppConfig(object):
         BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "XRPUSDT",
+                "currency_pair": "XRPUSD",
                 "timeframe": "3h",
                 "startcash": 1500,
                 "lotsize": 1470,
@@ -169,7 +169,7 @@ class AppConfig(object):
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "BTCUSDT",
+                "currency_pair": "BTCUSD",
                 "timeframe": "1h",
                 "startcash": 100000,
                 "lotsize": 10000,
@@ -197,7 +197,7 @@ class AppConfig(object):
         BTStrategyEnum.S003_ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "XRPUSDT",
+                "currency_pair": "XRPUSD",
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
@@ -228,7 +228,7 @@ class AppConfig(object):
         BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "XRPUSDT",
+                "currency_pair": "XRPUSD",
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
@@ -253,7 +253,7 @@ class AppConfig(object):
         BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "XRPUSDT",
+                "currency_pair": "XRPUSD",
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
@@ -275,7 +275,7 @@ class AppConfig(object):
         BTStrategyEnum.S006_ALEX_NORO_SQUEEZE_MOMENTUM_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "BTCUSDT",
+                "currency_pair": "BTCUSD",
                 "timeframe": "3h",
                 "startcash": 18255,
                 "lotsize": 1500,
@@ -299,7 +299,7 @@ class AppConfig(object):
         BTStrategyEnum.S007_ALEX_NORO_MULTIMA_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "XRPUSDT",
+                "currency_pair": "XRPUSD",
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
@@ -322,7 +322,7 @@ class AppConfig(object):
         BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "BTCUSDT",
+                "currency_pair": "BTCUSD",
                 "timeframe": "1h",
                 "startcash": 100000,
                 "lotsize": 10000,
@@ -343,7 +343,7 @@ class AppConfig(object):
         BTStrategyEnum.S009_RSI_MIN_MAX_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "LTCUSDT",
+                "currency_pair": "LTCUSD",
                 "timeframe": "30m",
                 "startcash": 1500,
                 "lotsize": 1470,
@@ -366,7 +366,7 @@ class AppConfig(object):
         BTStrategyEnum.S010_ALEX_AROON_TREND_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "NEOUSDT",
+                "currency_pair": "NEOUSD",
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
@@ -389,7 +389,7 @@ class AppConfig(object):
         BTStrategyEnum.S011_EMA_CROSS_OVER_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "BTCUSDT",
+                "currency_pair": "BTCUSD",
                 "timeframe": "1h",
                 "startcash": 100000,
                 "lotsize": 10000,
