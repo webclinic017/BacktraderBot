@@ -22,7 +22,7 @@ class FixedCashSizer(bt.Sizer):
 
     params = (
         ('cashamount', 10000),
-        ('commission', 0.0015),
+        ('commission', 0.002),
         ('debug', False),
     )
 

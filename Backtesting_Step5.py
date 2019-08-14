@@ -37,7 +37,7 @@ class BacktestingStep5(object):
                             help='Name of the output file(RunId****) from Step4')
 
         parser.add_argument('--commission',
-                            default=0.0015,
+                            default=0.002,
                             type=float,
                             help='The amount of commission to apply to a trade')
 

@@ -115,7 +115,7 @@ class BacktestingStep3(object):
                             help='The type of commission to apply to a trade')
 
         parser.add_argument('--commission',
-                            default=0.0015,
+                            default=0.002,
                             type=float,
                             help='The amount of commission to apply to a trade')
 
