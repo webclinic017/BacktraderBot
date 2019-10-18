@@ -24,6 +24,13 @@ class S002_AlexNoroSILAStrategy(GenericStrategy):
         ("usersi", True),
         ("usewto", True),
         ("uselocoentry", False),
+        ("sl", None),
+        ("tslflag", None),
+        ("tp", None),
+        ("ttpdist", None),
+        ("tbdist", None),
+        ("numdca", None),
+        ("dcainterval", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 12),
@@ -327,7 +334,7 @@ class S002_AlexNoroSILAStrategy(GenericStrategy):
         if self.is_open_long is True and self.is_open_short is True:
             self.log('!!! Signals in opposite directions produced! is_open_long={}, is_open_short={}'.format(self.is_open_long, self.is_open_short))
 
-    def printdebuginfonextinner(self):
+    def printdebuginfo(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
             ddanalyzer = self.analyzers.dd.get_analysis()
@@ -338,6 +345,7 @@ class S002_AlexNoroSILAStrategy(GenericStrategy):
         self.log('self.pending_order.ref = {}'.format(self.get_pending_order_ref()))
         self.log('self.curtradeid = {}'.format(self.curtradeid))
         self.log('self.curr_position = {}'.format(self.curr_position))
+        self.log('self.position_avg_price = {}'.format(self.position_avg_price))
         self.log('self.position.size = {}'.format(self.position.size))
         self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
         self.log('self.data.open = {}'.format(self.data.open[0]))

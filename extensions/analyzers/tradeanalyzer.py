@@ -160,6 +160,20 @@ class TVTradeAnalyzer(Analyzer):
         trades.total.equity.stats.p_value = lr_stats.p_value
         trades.total.equity.stats.std_err = lr_stats.std_err
 
+    def update_stoploss_data(self, sl_pnl, is_tsl_flag):
+        trades = self.rets
+        trades.sl.pnl.netprofit.count += 1 if sl_pnl >= 0 and is_tsl_flag is False else 0
+        trades.sl.pnl.netloss.count += 1 if sl_pnl < 0 and is_tsl_flag is False else 0
+        trades.tsl.pnl.netprofit.count += 1 if sl_pnl >= 0 and is_tsl_flag is True else 0
+        trades.tsl.pnl.netloss.count += 1 if sl_pnl < 0 and is_tsl_flag is True else 0
+
+    def update_takeprofit_data(self, tp_pnl, is_ttp_flag):
+        trades = self.rets
+        trades.tp.pnl.netprofit.count += 1 if tp_pnl >= 0 and is_ttp_flag is False else 0
+        trades.tp.pnl.netloss.count += 1 if tp_pnl < 0 and is_ttp_flag is False else 0
+        trades.ttp.pnl.netprofit.count += 1 if tp_pnl >= 0 and is_ttp_flag is True else 0
+        trades.ttp.pnl.netloss.count += 1 if tp_pnl < 0 and is_ttp_flag is True else 0
+
     def print_debug_info(self):
         print("!!!!! self.netprofits_data={}\n".format(self.netprofits_data))
         print("All Trades:")

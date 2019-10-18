@@ -269,11 +269,18 @@ class BacktestingStep1(object):
 
         return niterable
 
-    def check_params_to_add_strategy(self, params_dict):
-        if params_dict is not None and len(params_dict) > 0:
-            if "needlong" in params_dict.keys() and params_dict["needlong"] == False and \
-               "needshort" in params_dict.keys() and params_dict["needshort"] == False:
-                return False
+    def is_need_params_to_add_strategy(self, params_dict):
+        if params_dict.get("needlong") is False and params_dict.get("needshort") is False:
+            return False
+        if params_dict.get("tslflag") is not None and params_dict.get("sl") is None:
+            return False
+        if params_dict.get("ttpdist") is not None and params_dict.get("tp") is None:
+            return False
+        if params_dict.get("dcainterval") is not None and params_dict.get("numdca") is None or params_dict.get("dcainterval") is None and params_dict.get("numdca") is not None:
+            return False
+        if (params_dict.get("tslflag") is not None or params_dict.get("sl") is not None) and (params_dict.get("dcainterval") is not None or params_dict.get("numdca") is not None):
+            return False
+
         return True
 
     def enqueue_strategies(self):
@@ -288,7 +295,7 @@ class BacktestingStep1(object):
         list_strat_params = list(optkwargs)
 
         for params in list_strat_params:
-            if self.check_params_to_add_strategy(params) is True:
+            if self.is_need_params_to_add_strategy(params) is True:
                 StFetcher.register(strategy_class, **params)
 
         print("Number of strategies: {}".format(len(StFetcher.COUNT())))

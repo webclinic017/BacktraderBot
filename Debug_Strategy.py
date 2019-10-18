@@ -222,28 +222,32 @@ class DebugStrategy(object):
         strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
         buyandhold_return = round(analyzer.total.buyandholdreturn, 8) if self.exists(analyzer, ['total', 'buyandholdreturn']) else 0
         buyandhold_return_pct = round(analyzer.total.buyandholdreturnpct, 2) if self.exists(analyzer, ['total', 'buyandholdreturnpct']) else 0
-        equitycurvedata = analyzer.total.equity.equitycurvedata
-        #print("equitycurvedata={}".format(equitycurvedata))
 
-        #print("analyzer.total.equity.stats.angle = {}".format(analyzer.total.equity.stats.angle))
-        #print("analyzer.total.equity.stats.slope = {}".format(analyzer.total.equity.stats.slope))
-        #print("analyzer.total.equity.stats.intercept = {}".format(analyzer.total.equity.stats.intercept))
-        #print("analyzer.total.equity.stats.r_value = {}".format(analyzer.total.equity.stats.r_value))
-        #print("analyzer.total.equity.stats.p_value = {}".format(analyzer.total.equity.stats.p_value))
-        #print("analyzer.total.equity.stats.std_err = {}".format(analyzer.total.equity.stats.std_err))
+        sl_profit_trades_count = analyzer.sl.pnl.netprofit.count
+        sl_loss_trades_count = analyzer.sl.pnl.netloss.count
+        tsl_profit_trades_count = analyzer.tsl.pnl.netprofit.count
+        tsl_loss_trades_count = analyzer.tsl.pnl.netloss.count
+        tp_profit_trades_count = analyzer.tp.pnl.netprofit.count
+        tp_loss_trades_count = analyzer.tp.pnl.netloss.count
+        ttp_profit_trades_count = analyzer.ttp.pnl.netprofit.count
+        ttp_loss_trades_count = analyzer.ttp.pnl.netloss.count
 
         # Designate the rows
         h1 = ['Total Open', 'Total Closed', 'Total Won', 'Total Lost']
         h2 = ['Win Rate', 'Win Streak', 'Losing Streak', '']
         h3 = ['Buy & Hold Return', 'Buy & Hold Return, %', '', '']
         h4 = ['Net Profit', 'Gross Profit', 'Gross Loss', 'Profit Factor']
+        h5 = ['Trades #: SL (Profit)', 'Trades #: SL (Loss)', 'Trades #: TSL (Profit)', 'Trades #: TSL (Loss)']
+        h6 = ['Trades #: TP (Profit)', 'Trades #: TP (Loss)', 'Trades #: TTP (Profit)', 'Trades #: TTP (Loss)']
         r1 = [total_open, total_closed, total_won, total_lost]
         r2 = [strike_rate, win_streak, lose_streak, '']
         r3 = [buyandhold_return, buyandhold_return_pct, '', '']
         r4 = [netprofit, grossprofit, grossloss, profitfactor]
+        r5 = [sl_profit_trades_count, sl_loss_trades_count, tsl_profit_trades_count, tsl_loss_trades_count]
+        r6 = [tp_profit_trades_count, tp_loss_trades_count, ttp_profit_trades_count, ttp_loss_trades_count]
 
         # Print the rows
-        print_list = [h1, r1, h2, r2, h3, r3, h4, r4]
+        print_list = [h1, r1, h2, r2, h3, r3, h4, r4, h5, r5, h6, r6]
         row_format = "{:<25}" * (len(h1) + 1)
         print("Backtesting Results:")
         for row in print_list:

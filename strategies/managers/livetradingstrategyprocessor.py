@@ -3,11 +3,13 @@ from datetime import datetime
 from bot.config.bot_config import BotConfig
 from bot.utils import send_telegram_message
 from bot.config.bot_strategy_config import BotStrategyConfig
+from .strategyprocessor import BaseStrategyProcessor
 
 
-class LiveTradingStrategyProcessor(object):
+class LiveTradingStrategyProcessor(BaseStrategyProcessor):
 
     def __init__(self, strategy, debug):
+        super().__init__(strategy, debug)
         self.strategy = strategy
         self.broker = strategy.broker
         self.analyzers = strategy.analyzers

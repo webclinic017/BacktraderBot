@@ -24,6 +24,13 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(GenericStrategy):
         ("usecbf", True),
         ("openbody", 20),
         ("closebody", 20),
+        ("sl", None),
+        ("tslflag", None),
+        ("tp", None),
+        ("ttpdist", None),
+        ("tbdist", None),
+        ("numdca", None),
+        ("dcainterval", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 12),
@@ -37,7 +44,6 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(GenericStrategy):
 
         self.curtradeid = -1
         self.curr_position = 0
-        self.position_avg_price = 0
 
         self.tradesopen = {}
         self.tradesclosed = {}
@@ -146,7 +152,7 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(GenericStrategy):
         self.is_open_short = True if self.position.size == 0 and self.opengbarok[-1] == 1 and self.rsiupok[-1] == 1 and self.openbodyok[-1] == 1 else False
         self.is_close_short = True if (self.position.size < 0 and self.closerbarok[-1] == 1 and self.rsi[0] < self.p.rsishort) and self.closebodyok[-1] == 1 else False
 
-    def printdebuginfonextinner(self):
+    def printdebuginfo(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
             ddanalyzer = self.analyzers.dd.get_analysis()

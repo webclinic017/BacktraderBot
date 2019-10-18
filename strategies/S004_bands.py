@@ -18,6 +18,13 @@ class S004_AlexNoroBandsScalperStrategy(GenericStrategy):
         ("bodylen", 10),
         ("trb", 1),
         ("len", 20),
+        ("sl", None),
+        ("tslflag", None),
+        ("tp", None),
+        ("ttpdist", None),
+        ("tbdist", None),
+        ("numdca", None),
+        ("dcainterval", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 10),
@@ -157,7 +164,7 @@ class S004_AlexNoroBandsScalperStrategy(GenericStrategy):
                 self.is_close_short = False
             self.log('!!! Changed signals as follows: is_open_long={}, is_open_short={}'.format(self.is_open_long, self.is_open_short))
 
-    def printdebuginfonextinner(self):
+    def printdebuginfo(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
             ddanalyzer = self.analyzers.dd.get_analysis()

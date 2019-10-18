@@ -16,6 +16,13 @@ class S005_AlexNoroTripleRSIStrategy(GenericStrategy):
         ("indi", 3),
         ("accuracy", 3),
         ("isreversive", False),
+        ("sl", None),
+        ("tslflag", None),
+        ("tp", None),
+        ("ttpdist", None),
+        ("tbdist", None),
+        ("numdca", None),
+        ("dcainterval", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 12),
@@ -68,7 +75,7 @@ class S005_AlexNoroTripleRSIStrategy(GenericStrategy):
             self.is_close_long = True if self.position.size > 0 and self.data.close[0] > self.data.open[0] and self.body[0] > self.abody[0] / 3 else False
             self.is_close_short = True if self.position.size < 0 and self.data.close[0] < self.data.open[0] and self.body[0] > self.abody[0] / 3 else False
 
-    def printdebuginfonextinner(self):
+    def printdebuginfo(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
             ddanalyzer = self.analyzers.dd.get_analysis()

@@ -1,7 +1,10 @@
+from .strategyprocessor import BaseStrategyProcessor
 
-class BacktestingStrategyProcessor(object):
+
+class BacktestingStrategyProcessor(BaseStrategyProcessor):
 
     def __init__(self, strategy, debug):
+        super().__init__(strategy, debug)
         self.strategy = strategy
         self.broker = strategy.broker
         self.analyzers = strategy.analyzers
@@ -16,6 +19,7 @@ class BacktestingStrategyProcessor(object):
         # TODO: Workaround
         self.analyzers.dd.p.initial_cash = startcash
         self.analyzers.dd.maxportfoliovalue = startcash
+
         self.analyzers.ta.p.cash = startcash
 
     def log(self, txt, send_telegram_flag=False):

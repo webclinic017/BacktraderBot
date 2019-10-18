@@ -16,6 +16,13 @@ class S010_AlexAroonTrendStrategy(GenericStrategy):
         ("cross_r1_end", 80),
         ("cross_r2_start", 90),
         ("cross_r2_end", 100),
+        ("sl", None),
+        ("tslflag", None),
+        ("tp", None),
+        ("ttpdist", None),
+        ("tbdist", None),
+        ("numdca", None),
+        ("dcainterval", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 1),
@@ -80,7 +87,7 @@ class S010_AlexAroonTrendStrategy(GenericStrategy):
         self.is_open_short = True if self.openShortCondition is True else False
         self.is_close_short = True if self.closeShortCondition is True else False
 
-    def printdebuginfonextinner(self):
+    def printdebuginfo(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
             ddanalyzer = self.analyzers.dd.get_analysis()

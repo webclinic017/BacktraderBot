@@ -16,6 +16,13 @@ class S009_RSIMinMaxStrategy(GenericStrategy):
         ("rsilongclosevalue", 69),
         ("rsishortopenvalue", 72),
         ("rsishortclosevalue", 31),
+        ("sl", None),
+        ("tslflag", None),
+        ("tp", None),
+        ("ttpdist", None),
+        ("tbdist", None),
+        ("numdca", None),
+        ("dcainterval", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 1),
@@ -128,7 +135,7 @@ class S009_RSIMinMaxStrategy(GenericStrategy):
         self.is_open_short = True if self.signalOpenPosition == -1 else False
         self.is_close_short = True if self.signalClosePosition == -1 else False
 
-    def printdebuginfonextinner(self):
+    def printdebuginfo(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
             ddanalyzer = self.analyzers.dd.get_analysis()

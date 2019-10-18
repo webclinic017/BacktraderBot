@@ -19,6 +19,13 @@ class S006_AlexNoroSqueezeMomentumStrategy(GenericStrategy):
         ("multKC", 1.5),
         ("usecolor", True),
         ("usebody", True),
+        ("sl", None),
+        ("tslflag", None),
+        ("tp", None),
+        ("ttpdist", None),
+        ("tbdist", None),
+        ("numdca", None),
+        ("dcainterval", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 11),
@@ -100,7 +107,7 @@ class S006_AlexNoroSqueezeMomentumStrategy(GenericStrategy):
         self.is_open_short = True if self.trend[-1] == -1 and (self.bar[-1] == 1 or self.p.usecolor is False) and (self.body[0] > self.abody[0] or self.p.usebody is False) else False
         self.is_close_short = True if self.trend[-1] == 1 and (self.bar[-1] == -1 or self.p.usecolor is False) and (self.body[0] > self.abody[0] or self.p.usebody is False) else False
 
-    def printdebuginfonextinner(self):
+    def printdebuginfo(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
             ddanalyzer = self.analyzers.dd.get_analysis()
@@ -112,6 +119,7 @@ class S006_AlexNoroSqueezeMomentumStrategy(GenericStrategy):
         self.log('self.curtradeid = {}'.format(self.curtradeid))
         self.log('self.curr_position = {}'.format(self.curr_position))
         self.log('self.position.size = {}'.format(self.position.size))
+        self.log('self.position_avg_price = {}'.format(self.position_avg_price))
         self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
         self.log('self.data.open[0] = {}'.format(self.data.open[0]))
         self.log('self.data.high[0] = {}'.format(self.data.high[0]))

@@ -142,8 +142,8 @@ class AppConfig(object):
         BTStrategyEnum.S001_ALEX_NORO_TRENDMAS_STRATEGY_ID: [
             {
                 "exchange": "bitfinex",
-                "currency_pair": "XRPUSD",
-                "timeframe": "3h",
+                "currency_pair": "BTCUSD",
+                "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
                 "lottype": "Fixed"
@@ -158,9 +158,16 @@ class AppConfig(object):
                 "slowlen": 26,
                 "bars": 0,
                 "needex": False,
+                "sl": 2,
+                "tslflag": True,
+                "tp": 1,
+                "ttpdist": 0.5,
+                "tbdist": None,
+                "numdca": None,
+                "dcainterval": None,
                 "fromyear": 2018,
                 "toyear": 2018,
-                "frommonth": 7,
+                "frommonth": 8,
                 "tomonth": 8,
                 "fromday": 1,
                 "today": 31,

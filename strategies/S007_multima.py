@@ -18,6 +18,13 @@ class S007_AlexNoroMultimaStrategy(GenericStrategy):
         ("lenma1", 40),
         ("lenma2", 40),
         ("usecf", True),
+        ("sl", None),
+        ("tslflag", None),
+        ("tp", None),
+        ("ttpdist", None),
+        ("tbdist", None),
+        ("numdca", None),
+        ("dcainterval", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 11),
@@ -65,7 +72,7 @@ class S007_AlexNoroMultimaStrategy(GenericStrategy):
         self.is_open_short = True if down is True else False
         self.is_close_short = True if self.position.size < 0 and (up is True or sig_exit is True) else False
 
-    def printdebuginfonextinner(self):
+    def printdebuginfo(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
             ddanalyzer = self.analyzers.dd.get_analysis()

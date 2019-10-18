@@ -15,6 +15,13 @@ class S008_AlexNoroSuperTrendStrategy(GenericStrategy):
         ("cloud", 25),
         ("Factor", 3),
         ("ATR", 7),
+        ("sl", None),
+        ("tslflag", None),
+        ("tp", None),
+        ("ttpdist", None),
+        ("tbdist", None),
+        ("numdca", None),
+        ("dcainterval", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 11),
@@ -64,7 +71,7 @@ class S008_AlexNoroSuperTrendStrategy(GenericStrategy):
         self.is_open_short = True if self.Trend[-1] == -1 and self.data.close[0] > self.data.open[0] else False
         self.is_close_short = True if self.Trend[-1] == 1 and self.data.close[0] < self.data.open[0] else False
 
-    def printdebuginfonextinner(self):
+    def printdebuginfo(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
             ddanalyzer = self.analyzers.dd.get_analysis()

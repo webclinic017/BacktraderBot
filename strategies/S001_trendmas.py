@@ -20,6 +20,13 @@ class S001_AlexNoroTrendMAsStrategy(GenericStrategy):
         ("slowlen", 21),
         ("bars", 0),
         ("needex", True),
+        ("sl", None),
+        ("tslflag", None),
+        ("tp", None),
+        ("ttpdist", None),
+        ("tbdist", None),
+        ("numdca", None),
+        ("dcainterval", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 10),
@@ -137,7 +144,7 @@ class S001_AlexNoroTrendMAsStrategy(GenericStrategy):
                 self.is_close_short = False
             self.log('!!! Changed signals as follows: self.is_open_long={}, self.is_open_short={}'.format(self.is_open_long, self.is_open_short))
 
-    def printdebuginfonextinner(self):
+    def printdebuginfo(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
             ddanalyzer = self.analyzers.dd.get_analysis()
@@ -148,6 +155,7 @@ class S001_AlexNoroTrendMAsStrategy(GenericStrategy):
         self.log('self.pending_order.ref = {}'.format(self.get_pending_order_ref()))
         self.log('self.curtradeid = {}'.format(self.curtradeid))
         self.log('self.curr_position = {}'.format(self.curr_position))
+        self.log('self.position_avg_price = {}'.format(self.position_avg_price))
         self.log('self.position.size = {}'.format(self.position.size))
         self.log('self.rsi = {}'.format(self.rsi[0]))
         self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
