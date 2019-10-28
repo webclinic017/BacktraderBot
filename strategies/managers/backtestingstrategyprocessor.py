@@ -1,4 +1,5 @@
 from .strategyprocessor import BaseStrategyProcessor
+import backtrader as bt
 
 
 class BacktestingStrategyProcessor(BaseStrategyProcessor):
@@ -34,11 +35,17 @@ class BacktestingStrategyProcessor(BaseStrategyProcessor):
         ddanalyzer = self.strategy.analyzers.dd
         ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
 
-    def buy(self):
-        self.strategy.buy(tradeid=self.strategy.curtradeid)
+    def open_long_position(self):
+        order = self.strategy.generic_buy(tradeid=self.strategy.curtradeid, exectype=bt.Order.Market)
+        self.log("BUY MARKET base order submitted: order.ref={}, order.size={}, curtradeid={}".format(order.ref, order.size, self.strategy.curtradeid))
+        return order
 
-    def sell(self):
-        self.strategy.sell(tradeid=self.strategy.curtradeid)
+    def open_short_position(self):
+        order = self.strategy.generic_sell(tradeid=self.strategy.curtradeid, exectype=bt.Order.Market)
+        self.log("SELL MARKET base order submitted: order.ref={}, order.size={}, curtradeid={}".format(order.ref, order.size, self.strategy.curtradeid))
+        return order
 
-    def close(self):
-        self.strategy.close(tradeid=self.strategy.curtradeid)
+    def close_position(self):
+        order = self.strategy.generic_close(tradeid=self.strategy.curtradeid)
+        self.log("Closed position by MARKET order: order.ref={}, curtradeid={}".format(order.ref, self.strategy.curtradeid))
+        return order

@@ -10,6 +10,19 @@ from termcolor import colored
 import re
 
 
+class ParametersValidator(object):
+    @classmethod
+    def validate_params(cls, params):
+        if not params.needlong and not params.needshort:
+            raise ValueError("Either 'needlong' or 'needshort' parameters must be provided")
+        if params.tslflag and not params.sl:
+            raise ValueError("The 'tslflag' parameter should be provided with 'sl' parameter")
+        if params.ttpdist and not params.tp:
+            raise ValueError("The 'ttpdist' parameter cannot be provided without 'tp' parameter")
+        if params.dcainterval and not params.numdca or not params.dcainterval and params.numdca:
+            raise ValueError("Both 'dcainterval' and 'numdca' must be provided")
+
+
 class StrategyProcessorFactory(object):
     @classmethod
     def build_strategy_processor(cls, strategy, debug):
@@ -22,16 +35,7 @@ class StrategyProcessorFactory(object):
 class GenericStrategy(bt.Strategy):
 
     def check_params(self):
-        if self.p.needlong is False and self.p.needshort is False:
-            raise ValueError("Either 'needlong' or 'needshort' parameters must be provided")
-        if self.p.tslflag is not None and self.p.sl is None:
-            raise ValueError("The 'tslflag' parameter should be provided with 'sl' parameter")
-        if self.p.ttpdist is not None and self.p.tp is None:
-            raise ValueError("The 'ttpdist' parameter cannot be provided without 'tp' parameter")
-        if self.p.dcainterval is not None and self.p.numdca is None or self.p.dcainterval is None and self.p.numdca is not None:
-            raise ValueError("Both 'dcainterval' and 'numdca' must be provided")
-        if (self.p.sl is not None or self.p.tslflag is not None) and (self.p.numdca is not None or self.p.dcainterval is not None):
-            raise ValueError("Stop-loss ('sl'/'tslflag') and DCA mode ('numdca'/'dcainterval') parameters cannot be specified together")
+        ParametersValidator.validate_params(self.p)
 
     def __init__(self):
         self.pending_order = None
@@ -89,27 +93,43 @@ class GenericStrategy(bt.Strategy):
     def calculate_signals(self):
         pass
 
-    def open_position(self, curr_position, cash, is_long):
-        side_str = "LONG" if is_long else "SHORT"
-        self.log('!!! BEFORE OPEN {} !!!, self.curr_position={}, cash={}'.format(side_str, curr_position, cash))
+    def get_side_str(self, is_long):
+        return "LONG" if is_long else "SHORT"
+
+    def generic_buy(self, tradeid=None, size=None, price=None, exectype=None, params=None):
+        return self.buy(tradeid=tradeid, size=size, price=price, exectype=exectype, params=params)
+
+    def generic_sell(self, tradeid=None, size=None, price=None, exectype=None, params=None):
+        return self.sell(tradeid=tradeid, size=size, price=price, exectype=exectype, params=params)
+
+    def generic_close(self, tradeid=None, params=None):
+        return self.close(tradeid=tradeid, params=params)
+
+    def signal_open_position(self, is_long):
+        cash = self.broker.getcash()
+        side_str = self.get_side_str(is_long)
+        self.log('!!! BEFORE OPEN {} !!!, self.curr_position={}, cash={}'.format(side_str, self.curr_position, cash))
         self.curtradeid = next(self.tradeid)
         if is_long:
-            self.strategyprocessor.buy()
+            base_order = self.strategyprocessor.open_long_position()
             self.curr_position = 1
         else:
-            self.strategyprocessor.sell()
+            base_order = self.strategyprocessor.open_short_position()
             self.curr_position = -1
         self.position_avg_price = self.data.close[0]
-        self.log('!!! AFTER OPEN {} !!!, self.curr_position={}, cash={}'.format(side_str, curr_position, cash))
+        self.strategyprocessor.on_open_position_trade_managers(self.curtradeid, self.position_avg_price, base_order.size, is_long)
+        self.log('!!! AFTER OPEN {} !!!, self.curr_position={}, cash={}'.format(side_str, self.curr_position, cash))
 
-    def close_position(self, curr_position, cash, is_long):
-        side_str = "LONG" if is_long else "SHORT"
-        self.log('!!! BEFORE CLOSE {} !!!, self.curr_position={}, cash={}'.format(side_str, curr_position, cash))
-        self.strategyprocessor.close()
+    def signal_close_position(self, is_long):
+        cash = self.broker.getcash()
+        side_str = self.get_side_str(is_long)
+        self.log('!!! BEFORE CLOSE {} !!!, self.curr_position={}, cash={}'.format(side_str, self.curr_position, cash))
+        self.strategyprocessor.close_position()
         self.curr_position = 0
         self.position_avg_price = 0
         self.strategyprocessor.notify_analyzers()
-        self.log('!!! AFTER CLOSE {} !!!, self.curr_position={}, cash={}'.format(side_str, curr_position, cash))
+        self.strategyprocessor.on_close_position_trade_managers()
+        self.log('!!! AFTER CLOSE {} !!!, self.curr_position={}, cash={}'.format(side_str, self.curr_position, cash))
 
     def execute_signals(self):
         # Trading
@@ -121,28 +141,26 @@ class GenericStrategy(bt.Strategy):
         self.fromdt = pytz.utc.localize(self.fromdt)
         self.todt = pytz.utc.localize(self.todt)
         self.currdt = self.gmt3_tz.localize(self.currdt, is_dst=True)
-        print('******** !!!!!!!!!! self.currdt={}'.format(self.currdt))
 
-        if self.strategyprocessor.is_allow_signals_execution():
-            if self.islivedata() or self.currdt > self.fromdt and self.currdt < self.todt:
-                if self.is_short_position() and self.is_close_short is True:
-                    self.close_position(self.curr_position, self.broker.getcash(), False)
+        #if True: #self.strategyprocessor.is_allow_signals_execution():
+        if self.islivedata() or self.currdt > self.fromdt and self.currdt < self.todt:
+            if self.is_short_position() and self.is_close_short is True:
+                self.signal_close_position(False)
 
-                if self.is_position_closed() and self.p.needlong is True and self.is_open_long is True:
-                    self.open_position(self.curr_position, self.broker.getcash(), True)
+            if self.is_position_closed() and self.p.needlong is True and self.is_open_long is True:
+                self.signal_open_position(True)
 
-                if self.is_long_position() and self.is_close_long is True:
-                    self.close_position(self.curr_position, self.broker.getcash(), True)
+            if self.is_long_position() and self.is_close_long is True:
+                self.signal_close_position(True)
 
-                if self.is_position_closed() and self.p.needshort is True and self.is_open_short is True:
-                    self.open_position(self.curr_position, self.broker.getcash(), False)
+            if self.is_position_closed() and self.p.needshort is True and self.is_open_short is True:
+                self.signal_open_position(False)
 
         if not self.islivedata() and self.currdt > self.todt:
             self.log('!!! Time has passed beyond date range')
             if self.curr_position != 0:  # if 'curtradeid' in self:
                 self.log('!!! Closing trade prematurely')
-                self.strategyprocessor.close()
-                self.strategyprocessor.notify_analyzers()
+                self.signal_close_position(self.is_long_position())
             self.curr_position = 0
             self.position_avg_price = 0
 
@@ -171,11 +189,11 @@ class GenericStrategy(bt.Strategy):
             if self.strategyprocessor.handle_pending_order(self.pending_order) is False:
                 return
 
-        self.strategyprocessor.notify_trade_managers_process_next()
-
         self.calculate_signals()
 
         self.execute_signals()
+
+        self.strategyprocessor.on_next_trade_managers()
 
         self.printdebuginfo()
 
@@ -203,7 +221,13 @@ class GenericStrategy(bt.Strategy):
             return data_symbol.group(1)
 
     def notify_order(self, order):
-        self.log('notify_order() - order.ref={}, status={}, order.size={}, broker.cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], order.size, self.broker.getcash(), self.position.size))
+        if self.strategyprocessor.handle_order_completed_trade_managers(order):
+            self.curr_position = 0
+            self.position_avg_price = 0
+            self.strategyprocessor.notify_analyzers()
+            return
+
+        self.log('notify_order() - order.ref={}, status={}, order.size={}, order.price={}, broker.cash={}, self.position.size = {}'.format(order.ref, order.Status[order.status], order.size, order.price, self.broker.getcash(), self.position.size))
         if order.status in [bt.Order.Created, bt.Order.Submitted, bt.Order.Accepted]:
             self.mark_pending_order(order)
             return  # Await further notifications
@@ -217,10 +241,10 @@ class GenericStrategy(bt.Strategy):
                 self.log(selltxt, True)
             self.complete_pending_order(order)
         elif order.status == order.Canceled:
-            self.log('Order has been Cancelled: Symbol {}, Status {}, order.ref={}'.format(self.data.symbol, order.Status[order.status], order.ref), True)
+            self.log('Order has been Cancelled: Symbol {}, Status {}, order.ref={}'.format(self.get_data_symbol(self.data), order.getstatusname(), order.ref), True)
             self.unmark_pending_order()
         elif order.status in [order.Expired, order.Rejected]:
-            self.log('Order has been Expired/Rejected: Symbol {}, Status {}, order.ref={}'.format(self.data.symbol, order.Status[order.status], order.ref), True)
+            self.log('Order has been Expired/Rejected: Symbol {}, Status {}, order.ref={}'.format(self.get_data_symbol(self.data), order.getstatusname(), order.ref), True)
             self.curr_position = 0
             self.unmark_pending_order()
         elif order.status == order.Margin:
@@ -234,24 +258,22 @@ class GenericStrategy(bt.Strategy):
         return 'red' if trade.pnl < 0 else 'green'
 
     def notify_trade(self, trade):
-        self.log('!!! BEGIN notify_trade() - id(self)={}, self.curr_position={}, traderef={}, self.broker.getcash()={}'.format(id(self), self.curr_position, trade.ref, self.broker.getcash()))
+        self.log('!!! BEGIN notify_trade() - id(self)={}, self.curr_position={}, trade.ref={}, self.broker.getcash()={}'.format(id(self), self.curr_position, trade.ref, round(self.broker.getcash(), 8)))
 
         if trade.justopened:
             self.tradesopen[trade.ref] = trade
-            self.strategyprocessor.notify_trade_managers_open_trade(trade)
-            self.log('TRADE JUST OPENED, SIZE={}, REF={}, VALUE={}, COMMISSION={}, BROKER CASH={}'.format(trade.size, trade.ref, trade.value, trade.commission, self.broker.getcash()))
+            self.log('TRADE JUST OPENED: trade.size={}, trade.ref={}, trade.value={}, trade.commission={}'.format(trade.size, trade.ref, round(trade.value, 8), round(trade.commission, 8)))
 
         if trade.isclosed:
             self.tradesclosed[trade.ref] = trade
-            self.strategyprocessor.notify_trade_managers_close_trade(trade)
             self.log('---------------------------- TRADE CLOSED --------------------------')
             self.log("1: Data Name:                            {}".format(trade.data._name))
             self.log("2: Bar Num:                              {}".format(len(trade.data)))
             self.log("3: Current date:                         {}".format(self.data.datetime.date()))
             self.log('4: Status:                               Trade Complete')
             self.log('5: Ref:                                  {}'.format(trade.ref))
-            self.log('6: PnL GROSS:                            {}'.format(round(trade.pnl, 2)))
-            self.log('7: PnL NET:                              {}'.format(round(trade.pnlcomm, 2)))
+            self.log('6: PnL GROSS:                            {}'.format(round(trade.pnl, 8)))
+            self.log('7: PnL NET:                              {}'.format(round(trade.pnlcomm, 8)))
             self.log(colored('OPERATION PROFIT, GROSS {:.8f}, NET {:.8f}'.format(trade.pnl, trade.pnlcomm), self.get_trade_log_profit_color(trade)))
             self.log('--------------------------------------------------------------------')
 

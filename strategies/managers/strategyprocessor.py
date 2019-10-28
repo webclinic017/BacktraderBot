@@ -14,30 +14,29 @@ class BaseStrategyProcessor(object):
         self.takeprofitmanager = TakeProfitManager(strategy, debug)
         self.trailingbuymanager = TrailingBuyManager(strategy, debug)
         self.dcamodemanager = DcaModeManager(strategy, debug)
-        self.strategy_analyzers = strategy.analyzers
 
-    def notify_trade_managers_open_trade(self, trade):
-        self.stoplossmanager.open_trade(trade)
-        self.takeprofitmanager.open_trade(trade)
+    def on_open_position_trade_managers(self, tradeid, pos_price, pos_size, is_long):
+        self.stoplossmanager.activate(tradeid, pos_price, pos_size, is_long)
+        self.takeprofitmanager.activate(tradeid, pos_price, pos_size, is_long)
 
-    def notify_trade_managers_process_next(self):
-        self.stoplossmanager.process_next()
-        self.takeprofitmanager.process_next()
+    def on_next_trade_managers(self):
+        self.stoplossmanager.on_next()
+        self.takeprofitmanager.on_next()
 
-    def notify_trade_analyzers(self, trade):
-        if self.stoplossmanager.is_sl_triggered_trade_result():
-            self.strategy_analyzers.ta.update_stoploss_data(trade.pnlcomm, False)
-        if self.stoplossmanager.is_tsl_triggered_trade_result():
-            self.strategy_analyzers.ta.update_stoploss_data(trade.pnlcomm, True)
-        if self.takeprofitmanager.is_tp_triggered_trade_result():
-            self.strategy_analyzers.ta.update_takeprofit_data(trade.pnlcomm, False)
-        if self.takeprofitmanager.is_ttp_triggered_trade_result():
-            self.strategy_analyzers.ta.update_takeprofit_data(trade.pnlcomm, True)
+    def handle_order_completed_trade_managers(self, order):
+        sl_result = self.stoplossmanager.handle_order_completed(order)
+        tp_result = self.takeprofitmanager.handle_order_completed(order)
+        # OCO functionality
+        if sl_result and not tp_result:
+            self.takeprofitmanager.deactivate(True)
+        if not sl_result and tp_result:
+            self.stoplossmanager.deactivate(True)
 
-    def notify_trade_managers_close_trade(self, trade):
-        self.stoplossmanager.close_trade(trade)
-        self.takeprofitmanager.close_trade(trade)
-        self.notify_trade_analyzers(trade)
+        return sl_result or tp_result
+
+    def on_close_position_trade_managers(self):
+        self.stoplossmanager.deactivate(True)
+        self.takeprofitmanager.deactivate(True)
 
     def is_allow_signals_execution(self):
         return not self.stoplossmanager.is_activated() and not self.takeprofitmanager.is_activated()
@@ -87,13 +86,13 @@ class BaseStrategyProcessor(object):
         pass
 
     @abstractmethod
-    def buy(self):
+    def open_long_position(self):
         pass
 
     @abstractmethod
-    def sell(self):
+    def open_short_position(self):
         pass
 
     @abstractmethod
-    def close(self):
+    def close_position(self):
         pass

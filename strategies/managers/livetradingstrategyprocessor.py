@@ -98,25 +98,27 @@ class LiveTradingStrategyProcessor(BaseStrategyProcessor):
     def get_order_size(self):
         return BotStrategyConfig.get_instance().order_size
 
-    def buy(self):
-        amount = self.get_order_size()
+    def open_long_position(self):
+        size = self.get_order_size()
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
-        price = self.get_limit_price_order(ticker, True)
-        order = self.strategy.buy(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "market"})
-        self.log("BUY MARKET order submitted: Symbol={}, Amount={}, Price={}, curtradeid={}, order.ref={}".format(self.data.symbol, amount, price, self.strategy.curtradeid, order.ref), True)
+        #price = self.get_limit_price_order(ticker, True)
+        # TODO: Test in Live
+        order = self.strategy.generic_buy(tradeid=self.strategy.curtradeid, size=size, exectype=bt.Order.Market, params={"type": "market"})
+        self.log("BUY MARKET base order submitted: Symbol={}, Size={}, curtradeid={}, order.ref={}".format(self.data.symbol, size, self.strategy.curtradeid, order.ref), True)
         return order
 
-    def sell(self):
-        amount = self.get_order_size()
+    def open_short_position(self):
+        size = self.get_order_size()
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
-        price = self.get_limit_price_order(ticker, False)
-        order = self.strategy.sell(size=amount, price=price, exectype=bt.Order.Limit, tradeid=self.strategy.curtradeid, params={"type": "market"})
-        self.log("SELL MARKET order submitted: Symbol={}, Amount={}, Price={}, curtradeid={}, order.ref={}".format(self.data.symbol, amount, price, self.strategy.curtradeid, order.ref), True)
+        #price = self.get_limit_price_order(ticker, False)
+        # TODO: Test in Live
+        order = self.strategy.generic_sell(tradeid=self.strategy.curtradeid, size=size, exectype=bt.Order.Market, params={"type": "market"})
+        self.log("SELL MARKET base order submitted: Symbol={}, Size={}, curtradeid={}, order.ref={}".format(self.data.symbol, size, self.strategy.curtradeid, order.ref), True)
         return order
 
-    def close(self):
-        order = self.strategy.close(tradeid=self.strategy.curtradeid, params={"type": "market"})
-        self.log("Closing open position by MARKET order: Symbol={}, curtradeid={}, order.ref={}".format(self.data.symbol, self.strategy.curtradeid, order.ref), True)
+    def close_position(self):
+        order = self.strategy.generic_close(tradeid=self.strategy.curtradeid, params={"type": "market"})
+        self.log("Closed position by MARKET order: Symbol={}, curtradeid={}, order.ref={}".format(self.data.symbol, self.strategy.curtradeid, order.ref), True)
         return order

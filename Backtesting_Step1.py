@@ -18,6 +18,7 @@ from config.strategy_enum import BTStrategyEnum
 from model.backtestmodel import BacktestModel
 from model.backtestmodelgenerator import BacktestModelGenerator
 from common.stfetcher import StFetcher
+from strategies.genericstrategy import ParametersValidator
 import itertools
 import collections
 import os
@@ -270,18 +271,11 @@ class BacktestingStep1(object):
         return niterable
 
     def is_need_params_to_add_strategy(self, params_dict):
-        if params_dict.get("needlong") is False and params_dict.get("needshort") is False:
+        try:
+            ParametersValidator.validate_params(params_dict)
+            return True
+        except ValueError:
             return False
-        if params_dict.get("tslflag") is not None and params_dict.get("sl") is None:
-            return False
-        if params_dict.get("ttpdist") is not None and params_dict.get("tp") is None:
-            return False
-        if params_dict.get("dcainterval") is not None and params_dict.get("numdca") is None or params_dict.get("dcainterval") is None and params_dict.get("numdca") is not None:
-            return False
-        if (params_dict.get("tslflag") is not None or params_dict.get("sl") is not None) and (params_dict.get("dcainterval") is not None or params_dict.get("numdca") is not None):
-            return False
-
-        return True
 
     def enqueue_strategies(self):
         strategy_class = self._strategy_enum.value.clazz

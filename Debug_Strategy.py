@@ -223,28 +223,26 @@ class DebugStrategy(object):
         buyandhold_return = round(analyzer.total.buyandholdreturn, 8) if self.exists(analyzer, ['total', 'buyandholdreturn']) else 0
         buyandhold_return_pct = round(analyzer.total.buyandholdreturnpct, 2) if self.exists(analyzer, ['total', 'buyandholdreturnpct']) else 0
 
-        sl_profit_trades_count = analyzer.sl.pnl.netprofit.count
-        sl_loss_trades_count = analyzer.sl.pnl.netloss.count
-        tsl_profit_trades_count = analyzer.tsl.pnl.netprofit.count
-        tsl_loss_trades_count = analyzer.tsl.pnl.netloss.count
-        tp_profit_trades_count = analyzer.tp.pnl.netprofit.count
-        tp_loss_trades_count = analyzer.tp.pnl.netloss.count
-        ttp_profit_trades_count = analyzer.ttp.pnl.netprofit.count
-        ttp_loss_trades_count = analyzer.ttp.pnl.netloss.count
+        sl_trades_count = analyzer.sl.count if self.exists(analyzer, ['sl', 'count']) else 0
+        tsl_trades_count = analyzer.tsl.count if self.exists(analyzer, ['tsl', 'count']) else 0
+        tsl_moved_count = analyzer.tsl.moved.count if self.exists(analyzer, ['tsl', 'moved', 'count']) else 0
+        tp_trades_count = analyzer.tp.count if self.exists(analyzer, ['tp', 'count']) else 0
+        ttp_trades_count = analyzer.ttp.count if self.exists(analyzer, ['ttp', 'count']) else 0
+        ttp_moved_count = analyzer.ttp.moved.count if self.exists(analyzer, ['ttp', 'moved', 'count']) else 0
 
         # Designate the rows
         h1 = ['Total Open', 'Total Closed', 'Total Won', 'Total Lost']
         h2 = ['Win Rate', 'Win Streak', 'Losing Streak', '']
         h3 = ['Buy & Hold Return', 'Buy & Hold Return, %', '', '']
         h4 = ['Net Profit', 'Gross Profit', 'Gross Loss', 'Profit Factor']
-        h5 = ['Trades #: SL (Profit)', 'Trades #: SL (Loss)', 'Trades #: TSL (Profit)', 'Trades #: TSL (Loss)']
-        h6 = ['Trades #: TP (Profit)', 'Trades #: TP (Loss)', 'Trades #: TTP (Profit)', 'Trades #: TTP (Loss)']
+        h5 = ['Trades #: SL Count', 'Trades #: TSL Count', 'TSL Moved Count', '']
+        h6 = ['Trades #: TP Count', 'Trades #: TTP Count', 'TTP Moved Count', '']
         r1 = [total_open, total_closed, total_won, total_lost]
         r2 = [strike_rate, win_streak, lose_streak, '']
         r3 = [buyandhold_return, buyandhold_return_pct, '', '']
         r4 = [netprofit, grossprofit, grossloss, profitfactor]
-        r5 = [sl_profit_trades_count, sl_loss_trades_count, tsl_profit_trades_count, tsl_loss_trades_count]
-        r6 = [tp_profit_trades_count, tp_loss_trades_count, ttp_profit_trades_count, ttp_loss_trades_count]
+        r5 = [sl_trades_count, tsl_trades_count, tsl_moved_count, '']
+        r6 = [tp_trades_count, ttp_trades_count, ttp_moved_count, '']
 
         # Print the rows
         print_list = [h1, r1, h2, r2, h3, r3, h4, r4, h5, r5, h6, r6]
