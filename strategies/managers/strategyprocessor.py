@@ -50,10 +50,6 @@ class BaseStrategyProcessor(object):
         pass
 
     @abstractmethod
-    def handle_pending_order(self, order):
-        pass
-
-    @abstractmethod
     def get_ticker(self, symbol):
         pass
 

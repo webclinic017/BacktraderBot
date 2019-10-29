@@ -39,18 +39,6 @@ class LiveTradingStrategyProcessor(BaseStrategyProcessor):
 
         return result
 
-    def handle_pending_order(self, order):
-        result = False
-        self.log("An order is pending: order.ref={}, status={}".format(order.ref, order.status), True)
-        # A limit order is pending
-        # Check if the limit order has expired
-        if self.check_order_expired(order):
-            self.log("Limit order has expired after {} seconds. The order will be cancelled. order.ref={}".format(BotConfig.get_limit_order_timeout_seconds(), order.ref), True)
-            self.broker.cancel(order)
-            self.strategy.curr_position = 0
-            result = True
-        return result
-
     def get_ticker(self, symbol):
         ticker_data = self.broker.fetch_ticker(symbol)
         return ticker_data

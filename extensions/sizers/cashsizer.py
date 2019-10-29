@@ -32,7 +32,7 @@ class FixedCashSizer(bt.Sizer):
         pass
 
     def is_pre_margin_call_condition(self):
-        return self.broker.get_value() <= self.p.cashamount * (1 + self.p.commission)
+        return self.broker.get_value() <= self.p.cashamount * (1 + 2 * self.p.commission)
 
     def get_capital_value(self):
         if self.is_pre_margin_call_condition():

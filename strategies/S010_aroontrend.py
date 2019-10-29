@@ -95,7 +95,6 @@ class S010_AlexAroonTrendStrategy(GenericStrategy):
             self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
             self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
             self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
-        self.log('self.pending_order.ref = {}'.format(self.get_pending_order_ref()))
         self.log('self.curtradeid = {}'.format(self.curtradeid))
         self.log('self.curr_position = {}'.format(self.curr_position))
         self.log('self.position.size = {}'.format(self.position.size))
