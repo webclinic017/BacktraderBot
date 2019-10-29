@@ -12,6 +12,9 @@ class BacktestingStrategyProcessor(BaseStrategyProcessor):
         self.data = strategy.data
         self.debug = debug
 
+    def handle_pending_order(self, order):
+        return True
+
     def set_startcash(self, startcash):
         self.broker.setcash(startcash)
         # TODO: Workaround

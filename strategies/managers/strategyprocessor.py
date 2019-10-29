@@ -10,29 +10,36 @@ class BaseStrategyProcessor(object):
     def __init__(self, strategy, debug):
         self.strategy = strategy
         self.debug = debug
-        self.stoplossmanager = StopLossManager(strategy, self, debug)
-        self.takeprofitmanager = TakeProfitManager(strategy, self, debug)
-        self.trailingbuymanager = TrailingBuyManager(strategy, self, debug)
-        self.dcamodemanager = DcaModeManager(strategy, self, debug)
+        self.stoplossmanager = StopLossManager(strategy, debug)
+        self.takeprofitmanager = TakeProfitManager(strategy, debug)
+        self.trailingbuymanager = TrailingBuyManager(strategy, debug)
+        self.dcamodemanager = DcaModeManager(strategy, debug)
 
-    def on_open_position_trade_managers(self, pos_price, is_long):
-        self.stoplossmanager.activate(pos_price, is_long)
-        self.takeprofitmanager.activate(pos_price, is_long)
+    def on_open_position_trade_managers(self, tradeid, pos_price, pos_size, is_long):
+        self.stoplossmanager.activate(tradeid, pos_price, pos_size, is_long)
+        self.takeprofitmanager.activate(tradeid, pos_price, pos_size, is_long)
 
     def on_next_trade_managers(self):
-        sl_result = self.stoplossmanager.on_next()
-        tp_result = self.takeprofitmanager.on_next()
+        self.stoplossmanager.on_next()
+        self.takeprofitmanager.on_next()
+
+    def handle_order_completed_trade_managers(self, order):
+        sl_result = self.stoplossmanager.handle_order_completed(order)
+        tp_result = self.takeprofitmanager.handle_order_completed(order)
         # OCO functionality
         if sl_result and not tp_result:
-            self.takeprofitmanager.deactivate()
+            self.takeprofitmanager.deactivate(True)
         if not sl_result and tp_result:
-            self.stoplossmanager.deactivate()
+            self.stoplossmanager.deactivate(True)
 
         return sl_result or tp_result
 
     def on_close_position_trade_managers(self):
-        self.stoplossmanager.deactivate()
-        self.takeprofitmanager.deactivate()
+        self.stoplossmanager.deactivate(True)
+        self.takeprofitmanager.deactivate(True)
+
+    def is_allow_signals_execution(self):
+        return not self.stoplossmanager.is_activated() and not self.takeprofitmanager.is_activated()
 
     @abstractmethod
     def log(self, txt, send_telegram_flag=False):
@@ -40,6 +47,10 @@ class BaseStrategyProcessor(object):
 
     @abstractmethod
     def check_order_expired(self, order):
+        pass
+
+    @abstractmethod
+    def handle_pending_order(self, order):
         pass
 
     @abstractmethod
