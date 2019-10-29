@@ -39,45 +39,9 @@ class LiveTradingStrategyProcessor(BaseStrategyProcessor):
 
         return result
 
-    def handle_pending_order(self, order):
-        result = False
-        self.log("An order is pending: order.ref={}, status={}".format(order.ref, order.status), True)
-        # A limit order is pending
-        # Check if the limit order has expired
-        if self.check_order_expired(order):
-            self.log("Limit order has expired after {} seconds. The order will be cancelled. order.ref={}".format(BotConfig.get_limit_order_timeout_seconds(), order.ref), True)
-            self.broker.cancel(order)
-            self.strategy.curr_position = 0
-            result = True
-        return result
-
     def get_ticker(self, symbol):
         ticker_data = self.broker.fetch_ticker(symbol)
         return ticker_data
-
-    def get_spread(self, ticker, significant_digits_num):
-        bid_price = ticker['bid']
-        ask_price = ticker['ask']
-        return round(abs(bid_price - ask_price), significant_digits_num)
-
-    def get_significant_digits_number(self, ticker):
-        bid_signif_num = str(ticker['bid'])[::-1].find('.')
-        ask_signif_num = str(ticker['ask'])[::-1].find('.')
-        return max(bid_signif_num, ask_signif_num)
-
-    def get_limit_price_order(self, ticker, is_long):
-        price = ticker['bid'] if is_long is True else ticker['ask']
-        significant_digits_num = self.get_significant_digits_number(ticker)
-        spread = self.get_spread(ticker, significant_digits_num)
-        min_tick_price = round(pow(10, -significant_digits_num), significant_digits_num)
-        if spread == min_tick_price:
-            adj_tick_price = min_tick_price
-        else:
-            adj_tick_price = -min_tick_price  # If spread is large then would try to insert an order in order book at the first place
-        if is_long is True:
-            adj_tick_price *= -1
-        self.log("adjusted_tick_price: {:.8f}".format(adj_tick_price))
-        return round(price + adj_tick_price, significant_digits_num)
 
     def set_startcash(self, startcash):
         pass
@@ -102,8 +66,6 @@ class LiveTradingStrategyProcessor(BaseStrategyProcessor):
         size = self.get_order_size()
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
-        #price = self.get_limit_price_order(ticker, True)
-        # TODO: Test in Live
         order = self.strategy.generic_buy(tradeid=self.strategy.curtradeid, size=size, exectype=bt.Order.Market, params={"type": "market"})
         self.log("BUY MARKET base order submitted: Symbol={}, Size={}, curtradeid={}, order.ref={}".format(self.data.symbol, size, self.strategy.curtradeid, order.ref), True)
         return order
@@ -112,8 +74,6 @@ class LiveTradingStrategyProcessor(BaseStrategyProcessor):
         size = self.get_order_size()
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
-        #price = self.get_limit_price_order(ticker, False)
-        # TODO: Test in Live
         order = self.strategy.generic_sell(tradeid=self.strategy.curtradeid, size=size, exectype=bt.Order.Market, params={"type": "market"})
         self.log("SELL MARKET base order submitted: Symbol={}, Size={}, curtradeid={}, order.ref={}".format(self.data.symbol, size, self.strategy.curtradeid, order.ref), True)
         return order
