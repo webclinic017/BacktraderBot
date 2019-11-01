@@ -90,8 +90,6 @@ class LiveTradingStrategyProcessor(BaseStrategyProcessor):
         size = self.get_order_size()
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
-        #price = self.get_limit_price_order(ticker, True)
-        # TODO: Test in Live
         order = self.strategy.generic_buy(tradeid=self.strategy.curtradeid, size=size, exectype=bt.Order.Market, params={"type": "market"})
         self.log("BUY MARKET base order submitted: Symbol={}, Size={}, curtradeid={}, order.ref={}".format(self.data.symbol, size, self.strategy.curtradeid, order.ref), True)
         return order
@@ -100,8 +98,6 @@ class LiveTradingStrategyProcessor(BaseStrategyProcessor):
         size = self.get_order_size()
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
-        #price = self.get_limit_price_order(ticker, False)
-        # TODO: Test in Live
         order = self.strategy.generic_sell(tradeid=self.strategy.curtradeid, size=size, exectype=bt.Order.Market, params={"type": "market"})
         self.log("SELL MARKET base order submitted: Symbol={}, Size={}, curtradeid={}, order.ref={}".format(self.data.symbol, size, self.strategy.curtradeid, order.ref), True)
         return order

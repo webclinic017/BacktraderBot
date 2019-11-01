@@ -1,8 +1,42 @@
 from abc import abstractmethod
-from strategies.managers.stoplossmanager import StopLossManager
-from strategies.managers.takeprofitmanager import TakeProfitManager
+from strategies.managers.sltpmanager import SLTPManager
 from strategies.managers.trailingbuymanager import TrailingBuyManager
 from strategies.managers.dcamodemanager import DcaModeManager
+
+
+class OcoContext(object):
+    def __init__(self):
+        self.sl_order = None
+        self.tp_order = None
+
+    def reset(self):
+        self.sl_order = None
+        self.tp_order = None
+
+    def get_sl_order(self):
+        return self.sl_order
+
+    def set_sl_order(self, order):
+        self.sl_order = order
+
+    def get_tp_order(self):
+        return self.tp_order
+
+    def set_tp_order(self, order):
+        self.tp_order = order
+
+    def is_sl_order(self, order):
+        if order and self.sl_order and order.ref == self.sl_order.ref:
+            return True
+
+    def is_tp_order(self, order):
+        if order and self.tp_order and order.ref == self.tp_order.ref:
+            return True
+
+    def __str__(self):
+        sl_order_ref = self.sl_order.ref if self.sl_order else None
+        tp_order_ref = self.tp_order.ref if self.tp_order else None
+        return "OcoContext <sl_order.ref={}, tp_order.ref={}>".format(sl_order_ref, tp_order_ref)
 
 
 class BaseStrategyProcessor(object):
@@ -10,36 +44,29 @@ class BaseStrategyProcessor(object):
     def __init__(self, strategy, debug):
         self.strategy = strategy
         self.debug = debug
-        self.stoplossmanager = StopLossManager(strategy, debug)
-        self.takeprofitmanager = TakeProfitManager(strategy, debug)
-        self.trailingbuymanager = TrailingBuyManager(strategy, debug)
-        self.dcamodemanager = DcaModeManager(strategy, debug)
+        self.oco_context = OcoContext()
+        self.sltpmanager = SLTPManager(strategy, self.oco_context)
+        self.trailingbuymanager = TrailingBuyManager(strategy, self.oco_context)
+        self.dcamodemanager = DcaModeManager(strategy, self.oco_context)
 
     def on_open_position_trade_managers(self, tradeid, pos_price, pos_size, is_long):
-        self.stoplossmanager.activate(tradeid, pos_price, pos_size, is_long)
-        self.takeprofitmanager.activate(tradeid, pos_price, pos_size, is_long)
+        self.sltpmanager.activate_sl(tradeid, pos_price, pos_size, is_long)
+        self.sltpmanager.activate_tp(tradeid, pos_price, pos_size, is_long)
 
     def on_next_trade_managers(self):
-        self.stoplossmanager.on_next()
-        self.takeprofitmanager.on_next()
+        self.sltpmanager.move_targets()
+        self.sltpmanager.sl_on_next()
+        self.sltpmanager.tp_on_next()
 
     def handle_order_completed_trade_managers(self, order):
-        sl_result = self.stoplossmanager.handle_order_completed(order)
-        tp_result = self.takeprofitmanager.handle_order_completed(order)
-        # OCO functionality
-        if sl_result and not tp_result:
-            self.takeprofitmanager.deactivate(True)
-        if not sl_result and tp_result:
-            self.stoplossmanager.deactivate(True)
-
-        return sl_result or tp_result
+        return self.sltpmanager.handle_order_completed(order)
 
     def on_close_position_trade_managers(self):
-        self.stoplossmanager.deactivate(True)
-        self.takeprofitmanager.deactivate(True)
+        self.sltpmanager.sl_deactivate()
+        self.sltpmanager.tp_deactivate()
 
     def is_allow_signals_execution(self):
-        return not self.stoplossmanager.is_activated() and not self.takeprofitmanager.is_activated()
+        return not self.sltpmanager.is_sl_mode_activated() and not self.sltpmanager.is_tp_mode_activated()
 
     @abstractmethod
     def log(self, txt, send_telegram_flag=False):

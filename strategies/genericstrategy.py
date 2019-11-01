@@ -95,11 +95,11 @@ class GenericStrategy(bt.Strategy):
     def get_side_str(self, is_long):
         return "LONG" if is_long else "SHORT"
 
-    def generic_buy(self, tradeid=None, size=None, price=None, exectype=None, params=None):
-        return self.buy(tradeid=tradeid, size=size, price=price, exectype=exectype, params=params)
+    def generic_buy(self, tradeid=None, size=None, price=None, exectype=None, params=None, oco=None):
+        return self.buy(tradeid=tradeid, size=size, price=price, exectype=exectype, params=params, oco=oco)
 
-    def generic_sell(self, tradeid=None, size=None, price=None, exectype=None, params=None):
-        return self.sell(tradeid=tradeid, size=size, price=price, exectype=exectype, params=params)
+    def generic_sell(self, tradeid=None, size=None, price=None, exectype=None, params=None, oco=None):
+        return self.sell(tradeid=tradeid, size=size, price=price, exectype=exectype, params=params, oco=oco)
 
     def generic_close(self, tradeid=None, params=None):
         return self.close(tradeid=tradeid, params=params)

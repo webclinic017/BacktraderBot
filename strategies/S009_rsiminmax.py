@@ -167,4 +167,7 @@ class S009_RSIMinMaxStrategy(GenericStrategy):
         self.log('self.is_close_long = {}'.format(self.is_close_long))
         self.log('self.is_open_short = {}'.format(self.is_open_short))
         self.log('self.is_close_short = {}'.format(self.is_close_short))
+        self.log('sltpmanager.oco_context = {}'.format(self.strategyprocessor.sltpmanager.oco_context))
+        self.log('sltpmanager.sl_order.ref = {}'.format(self.strategyprocessor.sltpmanager.sl_order.ref if self.strategyprocessor.sltpmanager.sl_order else None))
+        self.log('sltpmanager.tp_order.ref = {}'.format(self.strategyprocessor.sltpmanager.tp_order.ref if self.strategyprocessor.sltpmanager.tp_order else None))
         self.log('----------------------')
