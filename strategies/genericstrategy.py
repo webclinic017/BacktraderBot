@@ -56,6 +56,9 @@ class GenericStrategy(bt.Strategy):
 
         self.strategyprocessor = StrategyProcessorFactory.build_strategy_processor(self, self.p.debug)
 
+        self.is_margin_condition = False
+        self.processing_status = None
+
     def islivedata(self):
         return self.data.islive()
 
@@ -130,6 +133,25 @@ class GenericStrategy(bt.Strategy):
         self.strategyprocessor.on_close_position_trade_managers()
         self.log('!!! AFTER CLOSE {} !!!, self.curr_position={}, cash={}'.format(side_str, self.curr_position, cash))
 
+    def exists(self, obj, chain):
+        _key = chain.pop(0)
+        if _key in obj:
+            return self.exists(obj[_key], chain) if chain else obj[_key]
+
+    def set_processing_status(self):
+        if self.islivedata():
+            return
+
+        if self.is_margin_condition:
+            self.processing_status = "Margin"
+        else:
+            analyzer = self.analyzers.ta.get_analysis()
+            total_open = analyzer.total.open if self.exists(analyzer, ['total', 'open']) else 0
+            if total_open != 0:
+                self.processing_status = "OpenTrades"
+            else:
+                self.processing_status = "Success"
+
     def execute_signals(self):
         # Trading
         self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
@@ -162,6 +184,7 @@ class GenericStrategy(bt.Strategy):
                 self.signal_close_position(self.is_long_position())
             self.curr_position = 0
             self.position_avg_price = 0
+            self.set_processing_status()
 
     @abstractmethod
     def printdebuginfo(self):
@@ -225,6 +248,7 @@ class GenericStrategy(bt.Strategy):
             self.curr_position = 0
         elif order.status == order.Margin:
             self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********', True)
+            self.is_margin_condition = True
             if self.position.size == 0:  # If margin call ocurred during opening a new position, just skip opened position and wait for next signals
                 self.curr_position = 0
             else:  # If margin call occurred during closing a position, then set curr_position to the same value as it was in previous cycle to give a chance to recover

@@ -62,7 +62,14 @@ class BacktestModelGenerator(object):
                 monthly_stats = ta_analysis.monthly_stats if self.exists(ta_analysis, ['monthly_stats']) else {}
                 num_months = model.get_num_months()
                 monthly_stats = self.update_monthly_stats(monthly_stats, num_months)
+                processing_status = strategy.processing_status
                 total_closed = ta_analysis.total.closed if self.exists(ta_analysis, ['total', 'closed']) else 0
+                sl_trades_count = ta_analysis.sl.count if self.exists(ta_analysis, ['sl', 'count']) else 0
+                tsl_trades_count = ta_analysis.tsl.count if self.exists(ta_analysis, ['tsl', 'count']) else 0
+                tsl_moved_count = ta_analysis.tsl.moved.count if self.exists(ta_analysis, ['tsl', 'moved', 'count']) else 0
+                tp_trades_count = ta_analysis.tp.count if self.exists(ta_analysis, ['tp', 'count']) else 0
+                ttp_trades_count = ta_analysis.ttp.count if self.exists(ta_analysis, ['ttp', 'count']) else 0
+                ttp_moved_count = ta_analysis.ttp.moved.count if self.exists(ta_analysis, ['ttp', 'moved', 'count']) else 0
                 net_profit = round(ta_analysis.pnl.netprofit.total, 8) if self.exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
                 net_profit_pct = round(100 * ta_analysis.pnl.netprofit.total / startcash, 2) if self.exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
                 avg_monthly_net_profit_pct = '{}%'.format(self.get_avg_monthly_net_profit_pct(monthly_stats, num_months))
@@ -86,6 +93,7 @@ class BacktestModelGenerator(object):
 
                 if self._needfiltering is False or self._needfiltering is True and net_profit > 0 and total_closed > 0:
                     model.add_result_row(strategy_id, exchange, symbol, timeframe, parameters, proc_daterange, startcash, self.getlotsize(lotsize, lottype),
-                                         total_closed, net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, net_profit_to_maxdd, strike_rate,
+                                         processing_status, total_closed, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count,
+                                         net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, net_profit_to_maxdd, strike_rate,
                                          num_winning_months, profitfactor, buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle,
                                          equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)
