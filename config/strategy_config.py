@@ -36,6 +36,8 @@ class AppConfig(object):
             "dcainterval": 3,
         },
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
+            "needlong": True,
+            "needshort": True,
             "sensup": range(0, 9),
             "sensdn": range(0, 9),
             "usewow": True,
@@ -260,6 +262,8 @@ class AppConfig(object):
                 "lottype": "Fixed"
             },
             {
+                "needlong": True,
+                "needshort": True,
                 "sensup": 0,
                 "sensdn": 7,
                 "usewow": True,

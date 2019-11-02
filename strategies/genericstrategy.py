@@ -13,14 +13,15 @@ import re
 class ParametersValidator(object):
     @classmethod
     def validate_params(cls, params):
-        if not params.needlong and not params.needshort:
+        if not params.get("needlong") and not params.get("needshort"):
             raise ValueError("Either 'needlong' or 'needshort' parameters must be provided")
-        if params.tslflag and not params.sl:
+        if params.get("tslflag") and not params.get("sl"):
             raise ValueError("The 'tslflag' parameter should be provided with 'sl' parameter")
-        if params.ttpdist and not params.tp:
+        if params.get("ttpdist") and not params.get("tp"):
             raise ValueError("The 'ttpdist' parameter cannot be provided without 'tp' parameter")
-        if params.dcainterval and not params.numdca or not params.dcainterval and params.numdca:
+        if params.get("dcainterval") and not params.get("numdca") or not params.get("dcainterval") and params.get("numdca"):
             raise ValueError("Both 'dcainterval' and 'numdca' must be provided")
+        return True
 
 
 class StrategyProcessorFactory(object):
@@ -35,7 +36,7 @@ class StrategyProcessorFactory(object):
 class GenericStrategy(bt.Strategy):
 
     def check_params(self):
-        ParametersValidator.validate_params(self.p)
+        ParametersValidator.validate_params(vars(self.p))
 
     def __init__(self):
         self.curtradeid = -1
@@ -142,15 +143,16 @@ class GenericStrategy(bt.Strategy):
         if self.islivedata():
             return
 
+        ta_analyzer = self.analyzers.ta
         if self.is_margin_condition:
-            self.processing_status = "Margin"
+            ta_analyzer.update_processing_status("Margin")
         else:
-            analyzer = self.analyzers.ta.get_analysis()
-            total_open = analyzer.total.open if self.exists(analyzer, ['total', 'open']) else 0
+            analysis = ta_analyzer.get_analysis()
+            total_open = analysis.total.open if self.exists(analysis, ['total', 'open']) else 0
             if total_open != 0:
-                self.processing_status = "OpenTrades"
+                ta_analyzer.update_processing_status("OpenTrades")
             else:
-                self.processing_status = "Success"
+                ta_analyzer.update_processing_status("Success")
 
     def execute_signals(self):
         # Trading

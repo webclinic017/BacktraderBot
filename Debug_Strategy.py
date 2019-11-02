@@ -190,7 +190,7 @@ class DebugStrategy(object):
         print('P/L: {}'.format(round(pnl, 2)))
         print('P/L, %: {}%'.format(round(pnlpct, 2)))
 
-        self.printStatus(strategy)
+        self.printStatus(strategy.analyzers.ta.get_analysis())
 
     def exists(self, obj, chain):
         _key = chain.pop(0)
@@ -262,8 +262,8 @@ class DebugStrategy(object):
         print('Max Drawdown, %: {}%'.format(round(analyzer.max.drawdown, 2)))
         print('Max Drawdown Length: {}'.format(round(analyzer.max.len, 2)))
 
-    def printStatus(self, strategy):
-        print('\nProcessing Status: {}'.format(strategy.processing_status))
+    def printStatus(self, analyzer):
+        print('\nProcessing Status: {}'.format(analyzer.processing_status))
 
     def printDict(self, dict):
         for keys, values in dict.items():

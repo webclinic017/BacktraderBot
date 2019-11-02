@@ -272,8 +272,7 @@ class BacktestingStep1(object):
 
     def is_need_params_to_add_strategy(self, params_dict):
         try:
-            ParametersValidator.validate_params(params_dict)
-            return True
+            return ParametersValidator.validate_params(params_dict)
         except ValueError:
             return False
 

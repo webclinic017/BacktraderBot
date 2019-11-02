@@ -178,6 +178,10 @@ class TVTradeAnalyzer(Analyzer):
         trades = self.rets
         trades.ttp.moved.count += 1 if is_ttp_flag is True else 0
 
+    def update_processing_status(self, processing_status):
+        trades = self.rets
+        trades.processing_status = processing_status
+
     def print_debug_info(self):
         print("!!!!! self.netprofits_data={}\n".format(self.netprofits_data))
         print("All Trades:")

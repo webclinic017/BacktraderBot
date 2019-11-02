@@ -62,7 +62,7 @@ class BacktestModelGenerator(object):
                 monthly_stats = ta_analysis.monthly_stats if self.exists(ta_analysis, ['monthly_stats']) else {}
                 num_months = model.get_num_months()
                 monthly_stats = self.update_monthly_stats(monthly_stats, num_months)
-                processing_status = strategy.processing_status
+                processing_status = ta_analysis.processing_status
                 total_closed = ta_analysis.total.closed if self.exists(ta_analysis, ['total', 'closed']) else 0
                 sl_trades_count = ta_analysis.sl.count if self.exists(ta_analysis, ['sl', 'count']) else 0
                 tsl_trades_count = ta_analysis.tsl.count if self.exists(ta_analysis, ['tsl', 'count']) else 0
