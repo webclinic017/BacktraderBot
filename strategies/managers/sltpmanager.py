@@ -104,7 +104,7 @@ class SLTPManager(object):
             self.is_sl_activated = True
             if self.is_tsl_enabled:
                 self.sl_trailed_price = pos_price
-            self.strategy.log("Activated {} for self.oco_context={}, self.tradeid={}, self.sl_order.ref={}, self.sl_order.size={}, self.sl_order.price={}, pos_price={}, pos_size={}, self.trailed_price={}, self.sl_price={}".format(
+            self.strategy.log("Activated {} mode for self.oco_context={}, self.tradeid={}, self.sl_order.ref={}, self.sl_order.size={}, self.sl_order.price={}, pos_price={}, pos_size={}, self.trailed_price={}, self.sl_price={}".format(
                 self.get_sl_type_str(), self.oco_context, self.tradeid, self.sl_order.ref, self.sl_order.size, self.sl_order.price, pos_price, pos_size, self.sl_trailed_price, self.sl_price))
 
     def activate_tp(self, tradeid, pos_price, pos_size, is_long):
@@ -257,8 +257,8 @@ class SLTPManager(object):
 
         if order.status == order.Completed and (self.tp_order and self.tp_order.ref == order.ref):
             self.strategy.log('SLTPManager.handle_order_completed(): order.ref={}, status={}'.format(order.ref, order.getstatusname()))
-            self.strategy.log("The {} order has been triggered and COMPLETED: self.oco_context={}, self.tp_order.ref={}, self.trailed_price={}, self.tp_price={}, order.price={}, order.size={}".format(
-                self.get_tp_type_str(), self.oco_context, self.tp_order.ref, self.tp_trailed_price, self.tp_price, order.price, order.size))
+            self.strategy.log("The {} order has been triggered and COMPLETED: self.oco_context={}, self.tp_order.ref={}, self.trailed_price={}, self.tp_price={}, self.ttp_price={}, order.price={}, order.size={}".format(
+                self.get_tp_type_str(), self.oco_context, self.tp_order.ref, self.tp_trailed_price, self.tp_price, self.ttp_price, order.price, order.size))
             self.sl_deactivate()
             self.tp_deactivate()
             self.strategy_analyzers.ta.update_tp_counts_data(self.is_ttp_enabled)
