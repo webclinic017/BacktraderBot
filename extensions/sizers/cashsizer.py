@@ -18,7 +18,8 @@ class FixedCashSizer(bt.Sizer):
       - ``debug`` (default: ``False``)
     '''
 
-    _PREMARGINCALL_ADJUSTMENT_RATIO = 0.9
+    _PRE_MARGIN_CALL_ADJUSTMENT_RATIO = 0.9
+    _SAFETY_BUFFER_MARGIN_CALL = 0.95
 
     params = (
         ('cashamount', 10000),
@@ -36,9 +37,9 @@ class FixedCashSizer(bt.Sizer):
 
     def get_capital_value(self):
         if self.is_pre_margin_call_condition():
-            return round(self.broker.get_value() * self._PREMARGINCALL_ADJUSTMENT_RATIO, 8)
+            return round(self.broker.get_value() * self._PRE_MARGIN_CALL_ADJUSTMENT_RATIO, 8)
         else:
-            return self.p.cashamount
+            return self._SAFETY_BUFFER_MARGIN_CALL * self.p.cashamount
 
     def _getsizing(self, comminfo, cash, data, isbuy):
         value = self.get_capital_value()
