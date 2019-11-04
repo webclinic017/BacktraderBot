@@ -36,14 +36,14 @@ class FixedCashSizer(bt.Sizer):
 
     def get_capital_value(self):
         if self.is_pre_margin_call_condition():
-            return round(self.broker.get_value() * self._PREMARGINCALL_ADJUSTMENT_RATIO)
+            return round(self.broker.get_value() * self._PREMARGINCALL_ADJUSTMENT_RATIO, 8)
         else:
             return self.p.cashamount
 
     def _getsizing(self, comminfo, cash, data, isbuy):
         value = self.get_capital_value()
         price = data.open[1]
-        size = round(value / (1.0 * price), 6)
+        size = round(value / (1.0 * price), 8)
 
         if self.p.debug:
             print(

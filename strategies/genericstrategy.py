@@ -57,6 +57,7 @@ class GenericStrategy(bt.Strategy):
 
         self.strategyprocessor = StrategyProcessorFactory.build_strategy_processor(self, self.p.debug)
 
+        self.is_error_condition = False
         self.is_margin_condition = False
         self.processing_status = None
 
@@ -144,7 +145,9 @@ class GenericStrategy(bt.Strategy):
             return
 
         ta_analyzer = self.analyzers.ta
-        if self.is_margin_condition:
+        if self.is_error_condition:
+            ta_analyzer.update_processing_status("Error")
+        elif self.is_margin_condition:
             ta_analyzer.update_processing_status("Margin")
         else:
             analysis = ta_analyzer.get_analysis()
@@ -202,20 +205,25 @@ class GenericStrategy(bt.Strategy):
         return self.curr_position < 0
 
     def next(self):
-        if self.islivedata():
-            self.log("BEGIN next(): status={}".format(self.status))
+        try:
+            if self.islivedata():
+                self.log("BEGIN next(): status={}".format(self.status))
 
-        if self.islivedata() and self.status != "LIVE":
-            self.log("%s - %.8f" % (self.status, self.data0.close[0]))
-            return
+            if self.islivedata() and self.status != "LIVE":
+                self.log("%s - %.8f" % (self.status, self.data0.close[0]))
+                return
 
-        self.calculate_signals()
+            self.calculate_signals()
 
-        self.execute_signals()
+            self.execute_signals()
 
-        self.strategyprocessor.on_next_trade_managers()
+            self.strategyprocessor.on_next_trade_managers()
 
-        self.printdebuginfo()
+            self.printdebuginfo()
+        except Exception as e:
+            self.is_error_condition = True
+            self.set_processing_status()
+            self.broker.cerebro.runstop()
 
     def get_data_symbol(self, data):
         if self.islivedata():
@@ -251,10 +259,12 @@ class GenericStrategy(bt.Strategy):
         elif order.status == order.Margin:
             self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********', True)
             self.is_margin_condition = True
+            self.set_processing_status()
             if self.position.size == 0:  # If margin call ocurred during opening a new position, just skip opened position and wait for next signals
                 self.curr_position = 0
             else:  # If margin call occurred during closing a position, then set curr_position to the same value as it was in previous cycle to give a chance to recover
                 self.curr_position = -1 if self.position.size < 0 else 1 if self.position.size > 0 else 0
+            self.broker.cerebro.runstop()
 
     def get_trade_log_profit_color(self, trade):
         return 'red' if trade.pnl < 0 else 'green'
