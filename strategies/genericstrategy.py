@@ -9,6 +9,8 @@ from strategies.managers.backtestingstrategyprocessor import BacktestingStrategy
 from termcolor import colored
 import re
 
+DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT = -30
+
 
 class ParametersValidator(object):
     @classmethod
@@ -153,7 +155,7 @@ class GenericStrategy(bt.Strategy):
             analysis = ta_analyzer.get_analysis()
             total_open = analysis.total.open if self.exists(analysis, ['total', 'open']) else 0
             if total_open != 0:
-                ta_analyzer.update_processing_status("OpenTrades")
+                ta_analyzer.update_processing_status("Open Trades")
             else:
                 ta_analyzer.update_processing_status("Success")
 
@@ -184,7 +186,7 @@ class GenericStrategy(bt.Strategy):
 
         if not self.islivedata() and self.currdt > self.todt:
             self.log('!!! Time has passed beyond date range')
-            if self.curr_position != 0:  # if 'curtradeid' in self:
+            if self.curr_position != 0:
                 self.log('!!! Closing trade prematurely')
                 self.signal_close_position(self.is_long_position())
             self.curr_position = 0
@@ -204,6 +206,16 @@ class GenericStrategy(bt.Strategy):
     def is_short_position(self):
         return self.curr_position < 0
 
+    def process_capital_sl(self):
+        result = False
+        realized_pl = round((self.broker.getvalue() - self.p.startcash) * 100 / self.p.startcash, 2)
+        if self.curr_position == 0 and realized_pl <= DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT:
+            self.log("The realized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed immediately.".format(realized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
+            self.set_processing_status()
+            self.broker.cerebro.runstop()
+            result = True
+        return result
+
     def next(self):
         try:
             if self.islivedata():
@@ -211,6 +223,9 @@ class GenericStrategy(bt.Strategy):
 
             if self.islivedata() and self.status != "LIVE":
                 self.log("%s - %.8f" % (self.status, self.data0.close[0]))
+                return
+
+            if self.process_capital_sl():
                 return
 
             self.calculate_signals()
