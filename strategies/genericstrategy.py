@@ -61,7 +61,6 @@ class GenericStrategy(bt.Strategy):
 
         self.is_error_condition = False
         self.is_margin_condition = False
-        self.processing_status = None
 
     def islivedata(self):
         return self.data.islive()
@@ -191,7 +190,6 @@ class GenericStrategy(bt.Strategy):
                 self.signal_close_position(self.is_long_position())
             self.curr_position = 0
             self.position_avg_price = 0
-            self.set_processing_status()
 
     @abstractmethod
     def printdebuginfo(self):
@@ -211,7 +209,6 @@ class GenericStrategy(bt.Strategy):
         realized_pl = round((self.broker.getvalue() - self.p.startcash) * 100 / self.p.startcash, 2)
         if self.curr_position == 0 and realized_pl <= DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT:
             self.log("The realized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed immediately.".format(realized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
-            self.set_processing_status()
             self.broker.cerebro.runstop()
             result = True
         return result
@@ -237,8 +234,8 @@ class GenericStrategy(bt.Strategy):
             self.printdebuginfo()
         except Exception as e:
             self.is_error_condition = True
-            self.set_processing_status()
             self.broker.cerebro.runstop()
+            raise e
 
     def get_data_symbol(self, data):
         if self.islivedata():
@@ -274,7 +271,6 @@ class GenericStrategy(bt.Strategy):
         elif order.status == order.Margin:
             self.log('notify_order() - ********** MARGIN CALL!! SKIP ORDER AND PREPARING FOR NEXT ORDERS!! **********', True)
             self.is_margin_condition = True
-            self.set_processing_status()
             if self.position.size == 0:  # If margin call ocurred during opening a new position, just skip opened position and wait for next signals
                 self.curr_position = 0
             else:  # If margin call occurred during closing a position, then set curr_position to the same value as it was in previous cycle to give a chance to recover
@@ -303,3 +299,6 @@ class GenericStrategy(bt.Strategy):
             self.log('7: PnL NET:                              {}'.format(round(trade.pnlcomm, 8)))
             self.log(colored('OPERATION PROFIT, GROSS {:.8f}, NET {:.8f}'.format(trade.pnl, trade.pnlcomm), self.get_trade_log_profit_color(trade)))
             self.log('--------------------------------------------------------------------')
+
+    def stop(self):
+        self.set_processing_status()

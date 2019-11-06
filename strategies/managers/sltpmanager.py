@@ -11,10 +11,10 @@ class SLTPManager(object):
         self.data = strategy.data
         self.strategy_analyzers = strategy.analyzers
 
-        self.is_sl_enabled = self.strategy.p.sl is not None
+        self.is_sl_enabled = self.strategy.p.sl is not None and self.strategy.p.sl > 0
         self.is_tsl_enabled = self.strategy.p.tslflag is True
-        self.is_tp_enabled = self.strategy.p.tp is not None
-        self.is_ttp_enabled = self.strategy.p.ttpdist is not None
+        self.is_tp_enabled = self.strategy.p.tp is not None and self.strategy.p.tp > 0
+        self.is_ttp_enabled = self.strategy.p.ttpdist is not None and self.strategy.p.ttpdist > 0
 
         self.is_sl_activated = False
         self.is_tp_activated = False
