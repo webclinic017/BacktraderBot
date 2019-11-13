@@ -152,23 +152,7 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(GenericStrategy):
         self.is_open_short = True if self.position.size == 0 and self.opengbarok[-1] == 1 and self.rsiupok[-1] == 1 and self.openbodyok[-1] == 1 else False
         self.is_close_short = True if (self.position.size < 0 and self.closerbarok[-1] == 1 and self.rsi[0] < self.p.rsishort) and self.closebodyok[-1] == 1 else False
 
-    def printdebuginfo(self):
-        self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
-        if not self.islivedata():
-            ddanalyzer = self.analyzers.dd.get_analysis()
-            self.log('Drawdown: {}'.format(round(ddanalyzer.moneydown, 8)))
-            self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
-            self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
-            self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
-        self.log('self.curtradeid = {}'.format(self.curtradeid))
-        self.log('self.curr_position = {}'.format(self.curr_position))
-        self.log('self.position.size = {}'.format(self.position.size))
-        self.log('self.position_avg_price = {}'.format(self.position_avg_price))
-        self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
-        self.log('self.data.open = {}'.format(self.data.open[0]))
-        self.log('self.data.high = {}'.format(self.data.high[0]))
-        self.log('self.data.low = {}'.format(self.data.low[0]))
-        self.log('self.data.close = {}'.format(self.data.close[0]))
+    def print_strategy_debug_info(self):
         self.log('self.rsi = {}'.format(self.rsi[0]))
         self.log('self.rsidn = {}'.format(self.rsidn[-1]))
         self.log('self.rsiup = {}'.format(self.rsiup[-1]))
@@ -189,9 +173,4 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(GenericStrategy):
         self.log('self.openrbarok = {}'.format(self.openrbarok[-1]))
         self.log('self.closegbarok = {}'.format(self.closegbarok[-1]))
         self.log('self.closerbarok = {}'.format(self.closerbarok[-1]))
-        self.log('self.is_open_long = {}'.format(self.is_open_long))
-        self.log('self.is_close_long = {}'.format(self.is_close_long))
-        self.log('self.is_open_short = {}'.format(self.is_open_short))
-        self.log('self.is_close_short = {}'.format(self.is_close_short))
-        self.log('sltpmanager.oco_context = {}'.format(self.strategyprocessor.sltpmanager.oco_context))
-        self.log('-------------------------------------------------------------------')
+

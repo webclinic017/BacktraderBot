@@ -334,23 +334,7 @@ class S002_AlexNoroSILAStrategy(GenericStrategy):
         if self.is_open_long is True and self.is_open_short is True:
             self.log('!!! Signals in opposite directions produced! is_open_long={}, is_open_short={}'.format(self.is_open_long, self.is_open_short))
 
-    def printdebuginfo(self):
-        self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
-        if not self.islivedata():
-            ddanalyzer = self.analyzers.dd.get_analysis()
-            self.log('Drawdown: {}'.format(round(ddanalyzer.moneydown, 8)))
-            self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
-            self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
-            self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
-        self.log('self.curtradeid = {}'.format(self.curtradeid))
-        self.log('self.curr_position = {}'.format(self.curr_position))
-        self.log('self.position_avg_price = {}'.format(self.position_avg_price))
-        self.log('self.position.size = {}'.format(self.position.size))
-        self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
-        self.log('self.data.open = {}'.format(self.data.open[0]))
-        self.log('self.data.high = {}'.format(self.data.high[0]))
-        self.log('self.data.low = {}'.format(self.data.low[0]))
-        self.log('self.data.close = {}'.format(self.data.close[0]))
+    def print_strategy_debug_info(self):
         self.log('self.lasthigh = {}'.format(self.lasthigh[0]))
         self.log('self.lastlow = {}'.format(self.lastlow[0]))
         self.log('self.center = {}'.format(self.center[-1]))
@@ -402,9 +386,4 @@ class S002_AlexNoroSILAStrategy(GenericStrategy):
         self.log('self.entry = {}'.format(self.entry[-1]))
         self.log('self.uploco = {}'.format(self.uploco))
         self.log('self.dnloco = {}'.format(self.dnloco))
-        self.log('self.is_open_long = {}'.format(self.is_open_long))
-        self.log('self.is_close_long = {}'.format(self.is_close_long))
-        self.log('self.is_open_short = {}'.format(self.is_open_short))
-        self.log('self.is_close_short = {}'.format(self.is_close_short))
-        self.log('sltpmanager.oco_context = {}'.format(self.strategyprocessor.sltpmanager.oco_context))
-        self.log('----------------------')
+

@@ -1,4 +1,4 @@
-from .strategyprocessor import BaseStrategyProcessor
+from strategies.processors.strategyprocessor import BaseStrategyProcessor
 import backtrader as bt
 
 

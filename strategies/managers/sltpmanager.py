@@ -29,14 +29,6 @@ class SLTPManager(object):
         self.tp_trailed_price = None
         self.ttp_price = None
 
-    def get_order_type_str(self, order):
-        if order.isbuy():
-            return "BUY"
-        if order.issell():
-            return "SELL"
-        else:
-            raise Exception("Wrong order state")
-
     def get_sl_type_str(self):
         return "TRAILING STOP-LOSS" if self.is_tsl_enabled else "STOP-LOSS"
 
@@ -145,12 +137,12 @@ class SLTPManager(object):
             self.oco_context.set_tp_order(None)
 
     def is_tsl_move_pending(self, last_price, is_long):
-        return self.is_tsl_enabled and self.is_sl_activated and self.is_allow_trailing_move(last_price, self.sl_trailed_price) and \
-               (is_long and last_price > self.sl_trailed_price or not is_long and last_price < self.sl_trailed_price)
+        return self.is_tsl_enabled and self.is_sl_activated and self.sl_order and self.strategy.is_order_accepted_in_broker(self.sl_order) and \
+               self.is_allow_trailing_move(last_price, self.sl_trailed_price) and (is_long and last_price > self.sl_trailed_price or not is_long and last_price < self.sl_trailed_price)
 
     def is_ttp_move_pending(self, last_price, is_long):
-        return self.is_ttp_activated and self.is_allow_trailing_move(last_price, self.tp_trailed_price) and \
-               (is_long and last_price > self.tp_trailed_price or not is_long and last_price < self.tp_trailed_price)
+        return self.is_ttp_activated and self.tp_order and self.strategy.is_order_accepted_in_broker(self.tp_order) \
+               and self.is_allow_trailing_move(last_price, self.tp_trailed_price) and (is_long and last_price > self.tp_trailed_price or not is_long and last_price < self.tp_trailed_price)
 
     def resubmit_oco_order(self, old_oco_order, is_long):
         if old_oco_order and old_oco_order.ref:
@@ -213,7 +205,7 @@ class SLTPManager(object):
         self.strategy_analyzers.ta.update_moved_ttp_counts_data(self.is_ttp_enabled)
 
     def move_targets(self):
-        if self.is_tsl_enabled or self.is_ttp_enabled:
+        if self.is_tsl_enabled and self.is_sl_mode_activated() or self.is_ttp_enabled and self.is_tp_mode_activated():
             is_long = self.strategy.is_long_position()
             last_price = self.strategy.data.close[0]
             tsl_move_pending = self.is_tsl_move_pending(last_price, is_long)
@@ -250,16 +242,20 @@ class SLTPManager(object):
             self.strategy.log('SLTPManager.handle_order_completed(): order.ref={}, status={}'.format(order.ref, order.getstatusname()))
             self.strategy.log("The {} order has been triggered and COMPLETED: self.oco_context={}, self.sl_order.ref={}, self.trailed_price={}, self.sl_price={}, order.price={}, order.size={}".format(
                 self.get_sl_type_str(), self.oco_context, self.sl_order.ref, self.sl_trailed_price, self.sl_price, order.price, order.size))
+            self.sl_order = None
             self.sl_deactivate()
+            self.tp_order = None
             self.tp_deactivate()
             self.strategy_analyzers.ta.update_sl_counts_data(self.is_tsl_enabled)
             return True
 
-        if order.status == order.Completed and (self.tp_order and self.tp_order.ref == order.ref):
+        if order.status == order.Completed and self.tp_order and self.tp_order.ref == order.ref:
             self.strategy.log('SLTPManager.handle_order_completed(): order.ref={}, status={}'.format(order.ref, order.getstatusname()))
             self.strategy.log("The {} order has been triggered and COMPLETED: self.oco_context={}, self.tp_order.ref={}, self.trailed_price={}, self.tp_price={}, self.ttp_price={}, order.price={}, order.size={}".format(
                 self.get_tp_type_str(), self.oco_context, self.tp_order.ref, self.tp_trailed_price, self.tp_price, self.ttp_price, order.price, order.size))
+            self.sl_order = None
             self.sl_deactivate()
+            self.tp_order = None
             self.tp_deactivate()
             self.strategy_analyzers.ta.update_tp_counts_data(self.is_ttp_enabled)
             return True
@@ -283,12 +279,6 @@ class SLTPManager(object):
             self.is_tp_activated = False
             self.is_ttp_activated = False
             self.tp_order = None
-
-    def is_sl_reached(self, sl_price, last_price, is_long):
-        result = False
-        if is_long and last_price < sl_price or not is_long and last_price > sl_price:
-            result = True
-        return result
 
     def is_tp_reached(self, tp_price, last_price, is_long):
         result = False
@@ -321,10 +311,7 @@ class SLTPManager(object):
             return base_price * (1 + ttp_dist_pct / 100.0)
 
     def is_allow_trailing_move(self, price1, price2):
-        if self.get_price_move_delta_pct(price1, price2) >= MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT:
-            return True
-        else:
-            return False
+        return self.get_price_move_delta_pct(price1, price2) >= MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT
 
     def get_price_move_delta_pct(self, price1, price2):
         return abs(100 * (price1 - price2) / price2)

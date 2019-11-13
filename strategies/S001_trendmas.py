@@ -144,24 +144,8 @@ class S001_AlexNoroTrendMAsStrategy(GenericStrategy):
                 self.is_close_short = False
             self.log('!!! Changed signals as follows: self.is_open_long={}, self.is_open_short={}'.format(self.is_open_long, self.is_open_short))
 
-    def printdebuginfo(self):
-        self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
-        if not self.islivedata():
-            ddanalyzer = self.analyzers.dd.get_analysis()
-            self.log('Drawdown: {}'.format(round(ddanalyzer.moneydown, 8)))
-            self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
-            self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
-            self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
-        self.log('self.curtradeid = {}'.format(self.curtradeid))
-        self.log('self.curr_position = {}'.format(self.curr_position))
-        self.log('self.position_avg_price = {}'.format(self.position_avg_price))
-        self.log('self.position.size = {}'.format(self.position.size))
+    def print_strategy_debug_info(self):
         self.log('self.rsi = {}'.format(self.rsi[0]))
-        self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
-        self.log('self.data.open[0] = {}'.format(self.data.open[0]))
-        self.log('self.data.high[0]= {}'.format(self.data.high[0]))
-        self.log('self.data.low[0] = {}'.format(self.data.low[0]))
-        self.log('self.data.close[0] = {}'.format(self.data.close[0]))
         self.log('self.lasthigh = {}'.format(self.lasthigh[0]))
         self.log('self.lastlow = {}'.format(self.lastlow[0]))
         self.log('self.lasthigh2 = {}'.format(self.lasthigh2[0]))
@@ -182,9 +166,4 @@ class S001_AlexNoroTrendMAsStrategy(GenericStrategy):
         self.log('up2 = {} - True if self.data.high[0]({}) < self.center[-1]({}) and self.data.high[0]({}) < self.center2[-1]({}) and self.bar[-1]({}) == -1 and self.p.needex({}) == True else False'.format(self.up2, self.data.high[0], self.center[-1], self.data.high[0], self.center2[-1], self.bar[-1], self.p.needex))
         self.log('dn2 = {}'.format(self.dn2))
         self.log('up3 = {} - 1 if self.data.close[0]({}) < self.data.open[0]({}) and self.len[0]({}) > self.sma[0]({}) * 3 and self.minV[0]({}) < self.minV[-1]({}) and fastrsi({}) < 10 else 0'.format(self.up3, self.data.close[0], self.data.open[0], self.len[0], self.sma[0], self.minV[0], self.minV[-1], self.fastrsi))
-        self.log('self.is_open_long = {}'.format(self.is_open_long))
-        self.log('self.is_close_long = {}'.format(self.is_close_long))
-        self.log('self.is_open_short = {}'.format(self.is_open_short))
-        self.log('self.is_close_short = {}'.format(self.is_close_short))
-        self.log('sltpmanager.oco_context = {}'.format(self.strategyprocessor.sltpmanager.oco_context))
-        self.log('----------------------')
+

@@ -60,32 +60,10 @@ class S011_EMACrossOverStrategy(GenericStrategy):
         self.is_open_short = True if self.signalOpenPosition == -1 else False
         self.is_close_short = True if self.signalOpenPosition == 1 else False
 
-    def printdebuginfo(self):
-        self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
-        if not self.islivedata():
-            ddanalyzer = self.analyzers.dd.get_analysis()
-            self.log('Drawdown: {}'.format(round(ddanalyzer.moneydown, 8)))
-            self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
-            self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
-            self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
-        self.log('self.curtradeid = {}'.format(self.curtradeid))
-        self.log('self.curr_position = {}'.format(self.curr_position))
-        self.log('self.position.size = {}'.format(self.position.size))
-        self.log('self.position_avg_price = {}'.format(self.position_avg_price))
-        self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
-        self.log('self.data.open = {}'.format(self.data.open[0]))
-        self.log('self.data.high = {}'.format(self.data.high[0]))
-        self.log('self.data.low = {}'.format(self.data.low[0]))
-        self.log('self.data.close = {}'.format(self.data.close[0]))
+    def print_strategy_debug_info(self):
         self.log('self.fast_ema_period = {}'.format(self.fast_ema_period))
         self.log('self.fastEMA[0] = {}'.format(self.fastEMA[0]))
         self.log('self.slowEMA[0] = {}'.format(self.slowEMA[0]))
         self.log('self.openLongPositionCriteria = {}'.format(self.openLongPositionCriteria))
         self.log('self.openShortPositionCriteria = {}'.format(self.openShortPositionCriteria))
         self.log('self.signalOpenPosition = {}'.format(self.signalOpenPosition))
-        self.log('self.is_open_long = {}'.format(self.is_open_long))
-        self.log('self.is_close_long = {}'.format(self.is_close_long))
-        self.log('self.is_open_short = {}'.format(self.is_open_short))
-        self.log('self.is_close_short = {}'.format(self.is_close_short))
-        self.log('sltpmanager.oco_context = {}'.format(self.strategyprocessor.sltpmanager.oco_context))
-        self.log('----------------------')

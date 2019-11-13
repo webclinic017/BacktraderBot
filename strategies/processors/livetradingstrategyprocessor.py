@@ -3,7 +3,7 @@ from datetime import datetime
 from bot.config.bot_config import BotConfig
 from bot.utils import send_telegram_message
 from bot.config.bot_strategy_config import BotStrategyConfig
-from .strategyprocessor import BaseStrategyProcessor
+from strategies.processors.strategyprocessor import BaseStrategyProcessor
 
 
 class LiveTradingStrategyProcessor(BaseStrategyProcessor):

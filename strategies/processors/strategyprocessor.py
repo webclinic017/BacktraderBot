@@ -46,17 +46,26 @@ class BaseStrategyProcessor(object):
         self.debug = debug
         self.oco_context = OcoContext()
         self.sltpmanager = SLTPManager(strategy, self.oco_context)
-        self.trailingbuymanager = TrailingBuyManager(strategy, self.oco_context)
+        self.trailingbuymanager = TrailingBuyManager(strategy)
         self.dcamodemanager = DcaModeManager(strategy, self.oco_context)
 
-    def on_open_position_trade_managers(self, tradeid, pos_price, pos_size, is_long):
+    def activate_trade_entry_managers(self, tradeid, last_price, is_long):
+        self.trailingbuymanager.activate_tb(tradeid, last_price, is_long)
+
+    def activate_position_trade_managers(self, tradeid, pos_price, pos_size, is_long):
         self.sltpmanager.activate_sl(tradeid, pos_price, pos_size, is_long)
         self.sltpmanager.activate_tp(tradeid, pos_price, pos_size, is_long)
 
     def on_next_trade_managers(self):
         self.sltpmanager.move_targets()
+        self.trailingbuymanager.move_targets()
+
         self.sltpmanager.sl_on_next()
         self.sltpmanager.tp_on_next()
+        self.trailingbuymanager.tb_on_next()
+
+    def handle_order_completed_entry_trade_managers(self, order):
+        return self.trailingbuymanager.handle_order_completed(order)
 
     def handle_order_completed_trade_managers(self, order):
         return self.sltpmanager.handle_order_completed(order)
@@ -64,9 +73,10 @@ class BaseStrategyProcessor(object):
     def on_close_position_trade_managers(self):
         self.sltpmanager.sl_deactivate()
         self.sltpmanager.tp_deactivate()
+        self.trailingbuymanager.tb_deactivate()
 
     def is_allow_signals_execution(self):
-        return not self.sltpmanager.is_sl_mode_activated() and not self.sltpmanager.is_tp_mode_activated()
+        return not self.trailingbuymanager.is_tb_mode_activated()
 
     @abstractmethod
     def log(self, txt, send_telegram_flag=False):
