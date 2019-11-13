@@ -12,10 +12,10 @@ declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy")
 declare -a arr_symbols=("BTCUSD")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("3h")
+declare -a arr_timeframes=("1h")
 
 declare -a backtest_startdate="2017-08-01"
-declare -a backtest_enddate="2018-01-31"
+declare -a backtest_enddate="2019-01-31"
 
 startyear=${backtest_startdate:0:4}
 startmonth=${backtest_startdate:5:2}

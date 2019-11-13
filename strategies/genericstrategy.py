@@ -63,6 +63,7 @@ class GenericStrategy(bt.Strategy):
         self.is_margin_condition = False
 
         self.skip_bar_flow_control_flag = False
+        self.capital_stoploss_fired_flow_control_flag = False
 
     def islivedata(self):
         return self.data.islive()
@@ -228,6 +229,7 @@ class GenericStrategy(bt.Strategy):
             self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
             self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
             self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
+            self.log('self.position.size = {}'.format(self.position.size))
         self.log('self.curtradeid = {}'.format(self.curtradeid))
         self.log('self.curr_position = {}'.format(self.curr_position))
         self.log('self.position_avg_price = {}'.format(self.position_avg_price))
@@ -239,6 +241,7 @@ class GenericStrategy(bt.Strategy):
         self.log('self.data.close = {}'.format(self.data.close[0]))
 
         self.print_strategy_debug_info()
+
         self.log('self.is_open_long = {}'.format(self.is_open_long))
         self.log('self.is_close_long = {}'.format(self.is_close_long))
         self.log('self.is_open_short = {}'.format(self.is_open_short))
@@ -266,14 +269,21 @@ class GenericStrategy(bt.Strategy):
     def is_short_position(self):
         return self.curr_position < 0
 
-    def process_capital_stoploss(self):
-        result = False
+    def handle_capital_stoploss(self):
         realized_pl = round((self.broker.getvalue() - self.p.startcash) * 100 / self.p.startcash, 2)
-        if self.curr_position == 0 and realized_pl <= DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT:
-            self.log("The realized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed immediately.".format(realized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
+        if not self.capital_stoploss_fired_flow_control_flag and realized_pl <= DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT:
+            self.log("The realized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed prematurely.".format(realized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
+            self.strategyprocessor.close_position()
+            self.curr_position = 0
+            self.position_avg_price = 0
+            self.strategyprocessor.notify_analyzers()
+            self.strategyprocessor.on_close_position_trade_managers()
+            self.capital_stoploss_fired_flow_control_flag = True
+            return True
+        if self.capital_stoploss_fired_flow_control_flag and self.position.size == 0:
             self.broker.cerebro.runstop()
-            result = True
-        return result
+            return True
+        return False
 
     def next(self):
         try:
@@ -290,7 +300,7 @@ class GenericStrategy(bt.Strategy):
                 self.log("%s - %.8f" % (self.status, self.data0.close[0]))
                 return
 
-            if self.process_capital_stoploss():
+            if self.handle_capital_stoploss():
                 return
 
             self.calculate_signals()

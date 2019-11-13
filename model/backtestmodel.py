@@ -28,14 +28,14 @@ class BacktestModel(object):
         return result
 
     def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
-                       processing_status, total_closed_trades, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count,
+                       processing_status, total_closed_trades, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count, tb_trades_count, tb_moved_count,
                        net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                        max_drawdown_length, net_profit_to_maxdd, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
                        sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope,
                        equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr):
         self._monthlystatsprefix = monthlystatsprefix
         row = BacktestReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
-                                processing_status, total_closed_trades, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count,
+                                processing_status, total_closed_trades, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count, tb_trades_count, tb_moved_count,
                                 net_profit, net_profit_pct, avg_monthly_net_profit_pct,
                                 max_drawdown_pct, max_drawdown_length, net_profit_to_maxdd, win_rate_pct, num_winning_months,
                                 profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats,
@@ -62,7 +62,7 @@ class BacktestModel(object):
     def get_header_names(self):
         result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Date Range', 'Start Cash', 'Lot Size',
                   'Processing Status', 'Total Closed Trades', 'Trades # SL Count', 'Trades # TSL Count', 'TSL Moved Count', 'Trades # TP Count', 'Trades # TTP Count', 'TTP Moved Count',
-                  'Net Profit', 'Net Profit, %', 'Avg Monthly Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length', 'Net Profit To Max Drawdown', 'Win Rate, %',
+                  'Trades # TB Count', 'TB Moved Count', 'Net Profit', 'Net Profit, %', 'Avg Monthly Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length', 'Net Profit To Max Drawdown', 'Win Rate, %',
                   'Winning Months, %', 'Profit Factor', 'Buy & Hold Return, %', 'SQN', 'Equity Curve Angle',
                   'Equity Curve Slope', 'Equity Curve Intercept', 'Equity Curve R-value', 'Equity Curve P-value',
                   'Equity Curve Stderr']
@@ -108,7 +108,7 @@ class BacktestModel(object):
 
 class BacktestReportRow(object):
     def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
-                 processing_status, total_closed_trades, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count,
+                 processing_status, total_closed_trades, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count, tb_trades_count, tb_moved_count,
                  net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                  max_drawdown_length, net_profit_to_maxdd, win_rate_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
                  sqn_number, monthly_stats, equitycurveangle, equitycurveslope, equitycurveintercept,
@@ -129,6 +129,8 @@ class BacktestReportRow(object):
         self.tp_trades_count = tp_trades_count
         self.ttp_trades_count = ttp_trades_count
         self.ttp_moved_count = ttp_moved_count
+        self.tb_trades_count = tb_trades_count
+        self.tb_moved_count = tb_moved_count
         self.net_profit = net_profit
         self.net_profit_pct = net_profit_pct
         self.avg_monthly_net_profit_pct = avg_monthly_net_profit_pct
@@ -166,6 +168,8 @@ class BacktestReportRow(object):
             self.tp_trades_count,
             self.ttp_trades_count,
             self.ttp_moved_count,
+            self.tb_trades_count,
+            self.tb_moved_count,
             self.net_profit,
             self.net_profit_pct,
             self.avg_monthly_net_profit_pct,
