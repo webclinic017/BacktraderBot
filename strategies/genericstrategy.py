@@ -273,7 +273,7 @@ class GenericStrategy(bt.Strategy):
         realized_pl = round((self.broker.getvalue() - self.p.startcash) * 100 / self.p.startcash, 2)
         if not self.capital_stoploss_fired_flow_control_flag and realized_pl <= DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT:
             self.log("The realized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed prematurely.".format(realized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
-            self.strategyprocessor.close_position()
+            self.generic_close(tradeid=self.curtradeid)
             self.curr_position = 0
             self.position_avg_price = 0
             self.strategyprocessor.notify_analyzers()
