@@ -108,8 +108,11 @@ class TrailingBuyManager(object):
             self.strategy.log('TrailingBuyManager.tb_deactivate() - TRAILING-BUY will be deactivated, self.tb_order.ref={}'.format(tb_order_ref))
             self.cancel_tb_order()
             self.is_tb_activated = False
-            self.tb_order = None
             self.is_long_signal = None
+            self.tradeid = None
+            self.tb_order = None
+            self.tb_price = None
+            self.tb_trailed_price = None
 
     def get_tb_price(self, base_price, tb_dist_pct):
         if self.is_long_signal:

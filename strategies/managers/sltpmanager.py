@@ -269,6 +269,8 @@ class SLTPManager(object):
             self.oco_context.reset()
             self.is_sl_activated = False
             self.sl_order = None
+            self.sl_price = None
+            self.sl_trailed_price = None
 
     def tp_deactivate(self):
         if self.is_tp_enabled and self.is_tp_mode_activated():
@@ -279,6 +281,9 @@ class SLTPManager(object):
             self.is_tp_activated = False
             self.is_ttp_activated = False
             self.tp_order = None
+            self.tp_price = None
+            self.tp_trailed_price = None
+            self.ttp_price = None
 
     def is_tp_reached(self, tp_price, last_price, is_long):
         result = False

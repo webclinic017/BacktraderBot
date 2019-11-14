@@ -40,7 +40,7 @@ class AppConfig(object):
                 "tslflag": False,
                 "tp": 0,
                 "ttpdist": 0,
-                "tbdist": 0,
+                "tbdist": 1,
                 "numdca": 2,
                 "dcainterval": 3,
                 "fromyear": 2017,

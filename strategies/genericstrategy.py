@@ -151,10 +151,6 @@ class GenericStrategy(bt.Strategy):
     def dcamode_signal_open_position(self, is_long):
         pass
 
-    def on_close_position_trade_managers(self):
-        self.sltpmanager.sl_deactivate()
-        self.sltpmanager.tp_deactivate()
-
     def signal_close_position(self, is_long):
         cash = self.broker.getcash()
         side_str = self.get_side_str(is_long)
@@ -163,7 +159,8 @@ class GenericStrategy(bt.Strategy):
         self.curr_position = 0
         self.position_avg_price = 0
         self.strategyprocessor.notify_analyzers()
-        self.strategyprocessor.on_close_position_trade_managers()
+        self.strategyprocessor.deactivate_entry_trade_managers()
+        self.strategyprocessor.deactivate_trade_managers()
         self.log('!!! AFTER - SIGNAL CLOSE POSITION {} !!!, self.curr_position={}, cash={}'.format(side_str, self.curr_position, cash))
 
     def exists(self, obj, chain):
@@ -215,6 +212,7 @@ class GenericStrategy(bt.Strategy):
 
         if not self.islivedata() and self.currdt > self.todt:
             self.log('!!! Time has passed beyond date range')
+            self.strategyprocessor.deactivate_entry_trade_managers()
             if self.curr_position != 0:
                 self.log('!!! Closing trade prematurely')
                 self.signal_close_position(self.is_long_position())
@@ -277,7 +275,8 @@ class GenericStrategy(bt.Strategy):
             self.curr_position = 0
             self.position_avg_price = 0
             self.strategyprocessor.notify_analyzers()
-            self.strategyprocessor.on_close_position_trade_managers()
+            self.strategyprocessor.deactivate_entry_trade_managers()
+            self.strategyprocessor.deactivate_trade_managers()
             self.capital_stoploss_fired_flow_control_flag = True
             return True
         if self.capital_stoploss_fired_flow_control_flag and self.position.size == 0:

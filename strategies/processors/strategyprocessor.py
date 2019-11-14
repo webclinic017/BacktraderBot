@@ -70,10 +70,12 @@ class BaseStrategyProcessor(object):
     def handle_order_completed_trade_managers(self, order):
         return self.sltpmanager.handle_order_completed(order)
 
-    def on_close_position_trade_managers(self):
+    def deactivate_entry_trade_managers(self):
+        self.trailingbuymanager.tb_deactivate()
+
+    def deactivate_trade_managers(self):
         self.sltpmanager.sl_deactivate()
         self.sltpmanager.tp_deactivate()
-        self.trailingbuymanager.tb_deactivate()
 
     def is_allow_signals_execution(self):
         return not self.trailingbuymanager.is_tb_mode_activated()
