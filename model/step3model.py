@@ -66,7 +66,7 @@ class Step3Model(object):
             symbol = step3_bk_row[2]
             timeframe = step3_bk_row[3]
             params = step3_bk_row[4]
-            step3_net_profit = step3_bk_row[9]
+            step3_net_profit = step3_bk_row[18]
             step3_bk_row = self.strip_unnecessary_fields(step3_bk_row)
             row_key = (strategy, exchange, symbol, timeframe, params)
             step2_row_df = step2_df_copy.loc[[row_key]]
