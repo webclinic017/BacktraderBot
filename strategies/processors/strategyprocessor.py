@@ -51,6 +51,7 @@ class BaseStrategyProcessor(object):
 
     def activate_trade_entry_managers(self, tradeid, last_price, is_long):
         self.trailingbuymanager.activate_tb(tradeid, last_price, is_long)
+        self.dcamodemanager.activate_dca_mode(tradeid, last_price, is_long)
 
     def activate_position_trade_managers(self, tradeid, pos_price, pos_size, is_long):
         self.sltpmanager.activate_sl(tradeid, pos_price, pos_size, is_long)
@@ -64,13 +65,17 @@ class BaseStrategyProcessor(object):
         self.sltpmanager.tp_on_next()
         self.trailingbuymanager.tb_on_next()
 
-    def handle_order_completed_entry_trade_managers(self, order):
+    def handle_order_completed_trailing_buy(self, order):
         return self.trailingbuymanager.handle_order_completed(order)
+
+    def handle_order_completed_dca_mode(self, order):
+        return self.dcamodemanager.handle_order_completed(order)
 
     def handle_order_completed_trade_managers(self, order):
         return self.sltpmanager.handle_order_completed(order)
 
     def deactivate_entry_trade_managers(self):
+        self.dcamodemanager.dca_mode_deactivate()
         self.trailingbuymanager.tb_deactivate()
 
     def deactivate_trade_managers(self):
@@ -78,7 +83,7 @@ class BaseStrategyProcessor(object):
         self.sltpmanager.tp_deactivate()
 
     def is_allow_signals_execution(self):
-        return not self.trailingbuymanager.is_tb_mode_activated()
+        return not self.sltpmanager.is_tp_mode_activated() and not self.trailingbuymanager.is_tb_mode_activated() and not self.dcamodemanager.is_dca_mode_activated()
 
     @abstractmethod
     def log(self, txt, send_telegram_flag=False):

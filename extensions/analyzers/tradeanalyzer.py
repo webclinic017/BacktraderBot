@@ -160,6 +160,10 @@ class TVTradeAnalyzer(Analyzer):
         trades.total.equity.stats.p_value = lr_stats.p_value
         trades.total.equity.stats.std_err = lr_stats.std_err
 
+    def update_processing_status(self, processing_status):
+        trades = self.rets
+        trades.processing_status = processing_status
+
     def update_sl_counts_data(self, is_tsl_flag):
         trades = self.rets
         trades.sl.count += 1 if is_tsl_flag is False else 0
@@ -186,9 +190,9 @@ class TVTradeAnalyzer(Analyzer):
         trades = self.rets
         trades.tb.moved.count += 1
 
-    def update_processing_status(self, processing_status):
+    def update_dca_triggered_counts_data(self):
         trades = self.rets
-        trades.processing_status = processing_status
+        trades.dca.triggered.count += 1
 
     def print_debug_info(self):
         print("!!!!! self.netprofits_data={}\n".format(self.netprofits_data))

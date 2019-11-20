@@ -275,7 +275,7 @@ class SLTPManager(object):
     def tp_deactivate(self):
         if self.is_tp_enabled and self.is_tp_mode_activated():
             tp_order_ref = self.tp_order.ref if self.tp_order else None
-            self.strategy.log('TakeProfitManager.tp_deactivate() - {} will be deactivated, self.oco_context={}, self.tp_order.ref={}'.format(self.get_tp_type_str(), self.oco_context, tp_order_ref))
+            self.strategy.log('SLTPManager.tp_deactivate() - {} will be deactivated, self.oco_context={}, self.tp_order.ref={}'.format(self.get_tp_type_str(), self.oco_context, tp_order_ref))
             self.cancel_tp_order()
             self.oco_context.reset()
             self.is_tp_activated = False
@@ -299,21 +299,21 @@ class SLTPManager(object):
 
     def get_sl_price(self, base_price, sl_dist_pct, is_long):
         if is_long:
-            return base_price * (1 - sl_dist_pct / 100.0)
+            return round(base_price * (1 - sl_dist_pct / 100.0), 8)
         else:
-            return base_price * (1 + sl_dist_pct / 100.0)
+            return round(base_price * (1 + sl_dist_pct / 100.0), 8)
 
     def get_tp_price(self, base_price, tp_dist_pct, is_long):
         if is_long:
-            return base_price * (1 + tp_dist_pct / 100.0)
+            return round(base_price * (1 + tp_dist_pct / 100.0), 8)
         else:
-            return base_price * (1 - tp_dist_pct / 100.0)
+            return round(base_price * (1 - tp_dist_pct / 100.0), 8)
 
     def get_ttp_price(self, base_price, ttp_dist_pct, is_long):
         if is_long:
-            return base_price * (1 - ttp_dist_pct / 100.0)
+            return round(base_price * (1 - ttp_dist_pct / 100.0), 8)
         else:
-            return base_price * (1 + ttp_dist_pct / 100.0)
+            return round(base_price * (1 + ttp_dist_pct / 100.0), 8)
 
     def is_allow_trailing_move(self, price1, price2):
         return self.get_price_move_delta_pct(price1, price2) >= MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT
@@ -321,3 +321,13 @@ class SLTPManager(object):
     def get_price_move_delta_pct(self, price1, price2):
         return abs(100 * (price1 - price2) / price2)
 
+    def log_state(self):
+        if self.is_sl_enabled:
+            self.strategy.log('SLTPManager.sl_price = {}'.format(self.sl_price))
+            self.strategy.log('SLTPManager.sl_trailed_price = {}'.format(self.sl_trailed_price))
+        if self.is_tp_enabled:
+            self.strategy.log('SLTPManager.tp_price = {}'.format(self.tp_price))
+            self.strategy.log('SLTPManager.tp_trailed_price = {}'.format(self.tp_trailed_price))
+            self.strategy.log('SLTPManager.ttp_price = {}'.format(self.ttp_price))
+        if self.is_sl_enabled or self.is_tp_enabled:
+            self.strategy.log('SLTPManager.oco_context = {}'.format(self.oco_context))

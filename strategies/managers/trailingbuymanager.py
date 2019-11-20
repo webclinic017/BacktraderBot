@@ -116,12 +116,17 @@ class TrailingBuyManager(object):
 
     def get_tb_price(self, base_price, tb_dist_pct):
         if self.is_long_signal:
-            return base_price * (1 + tb_dist_pct / 100.0)
+            return round(base_price * (1 + tb_dist_pct / 100.0), 8)
         else:
-            return base_price * (1 - tb_dist_pct / 100.0)
+            return round(base_price * (1 - tb_dist_pct / 100.0), 8)
 
     def is_allow_trailing_move(self, price1, price2):
         return self.get_price_move_delta_pct(price1, price2) >= MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT
 
     def get_price_move_delta_pct(self, price1, price2):
         return abs(100 * (price1 - price2) / price2)
+
+    def log_state(self):
+        if self.is_tb_enabled:
+            self.strategy.log('TrailingBuyManager.tb_price = {}'.format(self.tb_price))
+            self.strategy.log('TrailingBuyManager.tb_trailed_price = {}'.format(self.tb_trailed_price))

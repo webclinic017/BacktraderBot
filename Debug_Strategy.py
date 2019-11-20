@@ -233,6 +233,7 @@ class DebugStrategy(object):
         ttp_moved_count = analyzer.ttp.moved.count if self.exists(analyzer, ['ttp', 'moved', 'count']) else 0
         tb_trades_count = analyzer.tb.count if self.exists(analyzer, ['tb', 'count']) else 0
         tb_moved_count = analyzer.tb.moved.count if self.exists(analyzer, ['tb', 'moved', 'count']) else 0
+        dca_triggered_trades_count = analyzer.dca.triggered.count if self.exists(analyzer, ['dca', 'triggered', 'count']) else 0
 
         # Designate the rows
         h1 = ['Total Open', 'Total Closed', 'Total Won', 'Total Lost']
@@ -241,14 +242,14 @@ class DebugStrategy(object):
         h4 = ['Net Profit', 'Gross Profit', 'Gross Loss', 'Profit Factor']
         h5 = ['Trades #: SL Count', 'Trades #: TSL Count', 'TSL Moved Count', '']
         h6 = ['Trades #: TP Count', 'Trades #: TTP Count', 'TTP Moved Count', '']
-        h7 = ['Trades #: TB Count', 'TB Moved Count', '', '']
+        h7 = ['Trades #: TB Count', 'TB Moved Count', 'Trades #: DCA Triggered Count', '']
         r1 = [total_open, total_closed, total_won, total_lost]
         r2 = [strike_rate, win_streak, lose_streak, '']
         r3 = [buyandhold_return, buyandhold_return_pct, '', '']
         r4 = [netprofit, grossprofit, grossloss, profitfactor]
         r5 = [sl_trades_count, tsl_trades_count, tsl_moved_count, '']
         r6 = [tp_trades_count, ttp_trades_count, ttp_moved_count, '']
-        r7 = [tb_trades_count, tb_moved_count, '', '']
+        r7 = [tb_trades_count, tb_moved_count, dca_triggered_trades_count, '']
 
         # Print the rows
         print_list = [h1, r1, h2, r2, h3, r3, h4, r4, h5, r5, h6, r6, h7, r7]

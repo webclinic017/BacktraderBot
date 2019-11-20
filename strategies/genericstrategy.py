@@ -18,11 +18,15 @@ class ParametersValidator(object):
         if not params.get("needlong") and not params.get("needshort"):
             raise ValueError("Either 'needlong' or 'needshort' parameters must be provided")
         if params.get("tslflag") and not params.get("sl"):
-            raise ValueError("The 'tslflag' parameter should be provided with 'sl' parameter")
+            raise ValueError("The TRAILING STOP-LOSS ('tslflag') parameter should be provided with STOP-LOSS ('sl') parameter")
         if params.get("ttpdist") and not params.get("tp"):
-            raise ValueError("The 'ttpdist' parameter cannot be provided without 'tp' parameter")
+            raise ValueError("The TRAILING TAKE-PROFIT ('ttpdist') parameter cannot be provided without TAKE-PROFIT ('tp') parameter")
         if params.get("dcainterval") and not params.get("numdca") or not params.get("dcainterval") and params.get("numdca"):
-            raise ValueError("Both 'dcainterval' and 'numdca' must be provided")
+            raise ValueError("Both DCA-MODE parameters 'dcainterval' and 'numdca' must be provided")
+        if params.get("dcainterval") and params.get("numdca") and params.get("tbdist"):
+            raise ValueError("Both TRAILING-BUY ('tbdist') and DCA-MODE ('dcainterval'/'numdca') parameters can not be specified: only one mode (TRAILING-BUY or DCA-MODE) can be used at the same time")
+        if params.get("dcainterval") and params.get("numdca") and not params.get("tp"):
+            raise ValueError("The DCA-MODE ('dcainterval'/'numdca') parameters must be configured together with TAKE-PROFIT ('tp') parameter")
         return True
 
 
@@ -149,7 +153,13 @@ class GenericStrategy(bt.Strategy):
         self.log('!!! AFTER - TRAILING-BUY MODE - START {} !!!'.format(side_str, self.curr_position, cash))
 
     def dcamode_signal_open_position(self, is_long):
-        pass
+        cash = self.broker.getcash()
+        side_str = self.get_side_str(is_long)
+        self.log('!!! BEFORE - DCA MODE - START {} !!!'.format(side_str, self.curr_position, cash))
+        self.curtradeid = next(self.tradeid)
+        last_price = self.data.close[0]
+        self.strategyprocessor.activate_trade_entry_managers(self.curtradeid, last_price, is_long)
+        self.log('!!! AFTER - DCA MODE - START {} !!!'.format(side_str, self.curr_position, cash))
 
     def signal_close_position(self, is_long):
         cash = self.broker.getcash()
@@ -185,6 +195,12 @@ class GenericStrategy(bt.Strategy):
             else:
                 ta_analyzer.update_processing_status("Success")
 
+    def on_dca_order_completed(self, is_long, order):
+        self.log("on_dca_order_completed(): Handling DCA order has been COMPLETED")
+        self.strategyprocessor.deactivate_trade_managers()
+        self.strategyprocessor.activate_position_trade_managers(self.curtradeid, self.position.price, self.position.size, is_long)
+        self.log("on_dca_order_completed(): order.ref={}, self.curr_position = {}, self.position_avg_price = {}".format(order.ref, self.curr_position, self.position_avg_price))
+
     def execute_signals(self):
         # Trading
         self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
@@ -198,16 +214,16 @@ class GenericStrategy(bt.Strategy):
 
         if self.strategyprocessor.is_allow_signals_execution():
             if self.islivedata() or self.currdt > self.fromdt and self.currdt < self.todt:
-                if self.is_short_position() and self.is_close_short is True:
+                if self.is_short_position() and self.is_close_short:
                     self.signal_close_position(False)
 
-                if self.is_position_closed() and self.p.needlong is True and self.is_open_long is True:
+                if self.is_position_closed() and self.p.needlong and self.is_open_long:
                     self.signal_open_position(True)
 
-                if self.is_long_position() and self.is_close_long is True:
+                if self.is_long_position() and self.is_close_long:
                     self.signal_close_position(True)
 
-                if self.is_position_closed() and self.p.needshort is True and self.is_open_short is True:
+                if self.is_position_closed() and self.p.needshort and self.is_open_short:
                     self.signal_open_position(False)
 
         if not self.islivedata() and self.currdt > self.todt:
@@ -219,42 +235,6 @@ class GenericStrategy(bt.Strategy):
             self.curr_position = 0
             self.position_avg_price = 0
 
-    def print_all_debug_info(self):
-        self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
-        if not self.islivedata():
-            ddanalyzer = self.analyzers.dd.get_analysis()
-            self.log('Drawdown: {}'.format(round(ddanalyzer.moneydown, 8)))
-            self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
-            self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
-            self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
-            self.log('self.position.size = {}'.format(self.position.size))
-        self.log('self.curtradeid = {}'.format(self.curtradeid))
-        self.log('self.curr_position = {}'.format(self.curr_position))
-        self.log('self.position_avg_price = {}'.format(self.position_avg_price))
-        self.log('self.position.size = {}'.format(self.position.size))
-        self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
-        self.log('self.data.open = {}'.format(self.data.open[0]))
-        self.log('self.data.high = {}'.format(self.data.high[0]))
-        self.log('self.data.low = {}'.format(self.data.low[0]))
-        self.log('self.data.close = {}'.format(self.data.close[0]))
-
-        self.print_strategy_debug_info()
-
-        self.log('self.is_open_long = {}'.format(self.is_open_long))
-        self.log('self.is_close_long = {}'.format(self.is_close_long))
-        self.log('self.is_open_short = {}'.format(self.is_open_short))
-        self.log('self.is_close_short = {}'.format(self.is_close_short))
-        self.log('sltpmanager.sl_price = {}'.format(self.strategyprocessor.sltpmanager.sl_price))
-        self.log('sltpmanager.sl_trailed_price = {}'.format(self.strategyprocessor.sltpmanager.sl_trailed_price))
-        self.log('sltpmanager.tp_price = {}'.format(self.strategyprocessor.sltpmanager.tp_price))
-        self.log('sltpmanager.tp_trailed_price = {}'.format(self.strategyprocessor.sltpmanager.tp_trailed_price))
-        self.log('sltpmanager.ttp_price = {}'.format(self.strategyprocessor.sltpmanager.ttp_price))
-        self.log('trailingbuymanager.tb_price = {}'.format(self.strategyprocessor.trailingbuymanager.tb_price))
-        self.log('trailingbuymanager.tb_trailed_price = {}'.format(self.strategyprocessor.trailingbuymanager.tb_trailed_price))
-        self.log('sltpmanager.oco_context = {}'.format(self.strategyprocessor.sltpmanager.oco_context))
-        self.log('----------------------')
-
-    @abstractmethod
     def print_strategy_debug_info(self):
         pass
 
@@ -270,7 +250,7 @@ class GenericStrategy(bt.Strategy):
     def handle_capital_stoploss(self):
         realized_pl = round((self.broker.getvalue() - self.p.startcash) * 100 / self.p.startcash, 2)
         if not self.capital_stoploss_fired_flow_control_flag and realized_pl <= DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT:
-            self.log("The realized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed prematurely.".format(realized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
+            self.log("The Unrealized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed prematurely.".format(realized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
             self.generic_close(tradeid=self.curtradeid)
             self.curr_position = 0
             self.position_avg_price = 0
@@ -323,12 +303,17 @@ class GenericStrategy(bt.Strategy):
             return data_symbol.group(1)
 
     def notify_order(self, order):
-        if self.strategyprocessor.handle_order_completed_entry_trade_managers(order):
+        if self.strategyprocessor.handle_order_completed_trailing_buy(order):
             self.strategyprocessor.activate_position_trade_managers(self.curtradeid, self.position_avg_price, order.size, self.is_long_position())
             self.skip_bar_flow_control_flag = True
             return
 
+        if self.strategyprocessor.handle_order_completed_dca_mode(order):
+            self.skip_bar_flow_control_flag = True
+            return
+
         if self.strategyprocessor.handle_order_completed_trade_managers(order):
+            self.strategyprocessor.deactivate_entry_trade_managers()
             self.curr_position = 0
             self.position_avg_price = 0
             self.strategyprocessor.notify_analyzers()
@@ -384,3 +369,33 @@ class GenericStrategy(bt.Strategy):
 
     def stop(self):
         self.set_processing_status()
+
+    def print_all_debug_info(self):
+        self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
+        if not self.islivedata():
+            ddanalyzer = self.analyzers.dd.get_analysis()
+            self.log('Drawdown: {}'.format(round(ddanalyzer.moneydown, 8)))
+            self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
+            self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
+            self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
+        self.log('self.curtradeid = {}'.format(self.curtradeid))
+        self.log('self.curr_position = {}'.format(self.curr_position))
+        self.log('self.position.size = {}'.format(self.position.size))
+        self.log('self.position.price = {}'.format(self.position.price))
+        self.log('self.position_avg_price = {}'.format(self.position_avg_price))
+        self.log('self.data.datetime[0] = {}'.format(self.data.datetime.datetime()))
+        self.log('self.data.open = {}'.format(self.data.open[0]))
+        self.log('self.data.high = {}'.format(self.data.high[0]))
+        self.log('self.data.low = {}'.format(self.data.low[0]))
+        self.log('self.data.close = {}'.format(self.data.close[0]))
+
+        self.print_strategy_debug_info()
+
+        self.log('self.is_open_long = {}'.format(self.is_open_long))
+        self.log('self.is_close_long = {}'.format(self.is_close_long))
+        self.log('self.is_open_short = {}'.format(self.is_open_short))
+        self.log('self.is_close_short = {}'.format(self.is_close_short))
+        self.strategyprocessor.sltpmanager.log_state()
+        self.strategyprocessor.trailingbuymanager.log_state()
+        self.strategyprocessor.dcamodemanager.log_state()
+        self.log('----------------------')
