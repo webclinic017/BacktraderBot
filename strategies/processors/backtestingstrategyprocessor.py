@@ -32,13 +32,18 @@ class BacktestingStrategyProcessor(BaseStrategyProcessor):
         ddanalyzer = self.strategy.analyzers.dd
         ddanalyzer.notify_fund(self.broker.get_cash(), self.broker.get_value(), 0, 0)  # Notify DrawDown analyzer separately
 
-    def open_long_position(self):
-        order = self.strategy.generic_buy(tradeid=self.strategy.curtradeid, exectype=bt.Order.Market)
+    def get_order_size(self, data=None, is_long=None):
+        return self.strategy.getsizing(data, isbuy=is_long)
+
+    def open_long_position(self, size=None):
+        order_size = self.get_order_size() if not size else size
+        order = self.strategy.generic_buy(tradeid=self.strategy.curtradeid, exectype=bt.Order.Market, size=order_size)
         self.log("BUY MARKET base order submitted: order.ref={}, order.size={}, curtradeid={}".format(order.ref, order.size, self.strategy.curtradeid))
         return order
 
-    def open_short_position(self):
-        order = self.strategy.generic_sell(tradeid=self.strategy.curtradeid, exectype=bt.Order.Market)
+    def open_short_position(self, size=None):
+        order_size = self.get_order_size() if not size else size
+        order = self.strategy.generic_sell(tradeid=self.strategy.curtradeid, exectype=bt.Order.Market, size=order_size)
         self.log("SELL MARKET base order submitted: order.ref={}, order.size={}, curtradeid={}".format(order.ref, order.size, self.strategy.curtradeid))
         return order
 

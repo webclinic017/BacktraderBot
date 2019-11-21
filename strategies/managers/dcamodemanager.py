@@ -3,8 +3,9 @@ import backtrader as bt
 
 class DcaModeManager(object):
 
-    def __init__(self, strategy, oco_context):
+    def __init__(self, strategy, strategyprocessor, oco_context):
         self.strategy = strategy
+        self.strategyprocessor = strategyprocessor
         self.oco_context = oco_context
         self.data = strategy.data
         self.strategy_analyzers = strategy.analyzers
@@ -61,8 +62,9 @@ class DcaModeManager(object):
         return False
 
     def get_desired_order_size(self, is_long):
-        size = self.strategy.getsizing(self.strategy.data, isbuy=is_long)
-        return round(size / (1.0 * self.strategy.p.numdca), 8)
+        full_size = self.strategyprocessor.get_order_size(self.strategy.data, is_long)
+        number_of_orders = self.strategy.p.numdca + 1  # 1 base order + number of DCA orders
+        return round(full_size / (1.0 * number_of_orders), 8)
 
     def get_desired_order_price(self, is_long, idx, last_price):
         price_bracket_pct = (idx + 1) * self.strategy.p.dcainterval / 100.0
@@ -72,7 +74,7 @@ class DcaModeManager(object):
             return round(last_price * (1 + price_bracket_pct), 8)
 
     def submit_new_dca_order(self, tradeid, is_long, idx, last_price):
-        order_size = self.get_desired_order_size(idx)
+        order_size = self.get_desired_order_size(is_long)
         if is_long is True:
             long_order_price = self.get_desired_order_price(is_long, idx, last_price)
             dca_order = self.strategy.generic_buy(tradeid=tradeid, size=order_size, price=long_order_price, exectype=bt.Order.Limit)
@@ -107,11 +109,13 @@ class DcaModeManager(object):
     def activate_dca_mode(self, tradeid, last_price, is_long):
         if self.is_dca_mode_enabled and not self.is_dca_mode_activated():
             self.is_long_signal = is_long
+
             self.submit_dca_orders(is_long, last_price, tradeid)
-            self.is_dca_activated = True
+
             self.num_dca_orders_triggered = 0
+            self.is_dca_activated = True
+
             self.strategy.log("Activated DCA-MODE for self.tradeid={}, last_price={}, is_long={}".format(tradeid, last_price, is_long))
-            self.log_state()
 
     def cancel_order(self, order):
         if self.is_dca_mode_activated() and order:
@@ -144,19 +148,20 @@ class DcaModeManager(object):
             self.strategy.log('DcaModeManager.handle_order_completed(): order.ref={}, status={}'.format(order.ref, order.getstatusname()))
             self.strategy.log("BEFORE - The DCA-MODE order has been triggered and COMPLETED: order.ref={}, order.tradeid={}, order.price={}, order.size={}, order.side={}, self.num_dca_orders_triggered={}".format(
                 order.ref, order.tradeid, order.price, order.size, order.ordtypename(), self.num_dca_orders_triggered))
+
             self.strategy.curr_position = self.get_curr_position_size(order)
             self.strategy.position_avg_price = self.strategy.position.price
             idx = self.get_order_idx(order)
             self.store_order(self.is_long_signal, idx, None)
             self.strategy_analyzers.ta.update_dca_triggered_counts_data()
             self.num_dca_orders_triggered += 1
+
             active_orders_count = self.get_active_orders_count()
+            self.strategy.on_dca_order_completed(self.is_long_signal, order)
             if active_orders_count == 0:
-                self.strategy.log("After DCA order completed the number of active orders left=0. The DCA-MODE will be deactivated.".format(active_orders_count))
+                self.strategy.log("After DCA order has completed the number of active orders={}. The DCA-MODE will be deactivated.".format(active_orders_count))
                 self.dca_mode_deactivate()
-            elif active_orders_count > 0:
-                self.strategy.log("After DCA order completed the number of active orders left={}".format(active_orders_count))
-                self.strategy.on_dca_order_completed(self.is_long_signal, order)
+
             self.strategy.log("AFTER - The DCA-MODE order has been triggered and COMPLETED: self.strategy.curr_position={}, self.strategy.position_avg_price={}, self.num_dca_orders_triggered={}".format(
                 self.strategy.curr_position, self.strategy.position_avg_price, self.num_dca_orders_triggered))
             return True

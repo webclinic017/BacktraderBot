@@ -83,19 +83,19 @@ class LiveTradingStrategyProcessor(BaseStrategyProcessor):
     def notify_analyzers(self):
         pass
 
-    def get_order_size(self):
+    def get_order_size(self, data=None, is_long=None):
         return BotStrategyConfig.get_instance().order_size
 
-    def open_long_position(self):
-        size = self.get_order_size()
+    def open_long_position(self, size=None):
+        size = self.get_order_size() if not size else size
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
         order = self.strategy.generic_buy(tradeid=self.strategy.curtradeid, size=size, exectype=bt.Order.Market, params={"type": "market"})
         self.log("BUY MARKET base order submitted: Symbol={}, Size={}, curtradeid={}, order.ref={}".format(self.data.symbol, size, self.strategy.curtradeid, order.ref), True)
         return order
 
-    def open_short_position(self):
-        size = self.get_order_size()
+    def open_short_position(self, size=None):
+        size = self.get_order_size() if not size else size
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
         order = self.strategy.generic_sell(tradeid=self.strategy.curtradeid, size=size, exectype=bt.Order.Market, params={"type": "market"})
