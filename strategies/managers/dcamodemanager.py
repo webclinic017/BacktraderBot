@@ -29,14 +29,14 @@ class DcaModeManager(object):
                 return idx
         return None
 
-    def get_active_orders_count(self):
+    def get_dca_orders_count(self):
         result = 0
         for idx in range(0,  self.strategy.p.numdca):
             order_long = self.long_orders[idx]
             order_short = self.short_orders[idx]
-            if order_long and order_long.status == bt.Order.Accepted:
+            if order_long:
                 result += 1
-            if order_short and order_short.status == bt.Order.Accepted:
+            if order_short:
                 result += 1
         return result
 
@@ -73,23 +73,31 @@ class DcaModeManager(object):
         else:
             return round(last_price * (1 + price_bracket_pct), 8)
 
-    def submit_new_dca_order(self, tradeid, is_long, idx, last_price):
-        order_size = self.get_desired_order_size(is_long)
-        if is_long is True:
-            long_order_price = self.get_desired_order_price(is_long, idx, last_price)
-            dca_order = self.strategy.generic_buy(tradeid=tradeid, size=order_size, price=long_order_price, exectype=bt.Order.Limit)
-            self.strategy.log('Submitted a new DCA-MODE order (BUY LIMIT): tradeid={}, order_size={}, long_order_price={}, dca_order.ref={}, dca_order.size={}, dca_order.price={}, dca_order.side={}'.format(
-                tradeid, order_size, long_order_price, dca_order.ref, dca_order.size, dca_order.price, dca_order.ordtypename()))
+    def get_oco_order(self):
+        if self.oco_context.get_sl_order():
+            return self.oco_context.get_sl_order()
+        elif self.oco_context.get_tp_order():
+            return self.oco_context.get_tp_order()
         else:
-            short_order_price = self.get_desired_order_price(is_long, idx, last_price)
-            dca_order = self.strategy.generic_sell(tradeid=tradeid, size=order_size, price=short_order_price, exectype=bt.Order.Limit)
-            self.strategy.log('Submitted a new DCA-MODE order (SELL LIMIT): tradeid={}, order_size={}, short_order_price={}, dca_order.ref={}, dca_order.size={}, dca_order.price={}, dca_order.side={}'.format(
-                tradeid, order_size, short_order_price, dca_order.ref, dca_order.size, dca_order.price, dca_order.ordtypename()))
+            return None
+
+    def submit_new_dca_order(self, is_long, tradeid, dca_size, dca_price):
+        oco_order = self.get_oco_order()
+        if is_long:
+            dca_order = self.strategy.generic_buy(tradeid=tradeid, size=dca_size, price=dca_price, exectype=bt.Order.Limit, oco=oco_order)
+            self.strategy.log('Submitted a new DCA-MODE order (BUY LIMIT): tradeid={}, dca_size={}, dca_price={}, dca_order.ref={}, dca_order.size={}, dca_order.price={}, dca_order.side={}, oco_order.ref={}'.format(
+                tradeid, dca_size, dca_price, dca_order.ref, dca_order.size, dca_order.price, dca_order.ordtypename(), oco_order.ref))
+        else:
+            dca_order = self.strategy.generic_sell(tradeid=tradeid, size=dca_size, price=dca_price, exectype=bt.Order.Limit, oco=oco_order)
+            self.strategy.log('Submitted a new DCA-MODE order (SELL LIMIT): tradeid={}, dca_size={}, dca_price={}, dca_order.ref={}, dca_order.size={}, dca_order.price={}, dca_order.side={}, oco_order.ref={}'.format(
+                tradeid, dca_size, dca_price, dca_order.ref, dca_order.size, dca_order.price, dca_order.ordtypename(), oco_order.ref))
         return dca_order
 
     def submit_dca_orders(self, is_long, last_price, tradeid):
         for idx in range(0, self.strategy.p.numdca):
-            new_order = self.submit_new_dca_order(tradeid, is_long, idx, last_price)
+            order_size = self.get_desired_order_size(is_long)
+            order_price = self.get_desired_order_price(is_long, idx, last_price)
+            new_order = self.submit_new_dca_order(is_long, tradeid, order_size, order_price)
             if new_order:
                 self.strategy.log('submit_dca_orders(): Submitted the new {} order, i={}, new_order.ref={}, is_long={}, last_price={}'.format("LONG" if is_long else "SHORT", idx, new_order.ref, is_long, last_price))
                 self.store_order(is_long, idx, new_order)
@@ -143,12 +151,20 @@ class DcaModeManager(object):
         else:
             return 0
 
+    def resubmit_dca_orders(self, is_long, tradeid):
+        self.strategy.log("Resubmitting all existing DCA orders:")
+        for idx in range(0, self.strategy.p.numdca):
+            old_dca_order = self.long_orders[idx] if is_long else self.short_orders[idx]
+            if old_dca_order and old_dca_order.ref:
+                new_order = self.submit_new_dca_order(is_long, tradeid, old_dca_order.size, old_dca_order.price)
+                if new_order:
+                    self.strategy.log('submit_dca_orders(): Resubmitted the DCA {} order, i={}, old_dca_order.ref={}, new_order.ref={}, is_long={}'.format("LONG" if is_long else "SHORT", idx, old_dca_order.ref, new_order.ref, is_long))
+                    self.store_order(is_long, idx, new_order)
+
     def handle_order_completed(self, order):
         if self.is_dca_mode_enabled and self.is_dca_mode_activated() and order.status == order.Completed and self.check_order_is_stored(self.is_long_signal, order):
-            self.strategy.log('DcaModeManager.handle_order_completed(): order.ref={}, status={}'.format(order.ref, order.getstatusname()))
-            self.strategy.log("BEFORE - The DCA-MODE order has been triggered and COMPLETED: order.ref={}, order.tradeid={}, order.price={}, order.size={}, order.side={}, self.num_dca_orders_triggered={}".format(
-                order.ref, order.tradeid, order.price, order.size, order.ordtypename(), self.num_dca_orders_triggered))
-
+            self.strategy.log('DcaModeManager.handle_order_completed(): order.ref={}, order.status={}, order.tradeid={}, order.price={}, order.size={}, order.side={}'.format(
+                order.ref, order.getstatusname(), order.tradeid, order.price, order.size, order.ordtypename(), self.num_dca_orders_triggered))
             self.strategy.curr_position = self.get_curr_position_size(order)
             self.strategy.position_avg_price = self.strategy.position.price
             idx = self.get_order_idx(order)
@@ -156,14 +172,17 @@ class DcaModeManager(object):
             self.strategy_analyzers.ta.update_dca_triggered_counts_data()
             self.num_dca_orders_triggered += 1
 
-            active_orders_count = self.get_active_orders_count()
-            self.strategy.on_dca_order_completed(self.is_long_signal, order)
-            if active_orders_count == 0:
-                self.strategy.log("After DCA order has completed the number of active orders={}. The DCA-MODE will be deactivated.".format(active_orders_count))
+            self.strategy.deactivate_trade_managers()
+            self.strategy.activate_trade_managers(self.strategy.curtradeid, self.strategy.position.price, self.strategy.position.size, self.is_long_signal)
+            dca_orders_count = self.get_dca_orders_count()
+            if dca_orders_count == 0:
+                self.strategy.log("The number of active orders={}. The DCA-MODE will be deactivated.".format(dca_orders_count))
                 self.dca_mode_deactivate()
+            else:
+                self.resubmit_dca_orders(self.is_long_signal, self.strategy.curtradeid)
 
-            self.strategy.log("AFTER - The DCA-MODE order has been triggered and COMPLETED: self.strategy.curr_position={}, self.strategy.position_avg_price={}, self.num_dca_orders_triggered={}".format(
-                self.strategy.curr_position, self.strategy.position_avg_price, self.num_dca_orders_triggered))
+            self.strategy.log("The DCA-MODE order has been triggered and COMPLETED: self.strategy.curr_position={}, self.strategy.position_avg_price={}, self.num_dca_orders_triggered={}, self.get_dca_orders_count()={}".format(
+                self.strategy.curr_position, self.strategy.position_avg_price, self.num_dca_orders_triggered, self.get_dca_orders_count()))
             return True
         return False
 

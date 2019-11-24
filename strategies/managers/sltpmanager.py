@@ -239,7 +239,6 @@ class SLTPManager(object):
 
     def handle_order_completed(self, order):
         if order.status == order.Completed and self.sl_order and self.sl_order.ref == order.ref:
-            self.strategy.log('SLTPManager.handle_order_completed(): order.ref={}, status={}'.format(order.ref, order.getstatusname()))
             self.strategy.log("The {} order has been triggered and COMPLETED: self.oco_context={}, self.sl_order.ref={}, self.trailed_price={}, self.sl_price={}, order.price={}, order.size={}".format(
                 self.get_sl_type_str(), self.oco_context, self.sl_order.ref, self.sl_trailed_price, self.sl_price, order.price, order.size))
             self.sl_order = None
@@ -250,7 +249,6 @@ class SLTPManager(object):
             return True
 
         if order.status == order.Completed and self.tp_order and self.tp_order.ref == order.ref:
-            self.strategy.log('SLTPManager.handle_order_completed(): order.ref={}, status={}'.format(order.ref, order.getstatusname()))
             self.strategy.log("The {} order has been triggered and COMPLETED: self.oco_context={}, self.tp_order.ref={}, self.trailed_price={}, self.tp_price={}, self.ttp_price={}, order.price={}, order.size={}".format(
                 self.get_tp_type_str(), self.oco_context, self.tp_order.ref, self.tp_trailed_price, self.tp_price, self.ttp_price, order.price, order.size))
             self.sl_order = None

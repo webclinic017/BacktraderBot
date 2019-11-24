@@ -13,7 +13,7 @@ from strategies.processors.backtestingstrategyprocessor import BacktestingStrate
 from termcolor import colored
 import re
 
-DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT = -30
+DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT = -50
 
 
 class ParametersValidator(object):
@@ -25,12 +25,18 @@ class ParametersValidator(object):
             raise ValueError("The TRAILING STOP-LOSS ('tslflag') parameter should be provided with STOP-LOSS ('sl') parameter")
         if params.get("ttpdist") and not params.get("tp"):
             raise ValueError("The TRAILING TAKE-PROFIT ('ttpdist') parameter cannot be provided without TAKE-PROFIT ('tp') parameter")
-        if params.get("sl") and params.get("tp") and params.get("sl") >= params.get("tp"):
-            raise ValueError("The STOP-LOSS ('sl') parameter should be less than TAKE-PROFIT ('tp') parameter")
+        #if params.get("sl") and params.get("tp") and params.get("sl") >= params.get("tp"):
+        #    raise ValueError("The STOP-LOSS ('sl') parameter should be less than TAKE-PROFIT ('tp') parameter")
         if params.get("dcainterval") and not params.get("numdca") or not params.get("dcainterval") and params.get("numdca"):
             raise ValueError("Both DCA-MODE parameters 'dcainterval' and 'numdca' must be provided")
+        if params.get("numdca") and params.get("numdca") < 2:
+            raise ValueError("The DCA-MODE parameters 'dcainterval' must greater or equal 2")
         if params.get("dcainterval") and params.get("numdca") and params.get("tbdist"):
             raise ValueError("Both TRAILING-BUY ('tbdist') and DCA-MODE ('dcainterval'/'numdca') parameters can not be specified: only one mode (TRAILING-BUY or DCA-MODE) can be used at the same time")
+        if params.get("dcainterval") and params.get("numdca") and (params.get("tslflag") or params.get("ttpdist")):
+            raise ValueError("The DCA-MODE ('dcainterval'/'numdca') parameters cannot be configured together with TRAILING STOP-LOSS ('tslflag') or TRAILING TAKE-PROFIT ('ttpdist') parameters. Only STOP-LOSS ('sl') and TAKE-PROFIT ('tp') parameters allowed")
+        if params.get("dcainterval") and params.get("numdca") and params.get("sl") and params.get("sl") <= params.get("dcainterval") * params.get("numdca"):
+            raise ValueError("The DCA-MODE ('dcainterval'/'numdca') together with STOP-LOSS ('sl') parameters must be configured in such way that 'sl' should be greater than 'dcainterval'*'numdca'")
         if params.get("dcainterval") and params.get("numdca") and not params.get("tp"):
             raise ValueError("The DCA-MODE ('dcainterval'/'numdca') parameters must be configured together with TAKE-PROFIT ('tp') parameter")
         return True
@@ -76,7 +82,7 @@ class GenericStrategy(bt.Strategy):
         self.is_error_condition = False
         self.is_margin_condition = False
 
-        self.skip_bar_flow_control_flag = False
+        self.skip_bar_on_tb_completed = False
         self.capital_stoploss_fired_flow_control_flag = False
 
     def islivedata(self):
@@ -108,7 +114,7 @@ class GenericStrategy(bt.Strategy):
         self.trailingbuymanager.activate_tb(tradeid, last_price, is_long)
         self.dcamodemanager.activate_dca_mode(tradeid, last_price, is_long)
 
-    def activate_position_trade_managers(self, tradeid, pos_price, pos_size, is_long):
+    def activate_trade_managers(self, tradeid, pos_price, pos_size, is_long):
         self.sltpmanager.activate_sl(tradeid, pos_price, pos_size, is_long)
         self.sltpmanager.activate_tp(tradeid, pos_price, pos_size, is_long)
 
@@ -187,7 +193,7 @@ class GenericStrategy(bt.Strategy):
             self.curr_position = -1
 
         self.position_avg_price = self.data.close[0]
-        self.activate_position_trade_managers(self.curtradeid, self.position_avg_price, base_order.size, is_long)
+        self.activate_trade_managers(self.curtradeid, self.position_avg_price, base_order.size, is_long)
         self.log('!!! AFTER - SIGNAL OPEN POSITION {} !!!, self.curr_position={}, cash={}'.format(side_str, self.curr_position, cash))
 
     def tb_signal_open_position(self, is_long):
@@ -225,8 +231,8 @@ class GenericStrategy(bt.Strategy):
         base_order = self.submit_base_order(is_long)
 
         self.position_avg_price = last_price
+        self.activate_trade_managers(self.curtradeid, self.position_avg_price, base_order.size, is_long)
         self.activate_trade_entry_managers(self.curtradeid, last_price, is_long)
-        self.activate_position_trade_managers(self.curtradeid, self.position_avg_price, base_order.size, is_long)
 
         self.log('!!! AFTER - DCA MODE - START {} !!!'.format(side_str, self.curr_position, cash))
 
@@ -264,12 +270,6 @@ class GenericStrategy(bt.Strategy):
                 ta_analyzer.update_processing_status("Open Trades")
             else:
                 ta_analyzer.update_processing_status("Success")
-
-    def on_dca_order_completed(self, is_long, order):
-        self.log("on_dca_order_completed(): Handling DCA order has been COMPLETED")
-        self.deactivate_trade_managers()
-        self.activate_position_trade_managers(self.curtradeid, self.position.price, self.position.size, is_long)
-        self.log("on_dca_order_completed(): order.ref={}, self.curr_position = {}, self.position_avg_price = {}".format(order.ref, self.curr_position, self.position_avg_price))
 
     def execute_signals(self):
         # Trading
@@ -336,9 +336,9 @@ class GenericStrategy(bt.Strategy):
 
     def next(self):
         try:
-            if self.skip_bar_flow_control_flag:
-                self.log("next(): skip_bar_flow_control_flag={}. Skip next() processing.".format(self.skip_bar_flow_control_flag))
-                self.skip_bar_flow_control_flag = False
+            if self.skip_bar_on_tb_completed:
+                self.log("next(): skip_bar_on_tb_completed={}. Skip next() processing.".format(self.skip_bar_on_tb_completed))
+                self.skip_bar_on_tb_completed = False
                 self.print_all_debug_info()
                 return
 
@@ -374,12 +374,11 @@ class GenericStrategy(bt.Strategy):
 
     def notify_order(self, order):
         if self.handle_order_completed_trailing_buy(order):
-            self.activate_position_trade_managers(self.curtradeid, self.position_avg_price, order.size, self.is_long_position())
-            self.skip_bar_flow_control_flag = True
+            self.activate_trade_managers(self.curtradeid, self.position_avg_price, order.size, self.is_long_position())
+            self.skip_bar_on_tb_completed = True
             return
 
         if self.handle_order_completed_dca_mode(order):
-            self.skip_bar_flow_control_flag = True
             return
 
         if self.handle_order_completed_trade_managers(order):

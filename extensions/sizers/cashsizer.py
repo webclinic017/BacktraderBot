@@ -18,8 +18,8 @@ class FixedCashSizer(bt.Sizer):
       - ``debug`` (default: ``False``)
     '''
 
-    _PRE_MARGIN_CALL_ADJUSTMENT_RATIO = 0.9
-    _SAFETY_BUFFER_MARGIN_CALL = 0.95
+    _PRE_MARGIN_CALL_ADJUSTMENT_RATIO = 0.8
+    _SAFETY_BUFFER_MARGIN_CALL = 0.85
 
     params = (
         ('cashamount', 10000),
