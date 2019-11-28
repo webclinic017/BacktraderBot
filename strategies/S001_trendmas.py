@@ -13,8 +13,6 @@ class S001_AlexNoroTrendMAsStrategy(GenericStrategy):
         ("startcash", 100000),
         ("needlong", True),
         ("needshort", True),
-        ("needstops", False),
-        ("stoppercent", 5),
         ("usefastsma", True),
         ("fastlen", 3),
         ("slowlen", 21),

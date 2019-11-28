@@ -21,12 +21,14 @@ class ParametersValidator(object):
     def validate_params(cls, params):
         if not params.get("needlong") and not params.get("needshort"):
             raise ValueError("Either 'needlong' or 'needshort' parameters must be provided")
+        #if params.get("sl") and not params.get("tp") or not params.get("sl") and params.get("tp"):
+        #    raise ValueError("Both the STOP-LOSS ('sl') and TAKE-PROFIT ('tp') parameters should be defined together")
         if params.get("tslflag") and not params.get("sl"):
             raise ValueError("The TRAILING STOP-LOSS ('tslflag') parameter should be provided with STOP-LOSS ('sl') parameter")
         if params.get("ttpdist") and not params.get("tp"):
             raise ValueError("The TRAILING TAKE-PROFIT ('ttpdist') parameter cannot be provided without TAKE-PROFIT ('tp') parameter")
-        #if params.get("sl") and params.get("tp") and params.get("sl") >= params.get("tp"):
-        #    raise ValueError("The STOP-LOSS ('sl') parameter should be less than TAKE-PROFIT ('tp') parameter")
+        if params.get("sl") and params.get("tp") and params.get("tp") / (1.0 * params.get("sl")) < 0.5:
+            raise ValueError("The TAKE-PROFIT ('tp') / STOP-LOSS ('sl') ratio should be more than 0.5")
         if params.get("dcainterval") and not params.get("numdca") or not params.get("dcainterval") and params.get("numdca"):
             raise ValueError("Both DCA-MODE parameters 'dcainterval' and 'numdca' must be provided")
         if params.get("numdca") and params.get("numdca") < 2:

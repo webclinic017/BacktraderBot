@@ -295,23 +295,23 @@ class SLTPManager(object):
             result = True
         return result
 
-    def get_sl_price(self, base_price, sl_dist_pct, is_long):
+    def get_sl_price(self, base_price, sl_pct, is_long):
         if is_long:
-            return round(base_price * (1 - sl_dist_pct / 100.0), 8)
+            return round(base_price * (1 - sl_pct / 100.0), 8)
         else:
-            return round(base_price * (1 + sl_dist_pct / 100.0), 8)
+            return round(base_price * (1 + sl_pct / 100.0), 8)
 
-    def get_tp_price(self, base_price, tp_dist_pct, is_long):
+    def get_tp_price(self, base_price, tp_pct, is_long):
         if is_long:
-            return round(base_price * (1 + tp_dist_pct / 100.0), 8)
+            return round(base_price * (1 + tp_pct / 100.0), 8)
         else:
-            return round(base_price * (1 - tp_dist_pct / 100.0), 8)
+            return round(base_price * (1 - tp_pct / 100.0), 8)
 
-    def get_ttp_price(self, base_price, ttp_dist_pct, is_long):
+    def get_ttp_price(self, base_price, ttp_pct, is_long):
         if is_long:
-            return round(base_price * (1 - ttp_dist_pct / 100.0), 8)
+            return round(base_price * (1 - ttp_pct / 100.0), 8)
         else:
-            return round(base_price * (1 + ttp_dist_pct / 100.0), 8)
+            return round(base_price * (1 + ttp_pct / 100.0), 8)
 
     def is_allow_trailing_move(self, price1, price2):
         return self.get_price_move_delta_pct(price1, price2) >= MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT

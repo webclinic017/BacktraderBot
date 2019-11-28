@@ -175,10 +175,8 @@ class DcaModeManager(object):
             self.strategy.deactivate_trade_managers()
             self.strategy.activate_trade_managers(self.strategy.curtradeid, self.strategy.position.price, self.strategy.position.size, self.is_long_signal)
             dca_orders_count = self.get_dca_orders_count()
-            if dca_orders_count == 0:
-                self.strategy.log("The number of active orders={}. The DCA-MODE will be deactivated.".format(dca_orders_count))
-                self.dca_mode_deactivate()
-            else:
+            if dca_orders_count > 0:
+                self.strategy.log("The number of active orders={}. All non-closed DCA-MODE orders will be resubmitted.".format(dca_orders_count))
                 self.resubmit_dca_orders(self.is_long_signal, self.strategy.curtradeid)
 
             self.strategy.log("The DCA-MODE order has been triggered and COMPLETED: self.strategy.curr_position={}, self.strategy.position_avg_price={}, self.num_dca_orders_triggered={}, self.get_dca_orders_count()={}".format(
