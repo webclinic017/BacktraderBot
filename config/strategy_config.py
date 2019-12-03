@@ -13,7 +13,7 @@ class AppConfig(object):
             "STEP5_ENABLE_FILTERING": True,
             "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
             "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
-            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": True,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
+            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": False,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
         }
 
     _DEFAULT_STRATEGY_PARAMS_DICT = {
@@ -21,7 +21,7 @@ class AppConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSD",
-                "timeframe": "1m",
+                "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
                 "lottype": "Fixed"
@@ -31,22 +31,22 @@ class AppConfig(object):
                 "needshort": True,
                 "usefastsma": True,
                 "fastlen": 7,
-                "slowlen": 20,
-                "bars": 1,
+                "slowlen": 14,
+                "bars": 2,
                 "needex": False,
-                "sl": 0,
+                "sl": 4,
                 "tslflag": False,
-                "tp": 0.8,
+                "tp": 10,
                 "ttpdist": 0,
-                "tbdist": 0,
+                "tbdist": 4,
                 "numdca": 0,
                 "dcainterval": 0,
-                "fromyear": 2019,
-                "toyear": 2019,
-                "frommonth": 3,
-                "tomonth": 3,
+                "fromyear": 2014,
+                "toyear": 2017,
+                "frommonth": 1,
+                "tomonth": 6,
                 "fromday": 1,
-                "today": 8,
+                "today": 30,
             }
         ],
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: [
@@ -459,13 +459,13 @@ class AppConfig(object):
             "bodylen": range(0, 13, 3),
             "trb": range(1, 5),
             "len": 20,
-            "sl": (0, 4, 6),
+            "sl": (0, 1, 2, 4, 6),
             "tslflag": False,
-            "tp": (0, 4, 6),
-            "ttpdist": (0, 1),
-            "tbdist": (0, 2),
-            "numdca": (0, 2),
-            "dcainterval": (0, 2),
+            "tp": (0, 2, 4, 6),
+            "ttpdist": (0, 1, 1.5),
+            "tbdist": (0, 1, 2),
+            "numdca": (0, 2, 4),
+            "dcainterval": (0, 1, 2),
         },
         BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: {
             "needlong": True,
