@@ -464,7 +464,7 @@ class AppConfig(object):
             "tp": (0, 2, 4, 6),
             "ttpdist": (0, 1),
             "tbdist": (0, 2),
-            "numdca": (0, 2, 4),
+            "numdca": (0, 2),
             "dcainterval": (0, 2),
         },
         BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: {
