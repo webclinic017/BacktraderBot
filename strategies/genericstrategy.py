@@ -13,7 +13,7 @@ from strategies.processors.backtestingstrategyprocessor import BacktestingStrate
 from termcolor import colored
 import re
 
-DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT = -50
+DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT = -90
 
 
 class ParametersValidator(object):
@@ -351,8 +351,8 @@ class GenericStrategy(bt.Strategy):
                 self.log("%s - %.8f" % (self.status, self.data0.close[0]))
                 return
 
-            #if self.handle_capital_stoploss():
-            #    return
+            if self.handle_capital_stoploss():
+                return
 
             self.calculate_signals()
 
