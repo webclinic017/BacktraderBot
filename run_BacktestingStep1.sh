@@ -6,7 +6,7 @@ declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" 
 
 #declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S003_AlexNoroRobotBitMEXFastRSIStrategy" "S004_AlexNoroBandsScalperStrategy" "S005_AlexNoroTripleRSIStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy" "S009_RSIMinMaxStrategy" "S010_AlexAroonTrendStrategy" "S011_EMACrossOverStrategy")
 #declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S003_AlexNoroRobotBitMEXFastRSIStrategy" "S004_AlexNoroBandsScalperStrategy" "S005_AlexNoroTripleRSIStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy" "S009_RSIMinMaxStrategy" "S010_AlexAroonTrendStrategy" "S011_EMACrossOverStrategy")
-declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S004_AlexNoroBandsScalperStrategy" "S006_AlexNoroSqueezeMomentumStrategy")
+declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S004_AlexNoroBandsScalperStrategy")
 
 #declare -a arr_symbols=("BTCUSD" "ETHUSD" "XRPUSD" "LTCUSD" "ETCUSD" "IOTAUSD" "EOSUSD" "NEOUSD" "ZECUSD" "ETPUSD" "XMRUSD" "DASHUSD")
 declare -a arr_symbols=("BTCUSD")
