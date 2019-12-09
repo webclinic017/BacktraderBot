@@ -49,6 +49,7 @@ class TVTradeAnalyzer(Analyzer):
     def create_analysis(self):
         self.rets = AutoOrderedDict()
         self.rets.total.total = 0
+        self.rets.len.total = 0
         self.buyandholdcalcbegin = False
         self.buyandholdnumshares = 0
         self.buyandholdstartvalue = 0
@@ -194,6 +195,10 @@ class TVTradeAnalyzer(Analyzer):
         trades = self.rets
         trades.dca.triggered.count += 1
 
+    def update_bars_in_trades_ratio(self):
+        trades = self.rets
+        trades.len.tradebarsratio_pct = 100 * trades.len.total / trades.total.barsnumber
+
     def print_debug_info(self):
         print("!!!!! self.netprofits_data={}\n".format(self.netprofits_data))
         print("All Trades:")
@@ -222,6 +227,8 @@ class TVTradeAnalyzer(Analyzer):
     def next(self):
         #print('!! INSIDE next(): strategy.position.size={}, broker.get_value()={}, broker.get_cash()={}, data.open={}, data.close={}, datetime[0]={}'.format(self.strategy.position.size, self.strategy.broker.get_value(), self.strategy.broker.get_cash(), self.data.open[0], self.data.close[0], self.get_currentdate()))
         trades = self.rets
+        trades.total.barsnumber += 1
+        self.update_bars_in_trades_ratio()
         if self.buyandholdcalcbegin is True:
             trades.total.buyandholdreturn = self.data.close[0] * self.buyandholdnumshares - self.buyandholdstartvalue
             trades.total.buyandholdreturnpct = 100 * trades.total.buyandholdreturn / self.buyandholdstartvalue
@@ -326,6 +333,8 @@ class TVTradeAnalyzer(Analyzer):
 
             ml = trades.len.min or MAXINT
             trades.len.min = min(ml, trade.barlen)
+
+            self.update_bars_in_trades_ratio()
 
             # Length Won/Lost
             for wlname in ['won', 'lost']:

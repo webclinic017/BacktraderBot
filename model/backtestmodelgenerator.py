@@ -72,11 +72,14 @@ class BacktestModelGenerator(object):
                 ttp_moved_count = ta_analysis.ttp.moved.count if self.exists(ta_analysis, ['ttp', 'moved', 'count']) else 0
                 tb_trades_count = ta_analysis.tb.count if self.exists(ta_analysis, ['tb', 'count']) else 0
                 tb_moved_count = ta_analysis.tb.moved.count if self.exists(ta_analysis, ['tb', 'moved', 'count']) else 0
+                dca_triggered_count = ta_analysis.dca.triggered.count if self.exists(ta_analysis, ['dca', 'triggered', 'count']) else 0
                 net_profit = round(ta_analysis.pnl.netprofit.total, 8) if self.exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
                 net_profit_pct = round(100 * ta_analysis.pnl.netprofit.total / startcash, 2) if self.exists(ta_analysis, ['pnl', 'netprofit', 'total']) else 0
                 avg_monthly_net_profit_pct = '{}%'.format(self.get_avg_monthly_net_profit_pct(monthly_stats, num_months))
                 total_won = ta_analysis.won.total if self.exists(ta_analysis, ['won', 'total']) else 0
-                strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
+                win_rate_pct = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
+                trades_len_avg = round(ta_analysis.len.average) if self.exists(ta_analysis, ['len', 'average']) else 0
+                trade_bars_ratio_pct = '{}%'.format(round(ta_analysis.len.tradebarsratio_pct, 2)) if self.exists(ta_analysis, ['len', 'tradebarsratio_pct']) else "0.0%"
                 max_drawdown_pct = round(dd_analysis.max.drawdown, 2)
                 max_drawdown_length = round(dd_analysis.max.len)
                 net_profit_to_maxdd = round(abs(net_profit_pct / dd_analysis.max.drawdown), 2) if max_drawdown_pct != 0 else 0
@@ -95,7 +98,7 @@ class BacktestModelGenerator(object):
 
                 if self._needfiltering is False or self._needfiltering is True and net_profit > 0 and total_closed > 0:
                     model.add_result_row(strategy_id, exchange, symbol, timeframe, parameters, proc_daterange, startcash, self.getlotsize(lotsize, lottype),
-                                         processing_status, total_closed, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count, tb_trades_count, tb_moved_count,
-                                         net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, net_profit_to_maxdd, strike_rate,
+                                         processing_status, total_closed, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count, tb_trades_count, tb_moved_count, dca_triggered_count,
+                                         net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct, max_drawdown_length, net_profit_to_maxdd, win_rate_pct, trades_len_avg, trade_bars_ratio_pct,
                                          num_winning_months, profitfactor, buyandhold_return_pct, sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle,
                                          equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurvepvalue, equitycurvestderr)

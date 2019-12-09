@@ -221,9 +221,13 @@ class DebugStrategy(object):
         grossprofit = round(analyzer.pnl.grossprofit.total, 8) if self.exists(analyzer, ['pnl', 'grossprofit', 'total']) else 0
         grossloss = round(analyzer.pnl.grossloss.total, 8) if self.exists(analyzer, ['pnl', 'grossloss', 'total']) else 0
         profitfactor = round(analyzer.total.profitfactor, 3) if self.exists(analyzer, ['total', 'profitfactor']) else 0
-        strike_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
+        win_rate = '{}%'.format(round((total_won / total_closed) * 100, 2)) if total_closed > 0 else "0.0%"
         buyandhold_return = round(analyzer.total.buyandholdreturn, 8) if self.exists(analyzer, ['total', 'buyandholdreturn']) else 0
         buyandhold_return_pct = round(analyzer.total.buyandholdreturnpct, 2) if self.exists(analyzer, ['total', 'buyandholdreturnpct']) else 0
+        trades_len_avg = round(analyzer.len.average) if self.exists(analyzer, ['len', 'average']) else 0
+        trades_len_won_avg = round(analyzer.len.won.average) if self.exists(analyzer, ['len', 'won', 'average']) else 0
+        trades_len_lost_avg = round(analyzer.len.lost.average) if self.exists(analyzer, ['len', 'lost', 'average']) else 0
+        trade_bars_ratio = '{}%'.format(round(analyzer.len.tradebarsratio_pct, 2)) if self.exists(analyzer, ['len', 'tradebarsratio_pct']) else 0
 
         sl_trades_count = analyzer.sl.count if self.exists(analyzer, ['sl', 'count']) else 0
         tsl_trades_count = analyzer.tsl.count if self.exists(analyzer, ['tsl', 'count']) else 0
@@ -240,20 +244,22 @@ class DebugStrategy(object):
         h2 = ['Win Rate', 'Win Streak', 'Losing Streak', '']
         h3 = ['Buy & Hold Return', 'Buy & Hold Return, %', '', '']
         h4 = ['Net Profit', 'Gross Profit', 'Gross Loss', 'Profit Factor']
-        h5 = ['Trades #: SL Count', 'Trades #: TSL Count', 'TSL Moved Count', '']
-        h6 = ['Trades #: TP Count', 'Trades #: TTP Count', 'TTP Moved Count', '']
-        h7 = ['Trades #: TB Count', 'TB Moved Count', 'Trades #: DCA Triggered Count', '']
+        h5 = ['Avg # Bars In Trades', 'Avg # Bars In Won Trades', 'Avg # Bars In Lost Trades', 'Bars In Trades Ratio, %']
+        h6 = ['Trades #: SL Count', 'Trades #: TSL Count', 'TSL Moved Count', '']
+        h7 = ['Trades #: TP Count', 'Trades #: TTP Count', 'TTP Moved Count', '']
+        h8 = ['Trades #: TB Count', 'TB Moved Count', 'Trades #: DCA Triggered Count', '']
         r1 = [total_open, total_closed, total_won, total_lost]
-        r2 = [strike_rate, win_streak, lose_streak, '']
+        r2 = [win_rate, win_streak, lose_streak, '']
         r3 = [buyandhold_return, buyandhold_return_pct, '', '']
         r4 = [netprofit, grossprofit, grossloss, profitfactor]
-        r5 = [sl_trades_count, tsl_trades_count, tsl_moved_count, '']
-        r6 = [tp_trades_count, ttp_trades_count, ttp_moved_count, '']
-        r7 = [tb_trades_count, tb_moved_count, dca_triggered_trades_count, '']
+        r5 = [trades_len_avg, trades_len_won_avg, trades_len_lost_avg, trade_bars_ratio]
+        r6 = [sl_trades_count, tsl_trades_count, tsl_moved_count, '']
+        r7 = [tp_trades_count, ttp_trades_count, ttp_moved_count, '']
+        r8 = [tb_trades_count, tb_moved_count, dca_triggered_trades_count, '']
 
         # Print the rows
-        print_list = [h1, r1, h2, r2, h3, r3, h4, r4, h5, r5, h6, r6, h7, r7]
-        row_format = "{:<25}" * (len(h1) + 1)
+        print_list = [h1, r1, h2, r2, h3, r3, h4, r4, h5, r5, h6, r6, h7, r7, h8, r8]
+        row_format = "{:<30}" * (len(h1) + 1)
         print("Backtesting Results:")
         for row in print_list:
             print(row_format.format('', *row))
