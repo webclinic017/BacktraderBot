@@ -162,6 +162,9 @@ class DcaModeManager(object):
                     self.store_order(is_long, idx, new_order)
 
     def handle_order_completed(self, order):
+        if self.strategy.is_beyond_daterange():
+            return False
+
         if self.is_dca_mode_enabled and self.is_dca_mode_activated() and order.status == order.Completed and self.check_order_is_stored(self.is_long_signal, order):
             self.strategy.log('DcaModeManager.handle_order_completed(): order.ref={}, order.status={}, order.tradeid={}, order.price={}, order.size={}, order.side={}'.format(
                 order.ref, order.getstatusname(), order.tradeid, order.price, order.size, order.ordtypename(), self.num_dca_orders_triggered))

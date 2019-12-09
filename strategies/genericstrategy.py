@@ -27,8 +27,6 @@ class ParametersValidator(object):
             raise ValueError("The TRAILING STOP-LOSS ('tslflag') parameter should be provided with STOP-LOSS ('sl') parameter")
         if params.get("ttpdist") and not params.get("tp"):
             raise ValueError("The TRAILING TAKE-PROFIT ('ttpdist') parameter cannot be provided without TAKE-PROFIT ('tp') parameter")
-        if params.get("sl") and params.get("tp") and params.get("tp") / (1.0 * params.get("sl")) < 0.5:
-            raise ValueError("The TAKE-PROFIT ('tp') / STOP-LOSS ('sl') ratio should be more than 0.5")
         if params.get("dcainterval") and not params.get("numdca") or not params.get("dcainterval") and params.get("numdca"):
             raise ValueError("Both DCA-MODE parameters 'dcainterval' and 'numdca' must be provided")
         if params.get("numdca") and params.get("numdca") < 2:
@@ -37,8 +35,6 @@ class ParametersValidator(object):
             raise ValueError("Both TRAILING-BUY ('tbdist') and DCA-MODE ('dcainterval'/'numdca') parameters can not be specified: only one mode (TRAILING-BUY or DCA-MODE) can be used at the same time")
         if params.get("dcainterval") and params.get("numdca") and (params.get("tslflag") or params.get("ttpdist")):
             raise ValueError("The DCA-MODE ('dcainterval'/'numdca') parameters cannot be configured together with TRAILING STOP-LOSS ('tslflag') or TRAILING TAKE-PROFIT ('ttpdist') parameters. Only STOP-LOSS ('sl') and TAKE-PROFIT ('tp') parameters allowed")
-        if params.get("dcainterval") and params.get("numdca") and params.get("sl") and params.get("sl") <= params.get("dcainterval") * params.get("numdca"):
-            raise ValueError("The DCA-MODE ('dcainterval'/'numdca') together with STOP-LOSS ('sl') parameters must be configured in such way that 'sl' should be greater than 'dcainterval'*'numdca'")
         if params.get("dcainterval") and params.get("numdca") and not params.get("tp"):
             raise ValueError("The DCA-MODE ('dcainterval'/'numdca') parameters must be configured together with TAKE-PROFIT ('tp') parameter")
         return True
@@ -59,6 +55,11 @@ class GenericStrategy(bt.Strategy):
         ParametersValidator.validate_params(vars(self.p))
 
     def __init__(self):
+        self.gmt3_tz = None
+        self.fromdt = None
+        self.todt = None
+        self.currdt = None
+
         self.curtradeid = -1
         self.curr_position = 0
         self.position_avg_price = 0
@@ -146,7 +147,7 @@ class GenericStrategy(bt.Strategy):
         self.sltpmanager.tp_deactivate()
 
     def is_allow_signals_execution(self):
-        return not self.trailingbuymanager.is_tb_mode_activated() and not self.dcamodemanager.is_dca_mode_activated()
+        return not self.sltpmanager.is_tp_mode_activated() and not self.trailingbuymanager.is_tb_mode_activated() and not self.dcamodemanager.is_dca_mode_activated()
 
     def notify_data(self, data, status, *args, **kwargs):
         return self.strategyprocessor.notify_data(data, status, args, kwargs)
@@ -273,8 +274,7 @@ class GenericStrategy(bt.Strategy):
             else:
                 ta_analyzer.update_processing_status("Success")
 
-    def execute_signals(self):
-        # Trading
+    def set_current_dt_data(self):
         self.fromdt = datetime(self.p.fromyear, self.p.frommonth, self.p.fromday, 0, 0, 0)
         self.todt = datetime(self.p.toyear, self.p.tomonth, self.p.today, 23, 59, 59)
         self.currdt = self.data.datetime.datetime()
@@ -284,8 +284,18 @@ class GenericStrategy(bt.Strategy):
         self.todt = pytz.utc.localize(self.todt)
         self.currdt = self.gmt3_tz.localize(self.currdt, is_dst=True)
 
+    def is_within_daterange(self):
+        return self.fromdt < self.currdt < self.todt
+
+    def is_beyond_daterange(self):
+        return self.currdt > self.todt
+
+    def execute_signals(self):
+        # Trading
+        self.set_current_dt_data()
+
         if self.is_allow_signals_execution():
-            if self.islivedata() or self.currdt > self.fromdt and self.currdt < self.todt:
+            if self.islivedata() or self.is_within_daterange():
                 if self.is_short_position() and self.is_close_short:
                     self.signal_close_position(False)
 
@@ -298,7 +308,7 @@ class GenericStrategy(bt.Strategy):
                 if self.is_position_closed() and self.p.needshort and self.is_open_short:
                     self.signal_open_position(False)
 
-        if not self.islivedata() and self.currdt > self.todt:
+        if not self.islivedata() and self.is_beyond_daterange():
             self.log('!!! Time has passed beyond date range')
             self.deactivate_entry_trade_managers()
             if self.curr_position != 0:
@@ -375,6 +385,8 @@ class GenericStrategy(bt.Strategy):
             return data_symbol.group(1)
 
     def notify_order(self, order):
+        self.set_current_dt_data()
+
         if self.handle_order_completed_trailing_buy(order):
             self.activate_trade_managers(self.curtradeid, self.position_avg_price, order.size, self.is_long_position())
             self.skip_bar_on_tb_completed = True
