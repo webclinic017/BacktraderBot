@@ -13,7 +13,7 @@ from strategies.processors.backtestingstrategyprocessor import BacktestingStrate
 from termcolor import colored
 import re
 
-DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT = -90
+DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT = -60
 
 
 class ParametersValidator(object):
