@@ -399,7 +399,7 @@ class AppConfig(object):
             "needex": (False, True),
             "sl": (2, 4, 6),
             "tslflag": False,
-            "tp": (2, 4, 6, 8),
+            "tp": (2, 4, 6, 8, 10),
             "ttpdist": 0,
             "tbdist": 0,
             "numdca": (8, 10),
