@@ -85,7 +85,7 @@ class GenericStrategy(bt.Strategy):
         self.is_error_condition = False
         self.is_margin_condition = False
 
-        self.skip_bar_on_tb_completed = False
+        self.skip_bar_flow_control_flag = False
         self.capital_stoploss_fired_flow_control_flag = False
 
     def islivedata(self):
@@ -332,7 +332,7 @@ class GenericStrategy(bt.Strategy):
     def handle_capital_stoploss(self):
         realized_pl = round((self.broker.getvalue() - self.p.startcash) * 100 / self.p.startcash, 2)
         if not self.capital_stoploss_fired_flow_control_flag and realized_pl <= DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT:
-            self.log("The Unrealized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed prematurely.".format(realized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
+            self.log("handle_capital_stoploss(): The Unrealized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed prematurely.".format(realized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
             self.generic_close(tradeid=self.curtradeid)
             self.curr_position = 0
             self.position_avg_price = 0
@@ -348,9 +348,9 @@ class GenericStrategy(bt.Strategy):
 
     def next(self):
         try:
-            if self.skip_bar_on_tb_completed:
-                self.log("next(): skip_bar_on_tb_completed={}. Skip next() processing.".format(self.skip_bar_on_tb_completed))
-                self.skip_bar_on_tb_completed = False
+            if self.skip_bar_flow_control_flag:
+                self.log("next(): skip_bar_flow_control_flag={}. Skip next() processing.".format(self.skip_bar_flow_control_flag))
+                self.skip_bar_flow_control_flag = False
                 self.print_all_debug_info()
                 return
 
@@ -389,10 +389,11 @@ class GenericStrategy(bt.Strategy):
 
         if self.handle_order_completed_trailing_buy(order):
             self.activate_trade_managers(self.curtradeid, self.position_avg_price, order.size, self.is_long_position())
-            self.skip_bar_on_tb_completed = True
+            self.skip_bar_flow_control_flag = True
             return
 
         if self.handle_order_completed_dca_mode(order):
+            self.skip_bar_flow_control_flag = True
             return
 
         if self.handle_order_completed_trade_managers(order):
