@@ -31,16 +31,17 @@ class AppConfig(object):
                 "needshort": True,
                 "usefastsma": True,
                 "fastlen": 3,
-                "slowlen": 16,
-                "bars": 1,
-                "needex": False,
+                "slowlen": 24,
+                "bars": 0,
+                "needex": True,
                 "sl": 0,
                 "tslflag": False,
-                "tp": 1,
+                "tp": 6,
                 "ttpdist": 0,
                 "tbdist": 0,
-                "numdca": 20,
-                "dcainterval": 0.25,
+                "numdca": 10,
+                "dcainterval": 1.5,
+                "dcasltimeout": 12,
                 "fromyear": 2014,
                 "toyear": 2017,
                 "frommonth": 1,
@@ -79,6 +80,7 @@ class AppConfig(object):
                 "tbdist": 0,
                 "numdca": 2,
                 "dcainterval": 1,
+                "dcasltimeout": 0,
                 "fromyear": 2019,
                 "toyear": 2019,
                 "frommonth": 2,
@@ -117,6 +119,7 @@ class AppConfig(object):
                 "tbdist": 1,
                 "numdca": 2,
                 "dcainterval": 3,
+                "dcasltimeout": 0,
                 "fromyear": 2017,
                 "toyear": 2018,
                 "frommonth": 8,
@@ -149,6 +152,7 @@ class AppConfig(object):
                 "tbdist": 0,
                 "numdca": 0,
                 "dcainterval": 0,
+                "dcasltimeout": 0,
                 "fromyear": 2019,
                 "toyear": 2019,
                 "frommonth": 2,
@@ -178,6 +182,7 @@ class AppConfig(object):
                 "tbdist": 1,
                 "numdca": 2,
                 "dcainterval": 3,
+                "dcasltimeout": 0,
                 "fromyear": 2017,
                 "toyear": 2018,
                 "frommonth": 8,
@@ -209,6 +214,7 @@ class AppConfig(object):
                 "tbdist": 1,
                 "numdca": 2,
                 "dcainterval": 3,
+                "dcasltimeout": 0,
                 "fromyear": 2018,
                 "toyear": 2019,
                 "frommonth": 8,
@@ -239,6 +245,7 @@ class AppConfig(object):
                 "tbdist": 1,
                 "numdca": 2,
                 "dcainterval": 3,
+                "dcasltimeout": 0,
                 "fromyear": 2018,
                 "toyear": 2018,
                 "frommonth": 2,
@@ -267,6 +274,7 @@ class AppConfig(object):
                 "tbdist": 1,
                 "numdca": 2,
                 "dcainterval": 3,
+                "dcasltimeout": 0,
                 "fromyear": 2017,
                 "toyear": 2018,
                 "frommonth": 7,
@@ -297,6 +305,7 @@ class AppConfig(object):
                 "tbdist": 1,
                 "numdca": 2,
                 "dcainterval": 3,
+                "dcasltimeout": 0,
                 "fromyear": 2017,
                 "toyear": 2018,
                 "frommonth": 1,
@@ -327,6 +336,7 @@ class AppConfig(object):
                 "tbdist": 0,
                 "numdca": 2,
                 "dcainterval": 3,
+                "dcasltimeout": 0,
                 "fromyear": 2017,
                 "toyear": 2019,
                 "frommonth": 8,
@@ -354,6 +364,7 @@ class AppConfig(object):
                 "tbdist": 1,
                 "numdca": 2,
                 "dcainterval": 3,
+                "dcasltimeout": 0,
                 "fromyear": 2018,
                 "toyear": 2018,
                 "frommonth": 6,
@@ -399,11 +410,12 @@ class AppConfig(object):
             "needex": (False, True),
             "sl": 0,
             "tslflag": False,
-            "tp": (1, 2, 4, 8),
+            "tp": (0.5, 1, 2, 4, 6),
             "ttpdist": 0,
             "tbdist": 0,
-            "numdca": (2, 5, 10, 20, 40),
-            "dcainterval": (0.25, 1.5, 5),
+            "numdca": (2, 4),
+            "dcainterval": (5, 10, 15),
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
             "needlong": True,
@@ -426,6 +438,7 @@ class AppConfig(object):
             "tbdist": 0,
             "numdca": (0, 2, 3, 4),
             "dcainterval": (0, 1, 2, 3),
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S003_ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: {
             "needlong": True,
@@ -449,6 +462,7 @@ class AppConfig(object):
             "tbdist": (0, 1, 2),
             "numdca": 2,
             "dcainterval": 3,
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: {
             "needlong": True,
@@ -466,6 +480,7 @@ class AppConfig(object):
             "tbdist": (0, 2),
             "numdca": 0,
             "dcainterval": 0,
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: {
             "needlong": True,
@@ -481,6 +496,7 @@ class AppConfig(object):
             "tbdist": (0, 1, 2),
             "numdca": 2,
             "dcainterval": 3,
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S006_ALEX_NORO_SQUEEZE_MOMENTUM_STRATEGY_ID: {
             "needlong": True,
@@ -498,6 +514,7 @@ class AppConfig(object):
             "tbdist": (0, 2),
             "numdca": (0, 2),
             "dcainterval": (0, 1, 2),
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S007_ALEX_NORO_MULTIMA_STRATEGY_ID: {
             "needlong": True,
@@ -514,6 +531,7 @@ class AppConfig(object):
             "tbdist": (0, 1, 2),
             "numdca": 2,
             "dcainterval": 3,
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: {
             "needlong": True,
@@ -528,6 +546,7 @@ class AppConfig(object):
             "tbdist": (0, 1, 2),
             "numdca": 2,
             "dcainterval": 3,
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S009_RSI_MIN_MAX_STRATEGY_ID: {
             "needlong": True,
@@ -544,6 +563,7 @@ class AppConfig(object):
             "tbdist": (0, 1, 2),
             "numdca": 2,
             "dcainterval": 3,
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S010_ALEX_AROON_TREND_STRATEGY_ID: {
             "needlong": True,
@@ -560,6 +580,7 @@ class AppConfig(object):
             "tbdist": (0, 1, 2),
             "numdca": 2,
             "dcainterval": 3,
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S011_EMA_CROSS_OVER_STRATEGY_ID: {
             "needlong": True,
@@ -573,6 +594,7 @@ class AppConfig(object):
             "tbdist": (0, 1, 2),
             "numdca": 2,
             "dcainterval": 3,
+            "dcasltimeout": 0
         },
         BTStrategyEnum.S012_GRID_MARKET_MAKER_STRATEGY_ID: {
             "order_pairs": (15, 20),

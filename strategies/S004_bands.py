@@ -25,6 +25,7 @@ class S004_AlexNoroBandsScalperStrategy(GenericStrategy):
         ("tbdist", None),
         ("numdca", None),
         ("dcainterval", None),
+        ("dcasltimeout", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 10),

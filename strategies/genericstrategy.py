@@ -32,11 +32,15 @@ class ParametersValidator(object):
         if params.get("numdca") and params.get("numdca") < 2:
             raise ValueError("The DCA-MODE parameters 'dcainterval' must greater or equal 2")
         if params.get("dcainterval") and params.get("numdca") and params.get("tbdist"):
-            raise ValueError("Both TRAILING-BUY ('tbdist') and DCA-MODE ('dcainterval'/'numdca') parameters can not be specified: only one mode (TRAILING-BUY or DCA-MODE) can be used at the same time")
+            raise ValueError("Both TRAILING-BUY ('tbdist') and DCA-MODE ('dcainterval'/'numdca') parameters can not be used together: only one mode (TRAILING-BUY or DCA-MODE) can be used at the same time")
         if params.get("dcainterval") and params.get("numdca") and (params.get("tslflag") or params.get("ttpdist")):
             raise ValueError("The DCA-MODE ('dcainterval'/'numdca') parameters cannot be configured together with TRAILING STOP-LOSS ('tslflag') or TRAILING TAKE-PROFIT ('ttpdist') parameters. Only STOP-LOSS ('sl') and TAKE-PROFIT ('tp') parameters allowed")
         if params.get("dcainterval") and params.get("numdca") and not params.get("tp"):
             raise ValueError("The DCA-MODE ('dcainterval'/'numdca') parameters must be configured together with TAKE-PROFIT ('tp') parameter")
+        if params.get("dcasltimeout") and params.get("sl"):
+            raise ValueError("The DCA-MODE stop-loss timeout ('dcasltimeout') parameter must NOT be used together with the STOP-LOSS ('sl') parameter")
+        if params.get("dcasltimeout") and (not params.get("numdca") or not params.get("dcainterval")):
+            raise ValueError("The DCA-MODE stop-loss timeout ('dcasltimeout') must be configured together with the DCA-MODE ('dcainterval'/'numdca') parameters")
         return True
 
 
@@ -60,6 +64,7 @@ class GenericStrategy(bt.Strategy):
         self.todt = None
         self.currdt = None
 
+        self.barnum = 0
         self.curtradeid = -1
         self.curr_position = 0
         self.position_avg_price = 0
@@ -128,6 +133,7 @@ class GenericStrategy(bt.Strategy):
         self.sltpmanager.sl_on_next()
         self.sltpmanager.tp_on_next()
         self.trailingbuymanager.tb_on_next()
+        self.dcamodemanager.dca_on_next()
 
     def handle_order_completed_trailing_buy(self, order):
         return self.trailingbuymanager.handle_order_completed(order)
@@ -348,6 +354,7 @@ class GenericStrategy(bt.Strategy):
 
     def next(self):
         try:
+            self.barnum += 1
             if self.skip_bar_flow_control_flag:
                 self.log("next(): skip_bar_flow_control_flag={}. Skip next() processing.".format(self.skip_bar_flow_control_flag))
                 self.skip_bar_flow_control_flag = False
@@ -462,6 +469,7 @@ class GenericStrategy(bt.Strategy):
             self.log('Drawdown, %: {}%'.format(round(ddanalyzer.drawdown, 8)))
             self.log('self.broker.get_cash() = {}'.format(self.broker.get_cash()))
             self.log('self.broker.get_value() = {}'.format(self.broker.get_value()))
+        self.log('self.barnum = {}'.format(self.barnum))
         self.log('self.curtradeid = {}'.format(self.curtradeid))
         self.log('self.curr_position = {}'.format(self.curr_position))
         self.log('self.position.size = {}'.format(self.position.size))

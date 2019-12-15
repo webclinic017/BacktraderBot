@@ -22,6 +22,7 @@ class S008_AlexNoroSuperTrendStrategy(GenericStrategy):
         ("tbdist", None),
         ("numdca", None),
         ("dcainterval", None),
+        ("dcasltimeout", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 11),

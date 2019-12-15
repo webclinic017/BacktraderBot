@@ -23,6 +23,7 @@ class S010_AlexAroonTrendStrategy(GenericStrategy):
         ("tbdist", None),
         ("numdca", None),
         ("dcainterval", None),
+        ("dcasltimeout", None),
         ("fromyear", 2018),
         ("toyear", 2018),
         ("frommonth", 1),
