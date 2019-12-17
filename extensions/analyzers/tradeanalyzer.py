@@ -54,6 +54,7 @@ class TVTradeAnalyzer(Analyzer):
         self.buyandholdnumshares = 0
         self.buyandholdstartvalue = 0
         self.netprofits_data = AutoOrderedDict()
+        self.skip_trade_update_flag = False
 
     def set_netprofit_value(self, value):
         self.netprofits_data[self.get_currentdate()] = value
@@ -251,13 +252,17 @@ class TVTradeAnalyzer(Analyzer):
             res = AutoDict()
             # Trade just closed
 
-            won = res.won = int(trade.pnlcomm >= 0.0)
-            lost = res.lost = int(not won)
-            tlong = res.tlong = trade.long
-            tshort = res.tshort = not trade.long
+            if not self.skip_trade_update_flag:
+                won = res.won = int(trade.pnlcomm >= 0.0)
+                lost = res.lost = int(not won)
+                tlong = res.tlong = trade.long
+                tshort = res.tshort = not trade.long
 
             trades.total.open -= 1
             trades.total.closed += 1
+
+            if self.skip_trade_update_flag:
+                return
 
             # Streak
             for wlname in ['won', 'lost']:

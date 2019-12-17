@@ -118,6 +118,9 @@ class GenericStrategy(bt.Strategy):
     def is_order_accepted_in_broker(self, order):
         return order.status in [bt.Order.Accepted, bt.Order.Partial, bt.Order.Completed, bt.Order.Canceled, bt.Order.Expired, bt.Order.Margin, bt.Order.Rejected]
 
+    def is_strategy_dca_mode_enabled(self):
+        return self.dcamodemanager.is_dca_mode_enabled
+
     def activate_trade_entry_managers(self, tradeid, last_price, is_long):
         self.trailingbuymanager.activate_tb(tradeid, last_price, is_long)
         self.dcamodemanager.activate_dca_mode(tradeid, last_price, is_long)
@@ -316,6 +319,12 @@ class GenericStrategy(bt.Strategy):
 
         if not self.islivedata() and self.is_beyond_daterange():
             self.log('!!! Time has passed beyond date range')
+            if self.is_strategy_dca_mode_enabled():
+                ta_analyzer = self.analyzers.ta
+                ta_analyzer.skip_trade_update_flag = True
+                ddanalyzer = self.analyzers.dd
+                ddanalyzer.skip_trade_update_flag = True
+
             self.deactivate_entry_trade_managers()
             if self.curr_position != 0:
                 self.log('!!! Closing trade prematurely')
@@ -336,9 +345,14 @@ class GenericStrategy(bt.Strategy):
         return self.curr_position < 0
 
     def handle_capital_stoploss(self):
-        realized_pl = round((self.broker.getvalue() - self.p.startcash) * 100 / self.p.startcash, 2)
-        if not self.capital_stoploss_fired_flow_control_flag and realized_pl <= DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT:
-            self.log("handle_capital_stoploss(): The Unrealized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed prematurely.".format(realized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
+        unrealized_pl = round((self.broker.getvalue() - self.p.startcash) * 100 / self.p.startcash, 2)
+        if not self.capital_stoploss_fired_flow_control_flag and unrealized_pl <= DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT:
+            self.log("handle_capital_stoploss(): The Unrealized P/L of the strategy={}% has exceeded the Capital STOP-LOSS Value={}%. The strategy will be completed prematurely.".format(unrealized_pl, DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT))
+            if self.is_strategy_dca_mode_enabled():
+                ta_analyzer = self.analyzers.ta
+                ta_analyzer.skip_trade_update_flag = True
+                ddanalyzer = self.analyzers.dd
+                ddanalyzer.skip_trade_update_flag = True
             self.generic_close(tradeid=self.curtradeid)
             self.curr_position = 0
             self.position_avg_price = 0

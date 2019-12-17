@@ -183,7 +183,9 @@ class DebugStrategy(object):
 
         print('\nTotal # trades: {}'.format(len(tradesclosed.items())))
         # Get final portfolio Value
-        portvalue = self._cerebro.broker.getvalue()
+        analyzer = strategy.analyzers.ta.get_analysis()
+        netprofit = round(analyzer.pnl.netprofit.total, 8) if self.exists(analyzer, ['pnl', 'netprofit', 'total']) else 0
+        portvalue = netprofit + startcash
         pnl = portvalue - startcash
         pnlpct = 100 * (portvalue / startcash) - 100
         print('Final Portfolio Value: {}'.format(round(portvalue, 2)))

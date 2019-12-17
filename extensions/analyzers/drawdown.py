@@ -55,6 +55,7 @@ class TVNetProfitDrawDown(bt.Analyzer):
 
         self._currvalue = 0
         self.maxportfoliovalue = self.p.initial_cash
+        self.skip_trade_update_flag = False
 
     def stop(self):
         self.rets._close()  # . notation cannot create more keys
@@ -66,6 +67,9 @@ class TVNetProfitDrawDown(bt.Analyzer):
     def notify_trade(self,trade):
         #if trade.justopened:
             #print('!! INSIDE notify_trade JUSTOPENED self._currvalue={}'.format(self._currvalue))
+
+        if self.skip_trade_update_flag:
+            return
             
         if trade.isclosed:
             r = self.rets
