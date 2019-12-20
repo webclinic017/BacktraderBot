@@ -1,5 +1,7 @@
 #! /bin/bash
 
+chmod 744 ./run_Backtesting*
+
 ./run_BacktestingStep1.sh $1
 ./run_BacktestingStep2.sh $1
 ./run_BacktestingStep3.sh $1

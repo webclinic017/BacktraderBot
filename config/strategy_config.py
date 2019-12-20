@@ -9,11 +9,11 @@ class AppConfig(object):
             "DEFAULT_LOT_TYPE": "Fixed",
             "STEP1_ENABLE_FILTERING": False,
             "STEP2_ENABLE_FILTERING": False,
-            "STEP4_ENABLE_FILTERING": False,
+            "STEP4_ENABLE_FILTERING": True,
             "STEP5_ENABLE_FILTERING": True,
             "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
             "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
-            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": False,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
+            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": True,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
         }
 
     _DEFAULT_STRATEGY_PARAMS_DICT = {
@@ -30,17 +30,17 @@ class AppConfig(object):
                 "needlong": True,
                 "needshort": True,
                 "usefastsma": True,
-                "fastlen": 7,
-                "slowlen": 20,
-                "bars": 2,
+                "fastlen": 5,
+                "slowlen": 10,
+                "bars": 1,
                 "needex": False,
                 "sl": 0,
                 "tslflag": False,
-                "tp": 10,
+                "tp": 14,
                 "ttpdist": 0,
                 "tbdist": 0,
                 "numdca": 2,
-                "dcainterval": 2.5,
+                "dcainterval": 2,
                 "dcasltimeout": 4,
                 "fromyear": 2014,
                 "toyear": 2017,
@@ -410,12 +410,12 @@ class AppConfig(object):
             "needex": (False, True),
             "sl": 0,
             "tslflag": False,
-            "tp": (6, 10, 14),
+            "tp": (10, 14),
             "ttpdist": 0,
             "tbdist": 0,
             "numdca": (2, 3, 4),
             "dcainterval": (2, 2.5),
-            "dcasltimeout": (1, 2, 4)
+            "dcasltimeout": (2, 4)
         },
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
             "needlong": True,
