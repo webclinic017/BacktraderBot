@@ -410,12 +410,12 @@ class AppConfig(object):
             "needex": (False, True),
             "sl": 0,
             "tslflag": False,
-            "tp": (10, 14),
+            "tp": (0, 1, 2),
             "ttpdist": 0,
             "tbdist": 0,
-            "numdca": (2, 3, 4),
-            "dcainterval": (2, 2.5),
-            "dcasltimeout": (2, 4)
+            "numdca": (0, 2, 3, 4),
+            "dcainterval": (0, 0.2, 0.5),
+            "dcasltimeout": (0, 2, 4)
         },
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
             "needlong": True,
