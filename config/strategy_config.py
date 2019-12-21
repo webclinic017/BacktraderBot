@@ -13,7 +13,7 @@ class AppConfig(object):
             "STEP5_ENABLE_FILTERING": True,
             "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
             "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
-            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": True,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
+            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": False,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
         }
 
     _DEFAULT_STRATEGY_PARAMS_DICT = {
@@ -21,7 +21,7 @@ class AppConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSD",
-                "timeframe": "1h",
+                "timeframe": "5m",
                 "startcash": 1500,
                 "lotsize": 1470,
                 "lottype": "Fixed"
@@ -32,22 +32,22 @@ class AppConfig(object):
                 "usefastsma": True,
                 "fastlen": 5,
                 "slowlen": 10,
-                "bars": 1,
+                "bars": 0,
                 "needex": False,
                 "sl": 0,
                 "tslflag": False,
-                "tp": 14,
+                "tp": 3,
                 "ttpdist": 0,
                 "tbdist": 0,
-                "numdca": 2,
-                "dcainterval": 2,
+                "numdca": 4,
+                "dcainterval": 0.5,
                 "dcasltimeout": 4,
                 "fromyear": 2014,
-                "toyear": 2017,
+                "toyear": 2014,
                 "frommonth": 1,
-                "tomonth": 6,
+                "tomonth": 3,
                 "fromday": 1,
-                "today": 30,
+                "today": 31,
             }
         ],
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: [
@@ -410,12 +410,12 @@ class AppConfig(object):
             "needex": (False, True),
             "sl": 0,
             "tslflag": False,
-            "tp": (0, 1, 2, 3),
+            "tp": (3, 5, 7),
             "ttpdist": 0,
             "tbdist": 0,
-            "numdca": (0, 2, 3, 4),
-            "dcainterval": (0, 0.2, 0.5),
-            "dcasltimeout": (0, 2, 4)
+            "numdca": (2, 3, 4),
+            "dcainterval": (1, 2),
+            "dcasltimeout": (1, 2, 4)
         },
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: {
             "needlong": True,
