@@ -14,7 +14,7 @@ declare -a arr_symbols=("BTCUSD")
 declare -a arr_timeframes=("5m")
 
 declare -a backtest_startdate="2014-01-01"
-declare -a backtest_enddate="2014-03-31"
+declare -a backtest_enddate="2014-12-31"
 
 startyear=${backtest_startdate:0:4}
 startmonth=${backtest_startdate:5:2}
