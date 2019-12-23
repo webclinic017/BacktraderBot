@@ -30,11 +30,11 @@ class StrategyOptimizationFactory(object):
     # Step 4 (Forward testing) configuration
     _STEP4_TOTAL_CLOSED_TRADES_VALUE_FILTER = ValueFilter("FwTest: Total Closed Trades", 30, False)
 
-    _STEP4_NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 130, False)
+    _STEP4_NET_PROFIT_VALUE_FILTER = ValueFilter("Net Profit, %", 35, False)
 
     _STEP4_NET_PROFIT_TO_MAXDD_VALUE_FILTER = ValueFilter("FwTest: Net Profit To Max Drawdown", 0.4, False)
 
-    _STEP4_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("Equity Curve R-value", 0.97, False)
+    _STEP4_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("Equity Curve R-value", 0.95, False)
 
     _STEP4_COMBINED_EQUITY_CURVE_R_VALUE_FILTER = ValueFilter("FwTest: Combined Equity Curve R-value", 0.7, False)
 
