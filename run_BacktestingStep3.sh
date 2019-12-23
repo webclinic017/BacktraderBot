@@ -1,7 +1,7 @@
 #! /bin/bash
 
 runid=$1
-testdaterange=20150101-20150131
+testdaterange=20140201-20140208
 columnnameprefix=FwTest
 
 declare exchange=bitfinex
