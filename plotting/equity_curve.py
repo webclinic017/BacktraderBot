@@ -4,6 +4,9 @@ from bokeh.layouts import column
 from bokeh.models import Span, Label
 from bokeh.plotting import figure
 from bokeh.io import export_png
+from bokeh.models.tickers import FixedTicker
+from bokeh.models.tickers import DatetimeTicker
+from math import pi
 import itertools as it
 from datetime import datetime
 from bokeh.models import DatetimeTickFormatter
@@ -43,14 +46,14 @@ class EquityCurvePlotter(object):
         return Span(location=0, dimension='width', line_color='blue', line_dash='dashed', line_width=1, line_alpha=0.8)
 
     def get_x_axis_formatter(self, x_axis_flag):
-        if x_axis_flag is True:
+        if x_axis_flag:
             return NumeralTickFormatter(format="0")
         else:
             return DatetimeTickFormatter(
-                days=["%Y-%m-%d"],
-                months=["%Y-%m-%d"],
-                hours=["%Y-%m-%d"],
-                minutes=["%Y-%m-%d"]
+                days=["%Y-%m-%d %H:%M"],
+                months=["%Y-%m-%d %H:%M"],
+                hours=["%Y-%m-%d %H:%M"],
+                minutes=["%Y-%m-%d %H:%M"]
             )
 
     def get_x_axis_label(self, x_axis_flag):
@@ -59,12 +62,18 @@ class EquityCurvePlotter(object):
         else:
             return "Trade Date"
 
-    def build_equity_curve_plot_figure(self):
+    def build_equity_curve_plot_figure(self, x_data):
         x_axis_flag = AppConfig.is_global_equitycurve_img_x_axis_trades()
-        equity_curve_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="auto",
+        equity_curve_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="datetime",
                                    toolbar_location=None, x_axis_label=self.get_x_axis_label(x_axis_flag), x_axis_location="below",
                                    y_axis_label="Equity", background_fill_color="#efefef")
         equity_curve_plot.xaxis.formatter = self.get_x_axis_formatter(x_axis_flag)
+        if not x_axis_flag:
+            x_data_ticks = []
+            for x in x_data:
+                x_data_ticks.append(int(x.timestamp() * 1000))
+            equity_curve_plot.xaxis.ticker = FixedTicker(ticks=list(x_data_ticks))
+            equity_curve_plot.xaxis.major_label_orientation = pi/4
         equity_curve_plot.yaxis.formatter = NumeralTickFormatter(format="0")
         equity_curve_plot.title.text_font_style = "normal"
         equity_curve_plot.add_layout(self.build_y_axis_zero_line())
@@ -216,13 +225,13 @@ class EquityCurvePlotter(object):
 
     def draw_equity_curve(self, row, equity_curve_data_points_str, equitycurveslope, equitycurveintercept):
         plot_name_prefix = "BkTest"
-        equity_curve_plot = self.build_equity_curve_plot_figure()
 
         description = self.build_description(row, False)
 
         equity_curve_data_points_dict = json.loads(equity_curve_data_points_str)
         x_data = self.get_equity_data_x_axis(equity_curve_data_points_dict.keys(), None)
         y_data = self.get_equity_data_y_axis(equity_curve_data_points_dict.values(), 0)
+        equity_curve_plot = self.build_equity_curve_plot_figure(x_data)
         equity_curve_plot.line(x_data, y_data, line_width=3, alpha=0.7, legend='{} equity curve'.format(plot_name_prefix))
 
         lr_points = self.get_linear_regression_line_points(x_data, equitycurveslope, equitycurveintercept, 0)
@@ -241,13 +250,13 @@ class EquityCurvePlotter(object):
 
     def draw_combined_equity_curves(self, row, bktest_equity_curve_data_points_str, fwtest_equity_curve_data_points_str):
         plot_name_prefix = "FwTest"
-        equity_curve_plot = self.build_equity_curve_plot_figure()
 
         description = self.build_description(row, True)
 
         bktest_equity_curve_data_points_dict = json.loads(bktest_equity_curve_data_points_str)
         bktest_x_data = self.get_equity_data_x_axis(bktest_equity_curve_data_points_dict.keys(), None)
         bktest_y_data = self.get_equity_data_y_axis(bktest_equity_curve_data_points_dict.values(), 0)
+        equity_curve_plot = self.build_equity_curve_plot_figure(bktest_x_data)
         equity_curve_plot.line(bktest_x_data, bktest_y_data, line_width=3, alpha=0.7, legend='{} equity curve'.format("BkTest"))
 
         fwtest_equity_curve_data_points_dict = json.loads(fwtest_equity_curve_data_points_str)
