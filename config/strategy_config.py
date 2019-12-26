@@ -412,7 +412,7 @@ class AppConfig(object):
             "tslflag": False,
             "tp": (2, 4, 6),
             "ttpdist": (0, 1),
-            "tbdist": (0, 1, 1.5),
+            "tbdist": (0, 1),
             "numdca": 0,
             "dcainterval": 0,
             "dcasltimeout": 0
