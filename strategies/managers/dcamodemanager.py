@@ -17,7 +17,6 @@ class DcaModeManager(object):
         self.long_orders = [None] * self.strategy.p.numdca
         self.short_orders = [None] * self.strategy.p.numdca
         self.num_dca_orders_triggered = 0
-        self.dca_sl_timeout_start_bar = -1
 
     def is_dca_mode_activated(self):
         return self.is_dca_activated
@@ -122,29 +121,9 @@ class DcaModeManager(object):
             self.submit_dca_orders(is_long, last_price, tradeid)
 
             self.num_dca_orders_triggered = 0
-            self.dca_sl_timeout_start_bar = -1
             self.is_dca_activated = True
 
             self.strategy.log("Activated DCA-MODE for self.tradeid={}, last_price={}, is_long={}".format(tradeid, last_price, is_long))
-
-    def activate_dca_timeout_stoploss(self, dca_orders_count):
-        if self.is_dca_mode_enabled and self.strategy.p.dcasltimeout and self.num_dca_orders_triggered == self.strategy.p.numdca and dca_orders_count == 0:
-            self.dca_sl_timeout_start_bar = self.strategy.barnum
-            self.strategy.log("activate_dca_timeout_stoploss(): Activated DCA stop-loss by timeout process: self.num_dca_orders_triggered={}, dca_orders_count={}, self.dca_sl_timeout_start_bar={}".format(self.num_dca_orders_triggered, dca_orders_count, self.dca_sl_timeout_start_bar))
-
-    def handle_dca_timeout_stoploss(self):
-        result = False
-        if self.is_dca_mode_enabled and self.num_dca_orders_triggered == self.strategy.p.numdca and self.dca_sl_timeout_start_bar > 0 and (self.strategy.barnum - self.dca_sl_timeout_start_bar) >= self.strategy.p.dcasltimeout:
-            self.strategy.log("handle_dca_timeout_stoploss(): The DCA stop-loss timeout has been triggered! Current position will be closed: self.num_dca_orders_triggered={}, self.dca_sl_timeout_start_bar={}".format(self.num_dca_orders_triggered, self.dca_sl_timeout_start_bar))
-            self.strategy.generic_close(tradeid=self.strategy.curtradeid)
-            self.strategy.curr_position = 0
-            self.strategy.position_avg_price = 0
-            self.strategyprocessor.notify_analyzers()
-            self.strategy.deactivate_entry_trade_managers()
-            self.strategy.deactivate_trade_managers()
-            self.strategy_analyzers.ta.update_sl_counts_data(False)
-            result = True
-        return result
 
     def cancel_order(self, order):
         if self.is_dca_mode_activated() and order:
@@ -167,8 +146,6 @@ class DcaModeManager(object):
     def dca_on_next(self):
         if not self.is_dca_mode_enabled or self.strategy.is_position_closed() or not self.is_dca_mode_activated():
             return False
-
-        return self.handle_dca_timeout_stoploss()
 
     def get_curr_position_size(self, order):
         if order and order.isbuy():
@@ -208,8 +185,6 @@ class DcaModeManager(object):
             if dca_orders_count > 0:
                 self.strategy.log("The number of active orders={}. All non-closed DCA-MODE orders will be resubmitted.".format(dca_orders_count))
                 self.resubmit_dca_orders(self.is_long_signal, self.strategy.curtradeid)
-            else:
-                self.activate_dca_timeout_stoploss(dca_orders_count)
 
             self.strategy.log("The DCA-MODE order has been triggered and COMPLETED: self.strategy.curr_position={}, self.strategy.position_avg_price={}, self.num_dca_orders_triggered={}, self.get_dca_orders_count()={}".format(
                 self.strategy.curr_position, self.strategy.position_avg_price, self.num_dca_orders_triggered, self.get_dca_orders_count()))
@@ -228,6 +203,5 @@ class DcaModeManager(object):
     def log_state(self):
         if self.is_dca_mode_enabled:
             self.strategy.log('DcaModeManager.num_dca_orders_triggered = {}'.format(self.num_dca_orders_triggered))
-            self.strategy.log('DcaModeManager.dca_sl_timeout_start_bar = {}'.format(self.dca_sl_timeout_start_bar))
             self.strategy.log('DcaModeManager.long_orders = [{}]'.format(self.get_order_refs_str(self.long_orders)))
             self.strategy.log('DcaModeManager.short_orders = [{}]'.format(self.get_order_refs_str(self.short_orders)))
