@@ -1,4 +1,5 @@
 import backtrader as bt
+from .sltpcalc import SLTPCalculator
 
 MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT = 0.1
 
@@ -9,6 +10,7 @@ class TrailingBuyManager(object):
         self.strategy = strategy
         self.data = strategy.data
         self.strategy_analyzers = strategy.analyzers
+        self.sltpcalculator = SLTPCalculator(self.strategy)
 
         self.is_tb_enabled = self.strategy.p.tbdist is not None and self.strategy.p.tbdist > 0
         self.is_tb_activated = False
@@ -36,7 +38,7 @@ class TrailingBuyManager(object):
         if self.is_tb_enabled and not self.is_tb_mode_activated():
             self.is_long_signal = is_long
             self.tradeid = tradeid
-            self.tb_price = self.get_tb_price(last_price, self.strategy.p.tbdist)
+            self.tb_price = self.sltpcalculator.get_tb_price(is_long, last_price)
             self.tb_trailed_price = last_price
             self.submit_new_tb_order(self.tradeid, self.tb_price)
             self.is_tb_activated = True
@@ -60,7 +62,7 @@ class TrailingBuyManager(object):
         old_tb_trailed_price = self.tb_trailed_price
         old_tb_price = self.tb_price
         self.tb_trailed_price = last_price
-        self.tb_price = self.get_tb_price(last_price, self.strategy.p.tbdist)
+        self.tb_price = self.sltpcalculator.get_tb_price(self.is_long_signal, last_price)
         self.strategy.log("Moving TRAILING-BUY target: self.tb_trailed_price={} -> {}, self.tb_price={} -> {}, last_price={}, tb_size={}, self.is_long_signal={}".format(
             old_tb_trailed_price, self.tb_trailed_price, old_tb_price, self.tb_price, last_price, tb_size, self.is_long_signal))
         self.cancel_tb_order()
@@ -114,17 +116,8 @@ class TrailingBuyManager(object):
             self.tb_price = None
             self.tb_trailed_price = None
 
-    def get_tb_price(self, base_price, tb_dist_pct):
-        if self.is_long_signal:
-            return round(base_price * (1 + tb_dist_pct / 100.0), 8)
-        else:
-            return round(base_price * (1 - tb_dist_pct / 100.0), 8)
-
     def is_allow_trailing_move(self, price1, price2):
-        return self.get_price_move_delta_pct(price1, price2) >= MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT
-
-    def get_price_move_delta_pct(self, price1, price2):
-        return abs(100 * (price1 - price2) / price2)
+        return self.sltpcalculator.get_price_move_delta_pct(price1, price2) >= MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT
 
     def log_state(self):
         if self.is_tb_enabled:

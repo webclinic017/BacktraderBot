@@ -1,8 +1,12 @@
 import backtrader as bt
+import backtrader.indicators as btind
 from abc import abstractmethod
 import itertools
 from datetime import datetime
 import pytz
+
+from strategies.helper.constants import TradeExitMode
+from strategies.helper.validation import ParametersValidator
 from strategies.managers.sltpmanager import SLTPManager
 from strategies.managers.trailingbuymanager import TrailingBuyManager
 from strategies.managers.dcamodemanager import DcaModeManager
@@ -14,30 +18,6 @@ from termcolor import colored
 import re
 
 DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT = -60
-
-
-class ParametersValidator(object):
-    @classmethod
-    def validate_params(cls, params):
-        if not params.get("needlong") and not params.get("needshort"):
-            raise ValueError("Either 'needlong' or 'needshort' parameters must be provided")
-        #if params.get("sl") and not params.get("tp") or not params.get("sl") and params.get("tp"):
-        #    raise ValueError("Both the STOP-LOSS ('sl') and TAKE-PROFIT ('tp') parameters should be defined together")
-        if params.get("tslflag") and not params.get("sl"):
-            raise ValueError("The TRAILING STOP-LOSS ('tslflag') parameter should be provided with STOP-LOSS ('sl') parameter")
-        if params.get("ttpdist") and not params.get("tp"):
-            raise ValueError("The TRAILING TAKE-PROFIT ('ttpdist') parameter cannot be provided without TAKE-PROFIT ('tp') parameter")
-        if params.get("dcainterval") and not params.get("numdca") or not params.get("dcainterval") and params.get("numdca"):
-            raise ValueError("Both DCA-MODE parameters 'dcainterval' and 'numdca' must be provided")
-        if params.get("numdca") and params.get("numdca") < 2:
-            raise ValueError("The DCA-MODE parameters 'dcainterval' must greater or equal 2")
-        if params.get("dcainterval") and params.get("numdca") and params.get("tbdist"):
-            raise ValueError("Both TRAILING-BUY ('tbdist') and DCA-MODE ('dcainterval'/'numdca') parameters can not be used together: only one mode (TRAILING-BUY or DCA-MODE) can be used at the same time")
-        if params.get("dcainterval") and params.get("numdca") and (params.get("tslflag") or params.get("ttpdist")):
-            raise ValueError("The DCA-MODE ('dcainterval'/'numdca') parameters cannot be configured together with TRAILING STOP-LOSS ('tslflag') or TRAILING TAKE-PROFIT ('ttpdist') parameters. Only STOP-LOSS ('sl') and TAKE-PROFIT ('tp') parameters allowed")
-        if params.get("dcainterval") and params.get("numdca") and not params.get("tp"):
-            raise ValueError("The DCA-MODE ('dcainterval'/'numdca') parameters must be configured together with TAKE-PROFIT ('tp') parameter")
-        return True
 
 
 class StrategyProcessorFactory(object):
@@ -88,8 +68,23 @@ class GenericStrategy(bt.Strategy):
         self.skip_bar_flow_control_flag = False
         self.capital_stoploss_fired_flow_control_flag = False
 
+        if self.is_atr_mode():
+            self.atr_tf = btind.AverageTrueRange(self.data, period=14, movav=btind.MovAv.SMA)
+            self.sma_tf = btind.SimpleMovingAverage(self.data.close, period=14)
+            self.atr_tf_pct = (self.atr_tf / self.sma_tf) * 100
+            self.tf_intraday_low = 0
+            self.tf_intraday_high = 0
+            self.tf_intraday_range_pct = 0
+            self.data_d1_len = 0
+            self.atr_d1 = btind.AverageTrueRange(self.data1, period=28, movav=btind.MovAv.SMA)
+            self.sma_d1 = btind.SimpleMovingAverage(self.data1.close, period=28)
+            self.atr_d1_pct = (self.atr_d1 / self.sma_d1) * 100
+
     def islivedata(self):
         return self.data.islive()
+
+    def is_atr_mode(self):
+        return self.p.exitmode and self.p.exitmode != TradeExitMode.EXIT_MODE_DEFAULT
 
     def log(self, txt, send_telegram_flag=False):
         self.strategyprocessor.log(txt, send_telegram_flag)
@@ -361,8 +356,33 @@ class GenericStrategy(bt.Strategy):
             return True
         return False
 
+    def is_new_d1_bar(self):
+        return len(self.datas) > 1 and len(self.data1) > self.data_d1_len
+
+    def handle_d1_data(self):
+        if len(self.datas) == 1:
+            return True
+
+        if self.is_new_d1_bar():
+            self.data_d1_len = len(self.data1)
+            self.tf_intraday_low = self.data.close[0]
+            self.tf_intraday_high = self.data.close[0]
+            self.tf_intraday_range_pct = 0
+            self.log("handle_d1_data(): D1 timeframe - skipping next() method. self.data_d1_len={}, self.tf_intraday_range_pct={:.2f}%".format(self.data_d1_len, self.tf_intraday_range_pct))
+            return False
+        else:
+            # Calculate intraday range (high-low) for the current timeframe
+            self.tf_intraday_low = min(self.tf_intraday_low, self.data.low[0])
+            self.tf_intraday_high = max(self.tf_intraday_high, self.data.high[0])
+            curr_range = 100 * (self.tf_intraday_high - self.tf_intraday_low)/self.tf_intraday_low
+            self.tf_intraday_range_pct = max(curr_range, self.tf_intraday_range_pct)
+            return True
+
     def next(self):
         try:
+            if not self.handle_d1_data():
+                return
+
             if self.skip_bar_flow_control_flag:
                 self.log("next(): skip_bar_flow_control_flag={}. Skip next() processing.".format(self.skip_bar_flow_control_flag))
                 self.skip_bar_flow_control_flag = False
@@ -469,6 +489,19 @@ class GenericStrategy(bt.Strategy):
     def stop(self):
         self.set_processing_status()
 
+    def print_atr_mode_log_state(self):
+        if self.is_atr_mode():
+            self.log('self.atr_tf[0] = {}'.format(self.atr_tf[0]))
+            self.log('self.sma_tf[0] = {}'.format(self.sma_tf[0]))
+            self.log('self.atr_tf_pct[0] = {}%'.format(round(self.atr_tf_pct[0], 2)))
+            self.log('self.data_d1_len = {}'.format(self.data_d1_len))
+            self.log('self.tf_intraday_low = {}'.format(self.tf_intraday_low))
+            self.log('self.tf_intraday_high = {}'.format(self.tf_intraday_high))
+            self.log('self.tf_intraday_range_pct = {:.2f}%'.format(self.tf_intraday_range_pct))
+            self.log('self.atr_d1[0] = {}'.format(self.atr_d1[0]))
+            self.log('self.sma_d1[0] = {}'.format(self.sma_d1[0]))
+            self.log('self.atr_d1_pct[0] = {}%'.format(round(self.atr_d1_pct[0], 2)))
+
     def print_all_debug_info(self):
         self.log('---------------------- INSIDE NEXT DEBUG --------------------------')
         if not self.islivedata():
@@ -494,6 +527,7 @@ class GenericStrategy(bt.Strategy):
         self.log('self.is_close_long = {}'.format(self.is_close_long))
         self.log('self.is_open_short = {}'.format(self.is_open_short))
         self.log('self.is_close_short = {}'.format(self.is_close_short))
+        self.print_atr_mode_log_state()
         self.sltpmanager.log_state()
         self.trailingbuymanager.log_state()
         self.dcamodemanager.log_state()

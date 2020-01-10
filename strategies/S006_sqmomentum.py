@@ -20,6 +20,7 @@ class S006_AlexNoroSqueezeMomentumStrategy(GenericStrategy):
         ("usecolor", True),
         ("usebody", True),
         ("sl", None),
+        ("exitmode", None),
         ("tslflag", None),
         ("tp", None),
         ("ttpdist", None),

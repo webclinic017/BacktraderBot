@@ -13,6 +13,7 @@ class S011_EMACrossOverStrategy(GenericStrategy):
         ("needshort", True),
         ("ema_ratio", 0.5),
         ("slow_ema_period", 200),
+        ("exitmode", None),
         ("sl", None),
         ("tslflag", None),
         ("tp", None),

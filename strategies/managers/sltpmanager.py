@@ -1,4 +1,5 @@
 import backtrader as bt
+from .sltpcalc import SLTPCalculator
 
 MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT = 0.1
 
@@ -11,6 +12,7 @@ class SLTPManager(object):
         self.data = strategy.data
         self.strategy_analyzers = strategy.analyzers
 
+        self.sltpcalculator = SLTPCalculator(self.strategy)
         self.is_sl_enabled = self.strategy.p.sl is not None and self.strategy.p.sl > 0
         self.is_tsl_enabled = self.strategy.p.tslflag is True
         self.is_tp_enabled = self.strategy.p.tp is not None and self.strategy.p.tp > 0
@@ -91,7 +93,7 @@ class SLTPManager(object):
     def activate_sl(self, tradeid, pos_price, pos_size, is_long):
         if self.is_sl_enabled and not self.is_sl_activated:
             self.tradeid = tradeid
-            self.sl_price = self.get_sl_price(pos_price, self.strategy.p.sl, is_long)
+            self.sl_price = self.sltpcalculator.get_sl_price(pos_price, is_long)
             self.submit_new_sl_order(is_long, self.tradeid, pos_size, self.sl_price)
             self.is_sl_activated = True
             if self.is_tsl_enabled:
@@ -102,7 +104,7 @@ class SLTPManager(object):
     def activate_tp(self, tradeid, pos_price, pos_size, is_long):
         if self.is_tp_enabled and not self.is_tp_activated and not self.is_ttp_activated:
             self.tradeid = tradeid
-            self.tp_price = self.get_tp_price(pos_price, self.strategy.p.tp, is_long)
+            self.tp_price = self.sltpcalculator.get_tp_price(pos_price, is_long)
             if not self.is_ttp_enabled:
                 self.submit_new_tp_order(is_long, self.tradeid, pos_size, self.tp_price)
                 self.is_tp_activated = True
@@ -116,7 +118,7 @@ class SLTPManager(object):
     def activate_ttp(self, tradeid, pos_size, last_price, is_long):
         if self.is_tp_activated and not self.is_ttp_activated:
             self.tp_trailed_price = last_price
-            self.ttp_price = self.get_ttp_price(last_price, self.strategy.p.ttpdist, is_long)
+            self.ttp_price = self.sltpcalculator.get_ttp_price(last_price, is_long)
             self.submit_new_ttp_order(is_long, tradeid, pos_size, self.ttp_price)
             self.is_ttp_activated = True
             self.strategy.log("Activated TRAILING TAKE-PROFIT mode for self.oco_context={}, self.tradeid={}, self.tp_order.ref={}, self.tp_order.size={}, self.tp_order.price={}, pos_size={}, last_price={}, self.trailed_price={}, self.ttp_price={}".format(
@@ -159,7 +161,7 @@ class SLTPManager(object):
         old_sl_trailed_price = self.sl_trailed_price
         old_sl_price = self.sl_price
         self.sl_trailed_price = last_price
-        self.sl_price = self.get_sl_price(last_price, self.strategy.p.sl, is_long)
+        self.sl_price = self.sltpcalculator.get_sl_price(last_price, is_long)
         self.strategy.log("Moving TRAILING STOP-LOSS targets: self.oco_context={}, self.trailed_price={} -> {}, self.sl_price={} -> {}, last_price={}, sl_size={}, is_long={}".format(
             self.oco_context, old_sl_trailed_price, self.sl_trailed_price, old_sl_price, self.sl_price, last_price, sl_size, is_long))
         self.cancel_sl_order()
@@ -173,7 +175,7 @@ class SLTPManager(object):
         old_tp_trailed_price = self.tp_trailed_price
         old_ttp_price = self.ttp_price
         self.tp_trailed_price = last_price
-        self.ttp_price = self.get_ttp_price(last_price, self.strategy.p.ttpdist, is_long)
+        self.ttp_price = self.sltpcalculator.get_ttp_price(last_price, is_long)
         self.strategy.log("Moving TRAILING TAKE-PROFIT targets: self.oco_context={}, self.trailed_price={} -> {}, self.ttp_price={} -> {}, last_price={}, ttp_size={}, is_long={}".format(
             self.oco_context, old_tp_trailed_price, self.tp_trailed_price, old_ttp_price, self.ttp_price, last_price, ttp_size, is_long))
         self.cancel_tp_order()
@@ -187,7 +189,7 @@ class SLTPManager(object):
         old_sl_trailed_price = self.sl_trailed_price
         old_sl_price = self.sl_price
         self.sl_trailed_price = last_price
-        self.sl_price = self.get_sl_price(last_price, self.strategy.p.sl, is_long)
+        self.sl_price = self.sltpcalculator.get_sl_price(last_price, is_long)
         self.strategy.log("Moving TRAILING STOP-LOSS targets: self.oco_context={}, self.trailed_price={} -> {}, self.sl_price={} -> {}, last_price={}, sl_size={}, is_long={}".format(
             self.oco_context, old_sl_trailed_price, self.sl_trailed_price, old_sl_price, self.sl_price, last_price, sl_size, is_long))
         self.cancel_sl_order()
@@ -198,7 +200,7 @@ class SLTPManager(object):
         old_tp_trailed_price = self.tp_trailed_price
         old_ttp_price = self.ttp_price
         self.tp_trailed_price = last_price
-        self.ttp_price = self.get_ttp_price(last_price, self.strategy.p.ttpdist, is_long)
+        self.ttp_price = self.sltpcalculator.get_ttp_price(last_price, is_long)
         self.strategy.log("Moving TRAILING TAKE-PROFIT targets: self.oco_context={}, self.trailed_price={} -> {}, self.ttp_price={} -> {}, last_price={}, ttp_size={}, is_long={}".format(
             self.oco_context, old_tp_trailed_price, self.tp_trailed_price, old_ttp_price, self.ttp_price, last_price, ttp_size, is_long))
         self.submit_new_ttp_order(is_long, self.tradeid, ttp_size, self.ttp_price)
@@ -295,29 +297,8 @@ class SLTPManager(object):
             result = True
         return result
 
-    def get_sl_price(self, base_price, sl_pct, is_long):
-        if is_long:
-            return round(base_price * (1 - sl_pct / 100.0), 8)
-        else:
-            return round(base_price * (1 + sl_pct / 100.0), 8)
-
-    def get_tp_price(self, base_price, tp_pct, is_long):
-        if is_long:
-            return round(base_price * (1 + tp_pct / 100.0), 8)
-        else:
-            return round(base_price * (1 - tp_pct / 100.0), 8)
-
-    def get_ttp_price(self, base_price, ttp_pct, is_long):
-        if is_long:
-            return round(base_price * (1 - ttp_pct / 100.0), 8)
-        else:
-            return round(base_price * (1 + ttp_pct / 100.0), 8)
-
     def is_allow_trailing_move(self, price1, price2):
-        return self.get_price_move_delta_pct(price1, price2) >= MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT
-
-    def get_price_move_delta_pct(self, price1, price2):
-        return abs(100 * (price1 - price2) / price2)
+        return self.sltpcalculator.get_price_move_delta_pct(price1, price2) >= MOVE_TRAILING_PRICE_DELTA_THRESHOLD_PCT
 
     def log_state(self):
         if self.is_sl_enabled:

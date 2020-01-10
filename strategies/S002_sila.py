@@ -24,6 +24,7 @@ class S002_AlexNoroSILAStrategy(GenericStrategy):
         ("usersi", True),
         ("usewto", True),
         ("uselocoentry", False),
+        ("exitmode", None),
         ("sl", None),
         ("tslflag", None),
         ("tp", None),

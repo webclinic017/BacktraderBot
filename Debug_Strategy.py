@@ -3,7 +3,6 @@ import backtrader.feeds as btfeeds
 from datetime import datetime
 from datetime import timedelta
 import argparse
-from backtrader import TimeFrame
 from extensions.analyzers.drawdown import TVNetProfitDrawDown
 from extensions.analyzers.tradeanalyzer import TVTradeAnalyzer
 from extensions.sizers.percentsizer import VariablePercentSizer
@@ -13,6 +12,8 @@ from config.strategy_enum import BTStrategyEnum
 from plotting.equity_curve import EquityCurvePlotter
 from model.backtestmodel import BacktestModel
 from model.backtestmodelgenerator import BacktestModelGenerator
+from strategies.helper.utils import Utils
+from strategies.helper.constants import TradeExitMode
 import pandas as pd
 
 tradesopen = {}
@@ -131,22 +132,37 @@ class DebugStrategy(object):
         today = arr["today"]
         return datetime(toyear, tomonth, today)
 
-    def add_data(self):
+    def add_datas(self):
         fromdate = self.get_fromdate(self._params)
         todate = self.get_todate(self._params)
 
+        data_tf = self.build_data(fromdate, todate, self._timeframe)
+
+        # Add the data to Cerebro
+        self._cerebro.adddata(data_tf, "data_{}".format(self._timeframe))
+
+        if self._params["exitmode"] and self._params["exitmode"] != TradeExitMode.EXIT_MODE_DEFAULT:
+            data_1d = self.build_data(fromdate, todate, "1d")
+
+            # Add the data to Cerebro
+            self._cerebro.adddata(data_1d, "data_1d")
+
+    def build_data(self, fromdate, todate, timeframe):
         fromdate_back_delta = timedelta(days=50)  # Adjust from date to add more candle data from the past to strategy to prevent any calculation problems with indicators
+        granularity = Utils.get_granularity_by_tf_str(timeframe)
+        timeframe_id = granularity[0][0]
+        compression = granularity[0][1]
         fromdate_back = fromdate - fromdate_back_delta
         todate_delta = timedelta(days=2)  # Adjust to date to add more candle data
         todate_beyond = todate + todate_delta
 
-        marketdata_filename = self.get_marketdata_filename(self._exchange, self._currency_pair, self._timeframe)
-        data = btfeeds.GenericCSVData(
+        marketdata_filename = self.get_marketdata_filename(self._exchange, self._currency_pair, timeframe)
+        return btfeeds.GenericCSVData(
             dataname=marketdata_filename,
             fromdate=fromdate_back,
             todate=todate_beyond,
-            timeframe=TimeFrame.Ticks,
-            # compression=15,
+            timeframe=timeframe_id,
+            compression=compression,
             dtformat="%Y-%m-%dT%H:%M:%S",
             # nullvalue=0.0,
             datetime=0,
@@ -157,9 +173,6 @@ class DebugStrategy(object):
             volume=5,
             openinterest=-1
         )
-
-        # Add the data to Cerebro
-        self._cerebro.adddata(data)
 
     def print_all_results(self, strategy, startcash):
         # Print out the final result
@@ -312,7 +325,7 @@ class DebugStrategy(object):
 
         self.add_strategy()
 
-        self.add_data()
+        self.add_datas()
 
         # Run the strategy
         strategies = self._cerebro.run()

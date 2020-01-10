@@ -16,6 +16,7 @@ class S009_RSIMinMaxStrategy(GenericStrategy):
         ("rsilongclosevalue", 69),
         ("rsishortopenvalue", 72),
         ("rsishortclosevalue", 31),
+        ("exitmode", None),
         ("sl", None),
         ("tslflag", None),
         ("tp", None),

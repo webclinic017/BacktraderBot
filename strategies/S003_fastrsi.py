@@ -25,6 +25,7 @@ class S003_AlexNoroRobotBitMEXFastRSIStrategy(GenericStrategy):
         ("openbody", 20),
         ("closebody", 20),
         ("sl", None),
+        ("exitmode", None),
         ("tslflag", None),
         ("tp", None),
         ("ttpdist", None),

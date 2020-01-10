@@ -16,6 +16,7 @@ class S010_AlexAroonTrendStrategy(GenericStrategy):
         ("cross_r1_end", 80),
         ("cross_r2_start", 90),
         ("cross_r2_end", 100),
+        ("exitmode", None),
         ("sl", None),
         ("tslflag", None),
         ("tp", None),

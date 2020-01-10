@@ -18,6 +18,7 @@ class S007_AlexNoroMultimaStrategy(GenericStrategy):
         ("lenma1", 40),
         ("lenma2", 40),
         ("usecf", True),
+        ("exitmode", None),
         ("sl", None),
         ("tslflag", None),
         ("tp", None),

@@ -18,6 +18,7 @@ class S001_AlexNoroTrendMAsStrategy(GenericStrategy):
         ("slowlen", 21),
         ("bars", 0),
         ("needex", True),
+        ("exitmode", None),
         ("sl", None),
         ("tslflag", None),
         ("tp", None),

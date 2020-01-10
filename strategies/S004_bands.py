@@ -18,6 +18,7 @@ class S004_AlexNoroBandsScalperStrategy(GenericStrategy):
         ("bodylen", 10),
         ("trb", 1),
         ("len", 20),
+        ("exitmode", None),
         ("sl", None),
         ("tslflag", None),
         ("tp", None),

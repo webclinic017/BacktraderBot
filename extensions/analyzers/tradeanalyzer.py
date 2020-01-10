@@ -55,6 +55,8 @@ class TVTradeAnalyzer(Analyzer):
         self.buyandholdstartvalue = 0
         self.netprofits_data = AutoOrderedDict()
         self.skip_trade_update_flag = False
+        self.prev_data_tf_len = 0
+        self.prev_data_d1_len = 0
 
     def set_netprofit_value(self, value):
         self.netprofits_data[self.get_currentdate()] = value
@@ -225,8 +227,19 @@ class TVTradeAnalyzer(Analyzer):
         super(TVTradeAnalyzer, self).stop()
         self.rets._close()
 
+    def is_new_d1_bar(self):
+        return len(self.strategy.datas) > 1 and len(self.strategy.data) == self.prev_data_tf_len and len(self.strategy.data1) > self.prev_data_d1_len
+
     def next(self):
-        #print('!! INSIDE next(): strategy.position.size={}, broker.get_value()={}, broker.get_cash()={}, data.open={}, data.close={}, datetime[0]={}'.format(self.strategy.position.size, self.strategy.broker.get_value(), self.strategy.broker.get_cash(), self.data.open[0], self.data.close[0], self.get_currentdate()))
+        #self.strategy.log("!! TVTradeAnalyzer: INSIDE next() - 1111: len(self.strategy.data)={}, len(self.strategy.data1)={}, self.prev_data_tf_len={}, self.prev_data_d1_len={}, self.rets.total.barsnumber={}".format(len(self.strategy.data), len(self.strategy.data1), self.prev_data_tf_len, self.prev_data_d1_len, self.rets.total.barsnumber))
+
+        if self.is_new_d1_bar():
+            #self.strategy.log("!! TVTradeAnalyzer: Skipping next():")
+            return
+        self.prev_data_tf_len = len(self.strategy.data)
+        self.prev_data_d1_len = len(self.strategy.data1)
+
+        # self.strategy.log('!! TVTradeAnalyzer: INSIDE next(): strategy.position.size={}, broker.get_value()={}, broker.get_cash()={}, data.open={}, data.close={}, datetime[0]={}'.format(self.strategy.position.size, self.strategy.broker.get_value(), self.strategy.broker.get_cash(), self.data.open[0], self.data.close[0], self.get_currentdate()))
         trades = self.rets
         trades.total.barsnumber += 1
         self.update_bars_in_trades_ratio()

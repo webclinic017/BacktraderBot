@@ -16,6 +16,7 @@ class S005_AlexNoroTripleRSIStrategy(GenericStrategy):
         ("indi", 3),
         ("accuracy", 3),
         ("isreversive", False),
+        ("exitmode", None),
         ("sl", None),
         ("tslflag", None),
         ("tp", None),

@@ -15,6 +15,7 @@ class S008_AlexNoroSuperTrendStrategy(GenericStrategy):
         ("cloud", 25),
         ("Factor", 3),
         ("ATR", 7),
+        ("exitmode", None),
         ("sl", None),
         ("tslflag", None),
         ("tp", None),
