@@ -357,10 +357,10 @@ class GenericStrategy(bt.Strategy):
         return False
 
     def is_new_d1_bar(self):
-        return len(self.datas) > 1 and len(self.data1) > self.data_d1_len
+        return self.is_atr_mode() and len(self.datas) > 1 and len(self.data1) > self.data_d1_len
 
     def handle_d1_data(self):
-        if len(self.datas) == 1:
+        if not self.is_atr_mode():
             return True
 
         if self.is_new_d1_bar():

@@ -233,11 +233,12 @@ class TVTradeAnalyzer(Analyzer):
     def next(self):
         #self.strategy.log("!! TVTradeAnalyzer: INSIDE next() - 1111: len(self.strategy.data)={}, len(self.strategy.data1)={}, self.prev_data_tf_len={}, self.prev_data_d1_len={}, self.rets.total.barsnumber={}".format(len(self.strategy.data), len(self.strategy.data1), self.prev_data_tf_len, self.prev_data_d1_len, self.rets.total.barsnumber))
 
-        if self.is_new_d1_bar():
-            #self.strategy.log("!! TVTradeAnalyzer: Skipping next():")
-            return
-        self.prev_data_tf_len = len(self.strategy.data)
-        self.prev_data_d1_len = len(self.strategy.data1)
+        if len(self.strategy.datas) > 1:
+            if self.is_new_d1_bar():
+                #self.strategy.log("!! TVTradeAnalyzer: Skipping next():")
+                return
+            self.prev_data_tf_len = len(self.strategy.data)
+            self.prev_data_d1_len = len(self.strategy.data1)
 
         # self.strategy.log('!! TVTradeAnalyzer: INSIDE next(): strategy.position.size={}, broker.get_value()={}, broker.get_cash()={}, data.open={}, data.close={}, datetime[0]={}'.format(self.strategy.position.size, self.strategy.broker.get_value(), self.strategy.broker.get_cash(), self.data.open[0], self.data.close[0], self.get_currentdate()))
         trades = self.rets

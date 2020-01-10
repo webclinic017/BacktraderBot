@@ -21,7 +21,7 @@ class AppConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSD",
-                "timeframe": "15m",
+                "timeframe": "30m",
                 "startcash": 1500,
                 "lotsize": 1470,
                 "lottype": "Fixed"
@@ -36,9 +36,9 @@ class AppConfig(object):
                 "needex": True,
                 "exitmode": 3,
                 "sl": 6,
-                "tslflag": True,
+                "tslflag": False,
                 "tp": 4,
-                "ttpdist": 3,
+                "ttpdist": 0,
                 "tbdist": 3,
                 "numdca": 0,
                 "dcainterval": 0,

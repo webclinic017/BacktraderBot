@@ -19,7 +19,6 @@ from model.backtestmodelgenerator import BacktestModelGenerator
 from common.stfetcher import StFetcher
 from strategies.helper.validation import ParametersValidator
 from strategies.helper.utils import Utils
-from strategies.helper.constants import TradeExitMode
 import itertools
 import collections
 import os
@@ -345,11 +344,10 @@ class BacktestingStep1(object):
         # Add the data to Cerebro
         self._cerebro.adddata(data_tf, "data_{}".format(args.timeframe))
 
-        if self._params["exitmode"] and self._params["exitmode"] != TradeExitMode.EXIT_MODE_DEFAULT:
-            data_1d = self.build_data(fromdate, todate, "1d")
+        data_1d = self.build_data(fromdate, todate, "1d")
 
-            # Add the data to Cerebro
-            self._cerebro.adddata(data_1d, "data_1d")
+        # Add the D1 data to Cerebro
+        self._cerebro.adddata(data_1d, "data_1d")
 
     def build_data(self, fromdate, todate, timeframe):
         fromdate_back_delta = timedelta(days=50)  # Adjust from date to add more candle data from the past to strategy to prevent any calculation problems with indicators
