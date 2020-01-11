@@ -2,7 +2,7 @@ from strategies.helper.constants import TradeExitMode
 
 DEFAULT_MIN_SL_ATR_MULT = 2
 DEFAULT_MIN_TP_ATR_MULT = 2
-MAXIMUM_ALLOWED_SL_PCT = 10
+MAXIMUM_ALLOWED_SL_PCT = 20
 
 
 class DailyRangePriceStats(object):
@@ -59,7 +59,7 @@ class SLTPCalculator(object):
                 sl_pct = max(drps.k1 + drps.halfrangedeltapct, default_min_sl)
             else:
                 sl_pct = max(drps.k2 + drps.halfrangedeltapct, default_min_sl)
-            # sl_pct = min(sl_pct, MAXIMUM_ALLOWED_SL_PCT)
+            sl_pct = min(sl_pct, MAXIMUM_ALLOWED_SL_PCT)
             sl_result = self.calc_low_side_pr(base_price, sl_pct, is_long)
             self.strategy.log("SLTPCalculator.get_sl_price(): self.exitmode={}, drps.k1={:.2f}%, drps.k2={:.2f}%, drps.hrd={:.2f}%, drps.hrc={:.2f}%, drps.halfrangedeltapct={:.2f}%, default_min_sl={:.2f}%, sl_pct={:.2f}%, sl_result={}".format(self.exitmode, drps.k1, drps.k2, drps.hrd, drps.hrc, drps.halfrangedeltapct, default_min_sl, sl_pct, sl_result))
             return sl_result
