@@ -10,7 +10,8 @@ from config.strategy_config import AppConfig
 import re
 from model.bktestanalyzermodel import BacktestAnalyzerModel
 
-DEFAULT_PARAMS_REGEX = None  # "('exitmode'.*)"
+IS_GENERATE_FWTEST_BLOCK = False
+DEFAULT_PARAMS_REGEX = "('exitmode'.*)"
 
 
 class BacktestAnalyzer(object):
@@ -136,11 +137,6 @@ class BacktestAnalyzer(object):
             group_bktest_profitable_count = len(group_bktest_sorted_df[group_bktest_sorted_df["Net Profit, %"] > 0])
             group_bktest_profitable_count_pct = 100 * group_bktest_profitable_count / group_bktest_rows_count
 
-            group_fwtest_sorted_df = group_df.sort_values(by=["FwTest: Net Profit, %"], ascending=False)
-            group_fwtest_best_row_df = group_fwtest_sorted_df.iloc[0]
-            group_fwtest_profitable_count = len(group_fwtest_sorted_df[group_fwtest_sorted_df["FwTest: Net Profit, %"] > 0])
-            group_fwtest_profitable_count_pct = 100 * group_fwtest_profitable_count / group_bktest_rows_count
-
             strategyid = group_idx[0]
             exchange = group_idx[1]
             currency_pair = group_idx[2]
@@ -148,12 +144,12 @@ class BacktestAnalyzer(object):
             parameters = group_idx[4] if self.is_params_grouping_enabled() else "N/A"
             parameters_best_record = group_bktest_best_row_df["Parameters Original"]
             total_closed_trades = self.get_field_value(group_bktest_best_row_df, "Total Closed Trades")
-            sl_trades_count = self.get_field_value(group_bktest_best_row_df, ["Trades # SL Count"])
-            tsl_trades_count = self.get_field_value(group_bktest_best_row_df, ["Trades # TSL Count"])
-            tp_trades_count = self.get_field_value(group_bktest_best_row_df, ["Trades # TP Count"])
-            ttp_trades_count = self.get_field_value(group_bktest_best_row_df, ["Trades # TTP Count"])
-            tb_trades_count = self.get_field_value(group_bktest_best_row_df, ["Trades # TB Count"])
-            dca_triggered_count = self.get_field_value(group_bktest_best_row_df, ["Trades # DCA Triggered Count"])
+            sl_trades_count = self.get_field_value(group_bktest_best_row_df, "Trades # SL Count")
+            tsl_trades_count = self.get_field_value(group_bktest_best_row_df, "Trades # TSL Count")
+            tp_trades_count = self.get_field_value(group_bktest_best_row_df, "Trades # TP Count")
+            ttp_trades_count = self.get_field_value(group_bktest_best_row_df, "Trades # TTP Count")
+            tb_trades_count = self.get_field_value(group_bktest_best_row_df, "Trades # TB Count")
+            dca_triggered_count = self.get_field_value(group_bktest_best_row_df, "Trades # DCA Triggered Count")
             net_profit_pct = self.get_pct_val(group_bktest_best_row_df["Net Profit, %"])
             max_drawdown_pct = self.get_pct_val(group_bktest_best_row_df["Max Drawdown, %"])
             max_drawdown_length = group_bktest_best_row_df["Max Drawdown Length"]
@@ -164,10 +160,21 @@ class BacktestAnalyzer(object):
             avg_net_profit_pct = self.get_pct_val(group_bktest_avg_net_profict_pct)
             bktest_profitable_records_num = group_bktest_profitable_count
             bktest_profitable_records_pct = self.get_pct_val(group_bktest_profitable_count_pct)
-            fwtest_total_closed_trades = group_fwtest_best_row_df["FwTest: Total Closed Trades"]
-            fwtest_net_profit_pct = self.get_pct_val(group_fwtest_best_row_df["FwTest: Net Profit, %"])
-            fwtest_profitable_records_num = group_fwtest_profitable_count
-            fwtest_profitable_records_pct = self.get_pct_val(group_fwtest_profitable_count_pct)
+
+            if IS_GENERATE_FWTEST_BLOCK:
+                group_fwtest_sorted_df = group_df.sort_values(by=["FwTest: Net Profit, %"], ascending=False)
+                group_fwtest_best_row_df = group_fwtest_sorted_df.iloc[0]
+                group_fwtest_profitable_count = len(group_fwtest_sorted_df[group_fwtest_sorted_df["FwTest: Net Profit, %"] > 0])
+                group_fwtest_profitable_count_pct = 100 * group_fwtest_profitable_count / group_bktest_rows_count
+                fwtest_total_closed_trades = group_fwtest_best_row_df["FwTest: Total Closed Trades"]
+                fwtest_net_profit_pct = self.get_pct_val(group_fwtest_best_row_df["FwTest: Net Profit, %"])
+                fwtest_profitable_records_num = group_fwtest_profitable_count
+                fwtest_profitable_records_pct = self.get_pct_val(group_fwtest_profitable_count_pct)
+            else:
+                fwtest_total_closed_trades = "0"
+                fwtest_net_profit_pct = "0%"
+                fwtest_profitable_records_num = "0"
+                fwtest_profitable_records_pct = "0%"
 
             model.add_result_row(strategyid, exchange, currency_pair, timeframe, parameters, parameters_best_record, total_closed_trades, sl_trades_count, tsl_trades_count, tp_trades_count, ttp_trades_count,
                  tb_trades_count, dca_triggered_count, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, equitycurvervalue, total_rows, avg_net_profit_pct,
