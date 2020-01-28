@@ -10,8 +10,8 @@ from config.strategy_config import AppConfig
 import re
 from model.bktestanalyzermodel import BacktestAnalyzerModel
 
-IS_GENERATE_FWTEST_BLOCK = True
-DEFAULT_PARAMS_REGEX = "('exitmode'.*)"
+IS_GENERATE_FWTEST_BLOCK = False
+DEFAULT_PARAMS_REGEX = "('sl'.*)"
 
 
 class BacktestAnalyzer(object):
