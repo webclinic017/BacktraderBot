@@ -68,17 +68,16 @@ class GenericStrategy(bt.Strategy):
         self.skip_bar_flow_control_flag = False
         self.capital_stoploss_fired_flow_control_flag = False
 
-        if self.is_atr_mode():
-            self.atr_tf = btind.AverageTrueRange(self.data, period=14, movav=btind.MovAv.SMA)
-            self.sma_tf = btind.SimpleMovingAverage(self.data.close, period=14)
-            self.atr_tf_pct = (self.atr_tf / self.sma_tf) * 100
-            self.tf_intraday_low = 0
-            self.tf_intraday_high = 0
-            self.tf_intraday_range_pct = 0
-            self.data_d1_len = 0
-            self.atr_d1 = btind.AverageTrueRange(self.data1, period=28, movav=btind.MovAv.SMA)
-            self.sma_d1 = btind.SimpleMovingAverage(self.data1.close, period=28)
-            self.atr_d1_pct = (self.atr_d1 / self.sma_d1) * 100
+        self.data_d1_len = 0
+        self.atr_tf = btind.AverageTrueRange(self.data, period=14, movav=btind.MovAv.SMA)
+        self.sma_tf = btind.SimpleMovingAverage(self.data.close, period=14)
+        self.atr_tf_pct = (self.atr_tf / self.sma_tf) * 100
+        self.tf_intraday_low = 0
+        self.tf_intraday_high = 0
+        self.tf_intraday_range_pct = 0
+        self.atr_d1 = btind.AverageTrueRange(self.data1, period=28, movav=btind.MovAv.SMA)
+        self.sma_d1 = btind.SimpleMovingAverage(self.data1.close, period=28)
+        self.atr_d1_pct = (self.atr_d1 / self.sma_d1) * 100
 
     def islivedata(self):
         return self.data.islive()
@@ -357,12 +356,9 @@ class GenericStrategy(bt.Strategy):
         return False
 
     def is_new_d1_bar(self):
-        return self.is_atr_mode() and len(self.datas) > 1 and len(self.data1) > self.data_d1_len
+        return len(self.data1) > self.data_d1_len
 
     def handle_d1_data(self):
-        if not self.is_atr_mode():
-            return True
-
         if self.is_new_d1_bar():
             self.data_d1_len = len(self.data1)
             self.tf_intraday_low = self.data.close[0]
@@ -490,11 +486,11 @@ class GenericStrategy(bt.Strategy):
         self.set_processing_status()
 
     def print_atr_mode_log_state(self):
+        self.log('self.data_d1_len = {}'.format(self.data_d1_len))
         if self.is_atr_mode():
             self.log('self.atr_tf[0] = {}'.format(self.atr_tf[0]))
             self.log('self.sma_tf[0] = {}'.format(self.sma_tf[0]))
             self.log('self.atr_tf_pct[0] = {}%'.format(round(self.atr_tf_pct[0], 2)))
-            self.log('self.data_d1_len = {}'.format(self.data_d1_len))
             self.log('self.tf_intraday_low = {}'.format(self.tf_intraday_low))
             self.log('self.tf_intraday_high = {}'.format(self.tf_intraday_high))
             self.log('self.tf_intraday_range_pct = {:.2f}%'.format(self.tf_intraday_range_pct))

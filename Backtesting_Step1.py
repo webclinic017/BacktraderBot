@@ -257,6 +257,9 @@ class BacktestingStep1(object):
                              ("fromday", args.fromday),
                              ("today", args.today)})
 
+    def get_marketdata_filename(self, exchange, symbol, timeframe):
+        return './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(exchange, symbol, timeframe, exchange, symbol, timeframe)
+
     @staticmethod
     def iterize(iterable):
         niterable = list()
@@ -339,17 +342,17 @@ class BacktestingStep1(object):
         fromdate = self.get_fromdate(self._params)
         todate = self.get_todate(self._params)
 
-        data_tf = self.build_data(fromdate, todate, args.timeframe)
+        data_tf = self.build_data(fromdate, todate, args.exchange, args.symbol, args.timeframe)
 
         # Add the data to Cerebro
         self._cerebro.adddata(data_tf, "data_{}".format(args.timeframe))
 
-        data_1d = self.build_data(fromdate, todate, "1d")
+        data_1d = self.build_data(fromdate, todate, args.exchange, args.symbol, "1d")
 
         # Add the D1 data to Cerebro
         self._cerebro.adddata(data_1d, "data_1d")
 
-    def build_data(self, fromdate, todate, timeframe):
+    def build_data(self, fromdate, todate, exchange, symbol, timeframe):
         fromdate_back_delta = timedelta(days=50)  # Adjust from date to add more candle data from the past to strategy to prevent any calculation problems with indicators
         granularity = Utils.get_granularity_by_tf_str(timeframe)
         timeframe_id = granularity[0][0]
@@ -358,7 +361,7 @@ class BacktestingStep1(object):
         todate_delta = timedelta(days=2)  # Adjust to date to add more candle data
         todate_beyond = todate + todate_delta
 
-        marketdata_filename = self._market_data_input_filename
+        marketdata_filename = self.get_marketdata_filename(exchange, symbol, timeframe)
         return btfeeds.GenericCSVData(
             dataname=marketdata_filename,
             fromdate=fromdate_back,
