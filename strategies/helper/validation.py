@@ -11,8 +11,8 @@ class ParametersValidator(object):
             raise ValueError("The 'exitmode' parameter must be provided")
         if params.get("exitmode") and params.get("exitmode") != TradeExitMode.EXIT_MODE_DEFAULT and params.get("exitmode") != TradeExitMode.EXIT_MODE_USE_DAILY_RANGE and params.get("exitmode") != TradeExitMode.EXIT_MODE_SET_DYNAMIC_SLTP_WITH_ATR:
             raise ValueError("The 'exitmode' parameter should be set to {}, {} or {}".format(TradeExitMode.EXIT_MODE_DEFAULT, TradeExitMode.EXIT_MODE_USE_DAILY_RANGE, TradeExitMode.EXIT_MODE_SET_DYNAMIC_SLTP_WITH_ATR))
-        if params.get("exitmode") and params.get("exitmode") == TradeExitMode.EXIT_MODE_USE_DAILY_RANGE and (params.get("sl") and not params.get("tp") or not params.get("sl") and params.get("tp")):
-            raise ValueError("When the 'exitmode' parameter={}, both the STOP-LOSS ('sl') and TAKE-PROFIT ('tp') parameters must be provided".format(TradeExitMode.EXIT_MODE_USE_DAILY_RANGE))
+        if params.get("exitmode") and params.get("exitmode") == TradeExitMode.EXIT_MODE_USE_DAILY_RANGE and (params.get("sl") or params.get("tp") or params.get("tslflag") or params.get("ttpdist")):
+            raise ValueError("When the 'exitmode' parameter={}, strategy must be used without the STOP-LOSS ('sl'), TAKE-PROFIT ('tp'), TRAILING STOP-LOSS ('tslflag') or TRAILING TAKE-PROFIT ('ttpdist') parameters".format(TradeExitMode.EXIT_MODE_USE_DAILY_RANGE))
         if params.get("tslflag") and not params.get("sl"):
             raise ValueError("The TRAILING STOP-LOSS ('tslflag') parameter should be provided with STOP-LOSS ('sl') parameter")
         if params.get("ttpdist") and not params.get("tp"):
