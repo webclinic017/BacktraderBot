@@ -11,7 +11,7 @@ declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStr
 declare -a arr_symbols=("BTCUSD" "LTCUSD")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("1h")
+declare -a arr_timeframes=("15m" "1h")
 
 declare -a backtest_startdate="2014-07-01"
 declare -a backtest_enddate="2017-06-30"
