@@ -1,8 +1,9 @@
-backtrader==1.9.69.122
-ccxt=1.18.240
+backtrader==1.9.74.123
+ccxt==1.18.240
 matplotlib==2.2.3
 cryptocmd==0.5.2
 pandas==0.24.1
 termcolor==1.1.0
 PyYAML==3.13
 requests==2.21.0
+objgraph==3.4.0

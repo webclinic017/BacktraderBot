@@ -11,7 +11,7 @@ import re
 from model.bktestanalyzermodel import BacktestAnalyzerModel
 
 IS_GENERATE_FWTEST_BLOCK = False
-DEFAULT_PARAMS_REGEX = "('sl'.*)"
+DEFAULT_PARAMS_REGEX = "('exitmode'.*)"
 
 
 class BacktestAnalyzer(object):
