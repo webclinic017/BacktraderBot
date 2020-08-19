@@ -347,11 +347,6 @@ class BacktestingStep1(object):
         # Add the data to Cerebro
         self._cerebro.adddata(data_tf, "data_{}".format(args.timeframe))
 
-        data_1d = self.build_data(fromdate, todate, args.exchange, args.symbol, "1d")
-
-        # Add the D1 data to Cerebro
-        self._cerebro.adddata(data_1d, "data_1d")
-
     def build_data(self, fromdate, todate, exchange, symbol, timeframe):
         fromdate_back_delta = timedelta(days=50)  # Adjust from date to add more candle data from the past to strategy to prevent any calculation problems with indicators
         granularity = Utils.get_granularity_by_tf_str(timeframe)

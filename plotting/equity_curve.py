@@ -418,3 +418,24 @@ class EquityCurvePlotter(object):
         image_filename = self.get_portfolio_output_image_filename(output_path)
         export_png(img, filename=image_filename)
         print("Finished.")
+
+    def build_generic_data_plot_figure(self, x_label, y_label):
+        data_plot = figure(plot_height=self._EQUITY_CURVE_IMAGE_HEIGHT, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, tools="", x_axis_type="datetime",
+                                   toolbar_location=None, x_axis_label=x_label, x_axis_location="below",
+                                   y_axis_label=y_label, background_fill_color="#efefef")
+        data_plot.xaxis.formatter = self.get_x_axis_formatter(True)
+        data_plot.yaxis.formatter = NumeralTickFormatter(format="0")
+        data_plot.title.text_font_style = "normal"
+        data_plot.add_layout(self.build_y_axis_zero_line())
+        return data_plot
+
+    def generate_generic_data_image(self, output_path, arr):
+        print("Rendering data image into {}".format(output_path))
+        x_data = self.get_equity_data_x_axis_as_trades(arr, None)
+        x_data = x_data[1:]
+        y_data = self.get_equity_data_y_axis(arr, None)
+
+        data_plot = self.build_generic_data_plot_figure("Time", "Price")
+        data_plot.line(x_data, y_data, line_width=3, alpha=0.7, legend_label='Price')
+        img = column(data_plot)
+        export_png(img, filename=output_path)

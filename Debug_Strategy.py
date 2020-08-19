@@ -56,7 +56,7 @@ class DebugStrategy(object):
                             help='The type of commission to apply to a trade')
 
         parser.add_argument('--commission',
-                            default=0.002,
+                            default=0, #0.002,
                             type=float,
                             help='The amount of commission to apply to a trade')
 
@@ -140,11 +140,6 @@ class DebugStrategy(object):
 
         # Add the data to Cerebro
         self._cerebro.adddata(data_tf, "data_{}".format(self._timeframe))
-
-        data_1d = self.build_data(fromdate, todate, "1d")
-
-        # Add the data to Cerebro
-        self._cerebro.adddata(data_1d, "data_1d")
 
     def build_data(self, fromdate, todate, timeframe):
         fromdate_back_delta = timedelta(days=50)  # Adjust from date to add more candle data from the past to strategy to prevent any calculation problems with indicators

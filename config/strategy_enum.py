@@ -11,6 +11,7 @@ from strategies.S009_rsiminmax import S009_RSIMinMaxStrategy
 from strategies.S010_aroontrend import S010_AlexAroonTrendStrategy
 from strategies.S011_emacrossover import S011_EMACrossOverStrategy
 from strategies.S012_gridmarketmaker import S012_GridMarketMakerStrategy
+from strategies.TEST01_flipcoin import Test01FlipCoinStrategy
 
 
 class BTStrategy(object):
@@ -36,6 +37,7 @@ class BTStrategyEnum(Enum):
     S010_ALEX_AROON_TREND_STRATEGY_ID = BTStrategy(S010_AlexAroonTrendStrategy, "S010_AlexAroonTrendStrategy")
     S011_EMA_CROSS_OVER_STRATEGY_ID = BTStrategy(S011_EMACrossOverStrategy, "S011_EMACrossOverStrategy")
     S012_GRID_MARKET_MAKER_STRATEGY_ID = BTStrategy(S012_GridMarketMakerStrategy, "S012_GridMarketMakerStrategy")
+    TEST01_FLIP_COIN_STRATEGY_ID = BTStrategy(Test01FlipCoinStrategy, "Test01FlipCoinStrategy")
 
     @classmethod
     def get_strategy_enum_by_str(cls, strategy_str):

@@ -13,7 +13,7 @@ class AppConfig(object):
             "STEP5_ENABLE_FILTERING": True,
             "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
             "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
-            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": False,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
+            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": True,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
         }
 
     _DEFAULT_STRATEGY_PARAMS_DICT = {
@@ -129,9 +129,9 @@ class AppConfig(object):
             }],
         BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: [
             {
-                "exchange": "bitfinex",
+                "exchange": "bitmex",
                 "currency_pair": "BTCUSD",
-                "timeframe": "15m",
+                "timeframe": "1m",
                 "startcash": 1500,
                 "lotsize": 1470,
                 "lottype": "Fixed"
@@ -141,24 +141,24 @@ class AppConfig(object):
                 "needshort": True,
                 "takepercent": 0,
                 "needbe": False,
-                "needct": False,
-                "bodylen": 3,
+                "needct": True,
+                "bodylen": 0,
                 "trb": 3,
                 "len": 20,
                 "exitmode": 1,
-                "sl": 0,
-                "tslflag": False,
-                "tp": 4,
+                "sl": 1,
+                "tslflag": True,
+                "tp": 1,
                 "ttpdist": 0,
                 "tbdist": 0,
                 "numdca": 0,
                 "dcainterval": 0,
-                "fromyear": 2019,
-                "toyear": 2019,
-                "frommonth": 2,
-                "tomonth": 5,
+                "fromyear": 2020,
+                "toyear": 2020,
+                "frommonth": 1,
+                "tomonth": 3,
                 "fromday": 1,
-                "today": 31,
+                "today": 25,
             }],
         BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: [
             {
@@ -346,31 +346,31 @@ class AppConfig(object):
             }],
         BTStrategyEnum.S011_EMA_CROSS_OVER_STRATEGY_ID: [
             {
-                "exchange": "bitfinex",
+                "exchange": "bitmex",
                 "currency_pair": "BTCUSD",
-                "timeframe": "1h",
+                "timeframe": "1m",
                 "startcash": 1500,
                 "lotsize": 1470,
                 "lottype": "Fixed"
             },  {
                 "needlong": True,
                 "needshort": True,
-                "ema_ratio": 0.7,
-                "slow_ema_period": 160,
+                "ema_ratio": 0.9,
+                "slow_ema_period": 400,
                 "exitmode": 1,
-                "sl": 4,
-                "tslflag": False,
-                "tp": 0,
+                "sl": 2,
+                "tslflag": True,
+                "tp": 2,
                 "ttpdist": 0,
                 "tbdist": 0,
                 "numdca": 0,
                 "dcainterval": 0,
-                "fromyear": 2018,
-                "toyear": 2019,
-                "frommonth": 3,
+                "fromyear": 2020,
+                "toyear": 2020,
+                "frommonth": 1,
                 "tomonth": 9,
                 "fromday": 1,
-                "today": 30,
+                "today": 15,
             }],
         BTStrategyEnum.S012_GRID_MARKET_MAKER_STRATEGY_ID: [
             {
@@ -396,7 +396,35 @@ class AppConfig(object):
                 "tomonth": 6,
                 "fromday": 5,
                 "today": 9,
-            }]
+            }],
+        BTStrategyEnum.TEST01_FLIP_COIN_STRATEGY_ID: [
+            {
+                "exchange": "bitmex",
+                "currency_pair": "BTCUSD",
+                "timeframe": "1m",
+                "startcash": 1500,
+                "lotsize": 1470,
+                "lottype": "Fixed"
+            },
+            {
+                "needlong": True,
+                "needshort": True,
+                "exitmode": 1,
+                "sl": 0.5,
+                "tslflag": False,
+                "tp": 1.5,
+                "ttpdist": 0,
+                "tbdist": 0,
+                "numdca": 0,
+                "dcainterval": 0,
+                "fromyear": 2020,
+                "toyear": 2020,
+                "frommonth": 1,
+                "tomonth": 3,
+                "fromday": 1,
+                "today": 15,
+            }
+        ],
     }
 
     _STEP1_STRATEGY_PARAMS_DICT = {
