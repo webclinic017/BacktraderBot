@@ -238,7 +238,7 @@ class BacktestingStep1(object):
         if args.lottype != "" and args.lottype == "Percentage":
             self._cerebro.addsizer(VariablePercentSizer, percents=args.lotsize, debug=args.debug)
         else:
-            self._cerebro.addsizer(FixedCashSizer, cashamount=args.lotsize)
+            self._cerebro.addsizer(FixedCashSizer, cashamount=args.lotsize, commission=args.commission)
 
         if args.commtype.lower() == 'percentage':
             self._cerebro.broker.setcommission(args.commission)
