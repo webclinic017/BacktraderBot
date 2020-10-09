@@ -19,6 +19,7 @@ from model.step3model import Step3Model
 from model.backtestmodelgenerator import BacktestModelGenerator
 from common.stfetcher import StFetcher
 from scipy import stats
+import numpy as np
 from sklearn import preprocessing
 from config.strategy_config import AppConfig
 import math
@@ -39,12 +40,14 @@ class LinearRegressionStats(object):
     r_value = None
     p_value = None
     std_err = None
+    r_squared = None
 
-    def __init__(self, angle, slope, intercept, r_value, p_value, std_err):
+    def __init__(self, angle, slope, intercept, r_value, r_squared, p_value, std_err):
         self.angle = angle
         self.slope = slope
         self.intercept = intercept
         self.r_value = r_value
+        self.r_squared = r_squared
         self.p_value = p_value
         self.std_err = std_err
 
@@ -372,12 +375,13 @@ class BacktestingStep3(object):
         x_arr = list(process_dict.keys())
         y_arr = list(process_dict.values())
         slope, intercept, r_value, p_value, std_err = stats.linregress(x_arr, y_arr)
+        r_squared = np.sign(r_value) * r_value * r_value
         x_arr_norm = preprocessing.normalize([x_arr])[0]
         y_arr_norm = preprocessing.normalize([y_arr])[0]
         slope_norm, intercept_norm, r_value_norm, p_value_norm, std_err_norm = stats.linregress(x_arr_norm, y_arr_norm)
         angle = math.degrees(math.atan(slope_norm))
         #print("angle={}, slope={}, intercept={}, r_value={}, p_value={}, std_err={}".format(angle, slope, intercept, r_value, p_value, std_err))
-        return LinearRegressionStats(angle, slope, intercept, r_value, p_value, std_err)
+        return LinearRegressionStats(angle, slope, intercept, r_value, r_squared, p_value, std_err)
 
     def adjust_step3_data_by_startcash(self, data_dict, startcash):
         for key, value in data_dict.items():

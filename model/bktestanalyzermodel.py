@@ -8,17 +8,17 @@ class BacktestAnalyzerModel(object):
         self._report_rows = []
 
     def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, parameters_best_record, total_closed_trades, sl_trades_count, tsl_trades_count, tp_trades_count, ttp_trades_count,
-                 tb_trades_count, dca_triggered_count, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, equitycurvervalue, total_rows, avg_net_profit_pct,
+                 tb_trades_count, dca_triggered_count, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, equitycurvervalue, equitycurversquaredvalue, total_rows, avg_net_profit_pct,
                  bktest_profitable_records_num, bktest_profitable_records_pct, fwtest_total_closed_trades, fwtest_net_profit_pct, fwtest_profitable_records_num, fwtest_profitable_records_pct):
         row = BacktestAnalyzerReportRow(strategyid, exchange, currency_pair, timeframe, parameters, parameters_best_record, total_closed_trades, sl_trades_count, tsl_trades_count, tp_trades_count, ttp_trades_count,
-                 tb_trades_count, dca_triggered_count, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, equitycurvervalue, total_rows, avg_net_profit_pct,
+                 tb_trades_count, dca_triggered_count, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, equitycurvervalue, equitycurversquaredvalue, total_rows, avg_net_profit_pct,
                  bktest_profitable_records_num, bktest_profitable_records_pct, fwtest_total_closed_trades, fwtest_net_profit_pct, fwtest_profitable_records_num, fwtest_profitable_records_pct)
         self._report_rows.append(row)
 
     def get_header_names(self):
         result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters Grouping Key', 'Parameters - Best Record In Group', 'Total Closed Trades', 'Trades # SL Count',
                   'Trades # TSL Count', 'Trades # TP Count', 'Trades # TTP Count', 'Trades # TB Count', 'Trades # DCA Triggered Count', 'Net Profit, %',
-                  'Max Drawdown, %', 'Max Drawdown Length', 'Win Rate, %', 'Profit Factor', 'Equity Curve R-value', 'Total Rows', 'Avg. Net Profit, %',
+                  'Max Drawdown, %', 'Max Drawdown Length', 'Win Rate, %', 'Profit Factor', 'Equity Curve R-value', 'Equity Curve R-Squared value', 'Total Rows', 'Avg. Net Profit, %',
                   'BkTest Profitable Records', 'BkTest Profitable Records, %',
                   'FwTest: Total Closed Trades', 'FwTest: Net Profit, %', 'FwTest Profitable Records', 'FwTest Profitable Records, %']
         return result
@@ -33,7 +33,7 @@ class BacktestAnalyzerModel(object):
 
 class BacktestAnalyzerReportRow(object):
     def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, parameters_best_record, total_closed_trades, sl_trades_count, tsl_trades_count, tp_trades_count, ttp_trades_count,
-                 tb_trades_count, dca_triggered_count, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, equitycurvervalue, total_rows, avg_net_profit_pct,
+                 tb_trades_count, dca_triggered_count, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, equitycurvervalue, equitycurversquaredvalue, total_rows, avg_net_profit_pct,
                  bktest_profitable_records_num, bktest_profitable_records_pct, fwtest_total_closed_trades, fwtest_net_profit_pct, fwtest_profitable_records_num, fwtest_profitable_records_pct):
         self.strategyid = strategyid
         self.exchange = exchange
@@ -54,6 +54,7 @@ class BacktestAnalyzerReportRow(object):
         self.win_rate_pct = win_rate_pct
         self.profit_factor = profit_factor
         self.equitycurvervalue = equitycurvervalue
+        self.equitycurversquaredvalue = equitycurversquaredvalue
         self.total_rows = total_rows
         self.avg_net_profit_pct = avg_net_profit_pct
         self.bktest_profitable_records_num = bktest_profitable_records_num
@@ -84,6 +85,7 @@ class BacktestAnalyzerReportRow(object):
             self.win_rate_pct,
             self.profit_factor,
             self.equitycurvervalue,
+            self.equitycurversquaredvalue,
             self.total_rows,
             self.avg_net_profit_pct,
             self.bktest_profitable_records_num,

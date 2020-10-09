@@ -14,6 +14,7 @@ from backtrader.utils import AutoOrderedDict, AutoDict
 from backtrader.utils.py3 import MAXINT
 from calendar import monthrange
 from scipy import stats
+import numpy as np
 from sklearn import preprocessing
 import math
 import json
@@ -28,12 +29,14 @@ class LinearRegressionStats(object):
     r_value = None
     p_value = None
     std_err = None
+    r_squared = None
 
-    def __init__(self, angle, slope, intercept, r_value, p_value, std_err):
+    def __init__(self, angle, slope, intercept, r_value, r_squared, p_value, std_err):
         self.angle = angle
         self.slope = slope
         self.intercept = intercept
         self.r_value = r_value
+        self.r_squared = r_squared
         self.p_value = p_value
         self.std_err = std_err
 
@@ -83,14 +86,16 @@ class TVTradeAnalyzer(Analyzer):
             #print("!!! netprofits_data={}".format(netprofits_data))
             #print("!!! y_arr={}".format(y_arr))
             slope, intercept, r_value, p_value, std_err = stats.linregress(x_arr, y_arr)
+            r_squared = np.sign(r_value) * r_value * r_value
+
             x_arr_norm = preprocessing.normalize([x_arr])[0]
             y_arr_norm = preprocessing.normalize([y_arr])[0]
             slope_norm, intercept_norm, r_value_norm, p_value_norm, std_err_norm = stats.linregress(x_arr_norm, y_arr_norm)
             angle = math.degrees(math.atan(slope_norm))
             #print("angle={}, slope={}, intercept={}, r_value={}, p_value={}, std_err={}".format(angle, slope, intercept, r_value, p_value, std_err))
-            return LinearRegressionStats(angle, slope, intercept, r_value, p_value, std_err)
+            return LinearRegressionStats(angle, slope, intercept, r_value, r_squared, p_value, std_err)
         else:
-            return LinearRegressionStats(0, 0, 0, 0, 0, 0)
+            return LinearRegressionStats(0, 0, 0, 0, 0, 0, 0)
 
     def get_currentdate(self):
         return bt.num2date(self.data.datetime[0])
@@ -159,6 +164,7 @@ class TVTradeAnalyzer(Analyzer):
         trades.total.equity.stats.slope = lr_stats.slope
         trades.total.equity.stats.intercept = lr_stats.intercept
         trades.total.equity.stats.r_value = lr_stats.r_value
+        trades.total.equity.stats.r_squared = lr_stats.r_squared
         trades.total.equity.stats.p_value = lr_stats.p_value
         trades.total.equity.stats.std_err = lr_stats.std_err
 

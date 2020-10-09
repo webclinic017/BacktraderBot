@@ -31,7 +31,7 @@ class Step3Model(object):
         combined_total_stats_columns = ['Combined Net Profit']
         combined_total_stats_columns = self.append_prefix(combined_total_stats_columns)
         result.extend(combined_total_stats_columns)
-        combined_lr_stats_columns = ['Combined Equity Curve Angle', 'Combined Equity Curve Slope', 'Combined Equity Curve Intercept', 'Combined Equity Curve R-value']
+        combined_lr_stats_columns = ['Combined Equity Curve Angle', 'Combined Equity Curve Slope', 'Combined Equity Curve Intercept', 'Combined Equity Curve R-value', 'Combined Equity Curve R-Squared value']
         combined_lr_stats_columns = self.append_prefix(combined_lr_stats_columns)
         result.extend(combined_lr_stats_columns)
         return result
@@ -53,7 +53,7 @@ class Step3Model(object):
 
     def get_combined_lr_stats_row(self, combined_lr_stats, row_key):
         stats = combined_lr_stats[row_key]
-        return [round(stats.angle), round(stats.slope, 3), round(stats.intercept, 3), round(stats.r_value, 3)]
+        return [round(stats.angle), round(stats.slope, 3), round(stats.intercept, 3), round(stats.r_value, 3), round(stats.r_squared, 3)]
 
     def merge_results(self, step2_df, step3_backtest_model):
         final_results = []
