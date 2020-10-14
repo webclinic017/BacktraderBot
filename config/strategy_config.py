@@ -21,7 +21,7 @@ class AppConfig(object):
             {
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSD",
-                "timeframe": "1h",
+                "timeframe": "3h",
                 "startcash": 1500,
                 "lotsize": 1470,
                 "lottype": "Fixed"
@@ -43,9 +43,9 @@ class AppConfig(object):
                 "numdca": 0,
                 "dcainterval": 0,
                 "fromyear": 2017,
-                "toyear": 2019,
+                "toyear": 2017,
                 "frommonth": 8,
-                "tomonth": 1,
+                "tomonth": 8,
                 "fromday": 1,
                 "today": 31,
             }

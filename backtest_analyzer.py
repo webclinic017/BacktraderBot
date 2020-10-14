@@ -157,6 +157,7 @@ class BacktestAnalyzer(object):
             profit_factor = group_bktest_best_row_df["Profit Factor"]
             equitycurvervalue = group_bktest_best_row_df["Equity Curve R-value"]
             equitycurversquaredvalue = group_bktest_best_row_df["Equity Curve R-Squared value"]
+            mc_riskofruin_pct = group_bktest_best_row_df["MC: Risk Of Ruin, %"]
             total_rows = group_bktest_rows_count
             avg_net_profit_pct = self.get_pct_val(group_bktest_avg_net_profict_pct)
             bktest_profitable_records_num = group_bktest_profitable_count
@@ -178,7 +179,7 @@ class BacktestAnalyzer(object):
                 fwtest_profitable_records_pct = "0%"
 
             model.add_result_row(strategyid, exchange, currency_pair, timeframe, parameters, parameters_best_record, total_closed_trades, sl_trades_count, tsl_trades_count, tp_trades_count, ttp_trades_count,
-                 tb_trades_count, dca_triggered_count, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, equitycurvervalue, equitycurversquaredvalue, total_rows, avg_net_profit_pct,
+                 tb_trades_count, dca_triggered_count, net_profit_pct, max_drawdown_pct, max_drawdown_length, win_rate_pct, profit_factor, equitycurvervalue, equitycurversquaredvalue, mc_riskofruin_pct, total_rows, avg_net_profit_pct,
                  bktest_profitable_records_num, bktest_profitable_records_pct, fwtest_total_closed_trades, fwtest_net_profit_pct, fwtest_profitable_records_num, fwtest_profitable_records_pct)
 
         return model

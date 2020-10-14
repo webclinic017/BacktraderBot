@@ -183,7 +183,8 @@ class EquityCurvePlotter(object):
         winning_months_pct       = self.get_column_value_by_name(row, 'Winning Months, %', prefix, is_fwtest)
         profit_factor            = round(self.get_column_value_by_name(row, 'Profit Factor', prefix, is_fwtest), 3)
         sqn                      = self.get_column_value_by_name(row, 'SQN', prefix, is_fwtest)
-        text_lines_arr.append("{} Net Profit To Max Drawdown: {}, {} Win Rate,%: {}, {} Winning Months,%: {}%, {} Profit Factor: {}, {} SQN: {}".format(prefix, net_profit_to_maxdd, prefix, win_rate_pct, prefix, winning_months_pct, prefix, profit_factor, prefix, sqn))
+        mc_riskofruin_pct        = self.get_column_value_by_name(row, 'MC: Risk Of Ruin, %', prefix, is_fwtest)
+        text_lines_arr.append("{} Net Profit To Max Drawdown: {}, {} Win Rate,%: {}, {} Winning Months,%: {}%, {} Profit Factor: {}, {} SQN: {}, {} MC Risk Of Ruin, %: {}".format(prefix, net_profit_to_maxdd, prefix, win_rate_pct, prefix, winning_months_pct, prefix, profit_factor, prefix, sqn, prefix, mc_riskofruin_pct))
 
         equitycurveangle         = self.get_column_value_by_name(row, 'Equity Curve Angle', prefix, is_fwtest)
         equitycurveslope         = round(self.get_column_value_by_name(row, 'Equity Curve Slope', prefix, is_fwtest), 3)

@@ -32,14 +32,14 @@ class BacktestModel(object):
                        net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                        max_drawdown_length, net_profit_to_maxdd, win_rate_pct, trades_len_avg, trade_bars_ratio_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
                        sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope,
-                       equitycurveintercept, equitycurvervalue, equitycurversquaredvalue, equitycurvepvalue, equitycurvestderr):
+                       equitycurveintercept, equitycurvervalue, equitycurversquaredvalue, equitycurvepvalue, equitycurvestderr, mc_riskofruin_pct, mc_mediandd_pct, mc_medianreturn_pct):
         self._monthlystatsprefix = monthlystatsprefix
         row = BacktestReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
                                 processing_status, total_closed_trades, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count, tb_trades_count, tb_moved_count,  dca_triggered_count,
                                 net_profit, net_profit_pct, avg_monthly_net_profit_pct,
                                 max_drawdown_pct, max_drawdown_length, net_profit_to_maxdd, win_rate_pct, trades_len_avg, trade_bars_ratio_pct, num_winning_months,
                                 profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats,
-                                equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurversquaredvalue, equitycurvepvalue, equitycurvestderr)
+                                equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurversquaredvalue, equitycurvepvalue, equitycurvestderr, mc_riskofruin_pct, mc_mediandd_pct, mc_medianreturn_pct)
         self._report_rows.append(row)
         self._equitycurvedata_model.add_row(strategyid, exchange, currency_pair, timeframe, parameters, daterange, equitycurvedata)
 
@@ -63,7 +63,8 @@ class BacktestModel(object):
                   'Trades # TB Count', 'TB Moved Count', 'Trades # DCA Triggered Count', 'Net Profit', 'Net Profit, %', 'Avg Monthly Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length',
                   'Net Profit To Max Drawdown', 'Win Rate, %', 'Avg # Bars In Trades', 'Bars In Trades Ratio, %',
                   'Winning Months, %', 'Profit Factor', 'Buy & Hold Return, %', 'SQN', 'Equity Curve Angle',
-                  'Equity Curve Slope', 'Equity Curve Intercept', 'Equity Curve R-value', 'Equity Curve R-Squared value', 'Equity Curve P-value', 'Equity Curve Stderr']
+                  'Equity Curve Slope', 'Equity Curve Intercept', 'Equity Curve R-value', 'Equity Curve R-Squared value', 'Equity Curve P-value', 'Equity Curve Stderr',
+                  'MC: Risk Of Ruin, %',  'MC: Median Drawdown, %', 'MC: Median Return, %']
 
         column_names = self.get_monthly_stats_column_names()
         result.extend(column_names)
@@ -110,7 +111,7 @@ class BacktestReportRow(object):
                  net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
                  max_drawdown_length, net_profit_to_maxdd, win_rate_pct, trades_len_avg, trade_bars_ratio_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
                  sqn_number, monthly_stats, equitycurveangle, equitycurveslope, equitycurveintercept,
-                 equitycurvervalue, equitycurversquaredvalue, equitycurvepvalue, equitycurvestderr):
+                 equitycurvervalue, equitycurversquaredvalue, equitycurvepvalue, equitycurvestderr, mc_riskofruin_pct, mc_mediandd_pct, mc_medianreturn_pct):
         self.strategyid = strategyid
         self.exchange = exchange
         self.currency_pair = currency_pair
@@ -151,6 +152,9 @@ class BacktestReportRow(object):
         self.equitycurversquaredvalue = equitycurversquaredvalue
         self.equitycurvepvalue = equitycurvepvalue
         self.equitycurvestderr = equitycurvestderr
+        self.mc_riskofruin_pct = mc_riskofruin_pct
+        self.mc_mediandd_pct = mc_mediandd_pct
+        self.mc_medianreturn_pct = mc_medianreturn_pct
 
     def get_row_data(self):
         result = [
@@ -192,7 +196,10 @@ class BacktestReportRow(object):
             self.equitycurvervalue,
             self.equitycurversquaredvalue,
             self.equitycurvepvalue,
-            self.equitycurvestderr
+            self.equitycurvestderr,
+            self.mc_riskofruin_pct,
+            self.mc_mediandd_pct,
+            self.mc_medianreturn_pct
         ]
         return result
 

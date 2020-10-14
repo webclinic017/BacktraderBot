@@ -13,7 +13,6 @@ from plotting.equity_curve import EquityCurvePlotter
 from model.backtestmodel import BacktestModel
 from model.backtestmodelgenerator import BacktestModelGenerator
 from strategies.helper.utils import Utils
-from strategies.helper.constants import TradeExitMode
 import pandas as pd
 
 tradesopen = {}
@@ -185,6 +184,7 @@ class DebugStrategy(object):
 
         # print the analyzers
         self.printTradeAnalysis(strategy.analyzers.ta.get_analysis())
+        self.printMCSimulationResults(strategy.analyzers.ta.get_analysis())
         self.printSQN(strategy.analyzers.sqn.get_analysis())
         self.printDrawDown(strategy.analyzers.dd.get_analysis())
 
@@ -205,6 +205,9 @@ class DebugStrategy(object):
         _key = chain.pop(0)
         if _key in obj:
             return self.exists(obj[_key], chain) if chain else obj[_key]
+
+    def get_pct_fmt(self, val):
+        return "{}%".format(round(val, 2))
 
     def get_equity_curve_data(self, netprofit_data_arr):
         equity = 0
@@ -272,6 +275,10 @@ class DebugStrategy(object):
         print("Backtesting Results:")
         for row in print_list:
             print(row_format.format('', *row))
+
+    def printMCSimulationResults(self, analyzer):
+        mc_riskofruin_pct = self.get_pct_fmt(100 * analyzer.total.mcsimulation.risk_of_ruin) if self.exists(analyzer, ['total', 'mcsimulation', 'risk_of_ruin']) else "0.0%"
+        print('MC Risk Of Ruin, %: {}'.format(mc_riskofruin_pct))
 
     def printSQN(self, analyzer):
         sqn = round(analyzer.sqn, 2)

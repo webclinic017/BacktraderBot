@@ -18,6 +18,8 @@ import numpy as np
 from sklearn import preprocessing
 import math
 import json
+from montecarlo.montecarlo import MonteCarloSimulator
+import pandas as pd
 
 __all__ = ['TVTradeAnalyzer']
 
@@ -50,6 +52,7 @@ class TVTradeAnalyzer(Analyzer):
     )
 
     def create_analysis(self):
+        self.mcsimulator = MonteCarloSimulator()
         self.rets = AutoOrderedDict()
         self.rets.total.total = 0
         self.rets.len.total = 0
@@ -168,6 +171,15 @@ class TVTradeAnalyzer(Analyzer):
         trades.total.equity.stats.p_value = lr_stats.p_value
         trades.total.equity.stats.std_err = lr_stats.std_err
 
+    def update_mcsimulation_data(self):
+        trades = self.rets
+        if self.netprofits_data and len(self.netprofits_data) > 0:
+            netprofits_series = pd.Series(list(self.netprofits_data.values()))
+            mcsimulation = self.mcsimulator.calculate(netprofits_series, self.p.cash)
+            trades.total.mcsimulation.risk_of_ruin = mcsimulation.risk_of_ruin
+            trades.total.mcsimulation.median_dd = mcsimulation.median_dd
+            trades.total.mcsimulation.median_return = mcsimulation.median_return
+
     def update_processing_status(self, processing_status):
         trades = self.rets
         trades.processing_status = processing_status
@@ -227,6 +239,7 @@ class TVTradeAnalyzer(Analyzer):
     def stop(self):
         self.update_netprofit_monthly_stats()
         self.update_equitycurve_data()
+        self.update_mcsimulation_data()
         #self.print_debug_info()
         super(TVTradeAnalyzer, self).stop()
         self.rets._close()
