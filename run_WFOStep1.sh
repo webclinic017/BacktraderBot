@@ -4,6 +4,18 @@ declare exchange="bitfinex"
 declare -a arr_months=("1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12")
 declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" "31")
 
+runid=$1
+
+declare -a wfo_startdate="2018-09-01"
+
+startyear=${wfo_startdate:0:4}
+startmonth=${wfo_startdate:5:2}
+startday=${wfo_startdate:8:2}
+
+wfo_training_period=85
+wfo_test_period=15
+num_wfo_cycles=5
+
 #declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S003_AlexNoroRobotBitMEXFastRSIStrategy" "S004_AlexNoroBandsScalperStrategy" "S005_AlexNoroTripleRSIStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy" "S009_RSIMinMaxStrategy" "S010_AlexAroonTrendStrategy" "S011_EMACrossOverStrategy")
 declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy")
 
@@ -12,18 +24,6 @@ declare -a arr_symbols=("BTCUSD" )
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
 declare -a arr_timeframes=("3h")
-
-declare -a backtest_startdate="2018-03-01"
-declare -a backtest_enddate="2018-06-30"
-
-startyear=${backtest_startdate:0:4}
-startmonth=${backtest_startdate:5:2}
-startday=${backtest_startdate:8:2}
-endyear=${backtest_enddate:0:4}
-endmonth=${backtest_enddate:5:2}
-endday=${backtest_enddate:8:2}
-
-runid=$1
 
 if [ -d "/opt/anaconda3" ]; then
     source /opt/anaconda3/etc/profile.d/conda.sh
@@ -34,33 +34,21 @@ elif [ -d "/Users/alex/anaconda3" ]; then
 fi
 conda activate Backtrader
 
-process_backtest() {
-    _strategyid=${1}
-    _runid=${2}
+run_WFO_training() {
+    _runid=${1}
+    _strategyid=${2}
     _symbol=${3}
     _timeframe=${4}
-    _fromyear=${5}
-    _toyear=${6}
-    _frommonth=${7}
-    _tomonth=${8}
-    _fromday=${9}
-    _today=${10}
-    daterange=$_fromyear$_frommonth$_fromday-$_toyear$_tomonth$_$today
-    monthlystatsprefix="BkTest"
-    #echo INSIDE process_backtest: $_strategyid $_runid $_symbol $_timeframe $_fromyear $_toyear $_frommonth $_tomonth $_fromday $_today $daterange
 
     echo "---------------------------------------------------------------------------------------------------"
-    echo "Running backtesting Step 1 for $_strategyid/$exchange/$symbol/$timeframe/$daterange"
+    echo "Running WFO Step 1: Training Cycles for $_strategyid/$exchange/$symbol/$timeframe"
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
 
     echo "********** Started: $current_date_time"
-    python Backtesting_Step1.py -y $_strategyid -r $_runid -e $exchange -s $symbol -t $timeframe --fromyear $_fromyear --toyear $_toyear --frommonth $_frommonth --tomonth $_tomonth --fromday $_fromday --today $_today --monthlystatsprefix $monthlystatsprefix
+    python WFO_Step1.py -r $_runid --startyear $startyear --startmonth $startmonth --startday $startday --num_wfo_cycles $num_wfo_cycles --wfo_training_period $wfo_training_period --wfo_test_period $wfo_test_period -y $_strategyid -e $exchange -s $symbol -t $timeframe
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
     echo "********** Finished: $current_date_time"
 }
-
-pkill python
-pkill python
 
 for strategyid in "${arr_strategies[@]}"
 do
@@ -69,16 +57,8 @@ do
         for timeframe in "${arr_timeframes[@]}"
         do
             pkill python
-            pkill python
 
-            fromyear=$startyear
-            toyear=$endyear
-            frommonth=$startmonth
-            tomonth=$endmonth
-            fromday=$startday
-            today=$endday
-            #echo !!! $strategyid $runid $symbol $timeframe $fromyear $toyear $frommonth $tomonth $fromday $today
-            process_backtest $strategyid $runid $symbol $timeframe $fromyear $toyear $frommonth $tomonth $fromday $today
+            run_WFO_training $runid $strategyid $symbol $timeframe
         done
     done
 done

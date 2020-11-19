@@ -19,6 +19,7 @@ from model.backtestmodelgenerator import BacktestModelGenerator
 from common.stfetcher import StFetcher
 from strategies.helper.validation import ParametersValidator
 from strategies.helper.utils import Utils
+from wfo.wfo_helper import WFOHelper
 import itertools
 import collections
 import os
@@ -30,6 +31,9 @@ import sys
 from numbers import Number
 from collections.abc import Set, Mapping
 from collections import deque
+import gc
+
+STEP1_NUMBER_TOP_ROWS = 10
 
 zero_depth_bases = (str, bytes, Number, range, bytearray)
 iteritems = 'items'
@@ -93,13 +97,12 @@ class CerebroRunner(object):
         return self.cerebro.run()
 
 
-class BacktestingStep1(object):
+class WFOStep1(object):
 
     _ENABLE_FILTERING = AppConfig.is_global_step1_enable_filtering()
 
     def __init__(self):
         self._cerebro = None
-        self._strategy_enum = None
         self._params = None
         self. _is_output_file1_exists = None
         self._is_output_file2_exists = None
@@ -113,7 +116,46 @@ class BacktestingStep1(object):
         self._backtest_model = None
 
     def parse_args(self):
-        parser = argparse.ArgumentParser(description='Backtesting Step 1')
+        parser = argparse.ArgumentParser(description='Walk Forward Optimization Step 1: Training')
+
+        parser.add_argument('-r', '--runid',
+                            type=str,
+                            default="",
+                            required=True,
+                            help='Run ID')
+
+        parser.add_argument('--startyear',
+                            type=int,
+                            required=True,
+                            help='Date Range: Start Year')
+
+        parser.add_argument('--startmonth',
+                            type=int,
+                            required=True,
+                            help='Date Range: Start Month')
+
+        parser.add_argument('--startday',
+                            type=int,
+                            required=True,
+                            help='Date Range: Start Day')
+
+        parser.add_argument('--num_wfo_cycles',
+                            type=int,
+                            required=False,
+                            default=1,
+                            help='WFO number of cycles')
+
+        parser.add_argument('--wfo_training_period',
+                            type=int,
+                            required=False,
+                            default=85,
+                            help='WFO training (in-sample) period length in days')
+
+        parser.add_argument('--wfo_test_period',
+                            type=int,
+                            required=False,
+                            default=15,
+                            help='WFO test (out-of-sample) period length in days')
 
         parser.add_argument('-y', '--strategy',
                             type=str,
@@ -140,12 +182,6 @@ class BacktestingStep1(object):
                             default=8,
                             choices=[1, 2, 3, 4, 5, 7, 8],
                             help='The max number of CPUs to use for processing')
-
-        parser.add_argument('-r', '--runid',
-                            type=str,
-                            default="",
-                            required=True,
-                            help='Run ID')
 
         parser.add_argument('-l', '--lottype',
                             type=str,
@@ -178,46 +214,17 @@ class BacktestingStep1(object):
                             type=float,
                             help='The percentage of available cash to risk on a trade')
 
-        parser.add_argument('--fromyear',
-                            type=int,
-                            required=True,
-                            help='Date Range: From Year')
-
-        parser.add_argument('--toyear',
-                            type=int,
-                            required=True,
-                            help='Date Range: To Year')
-
-        parser.add_argument('--frommonth',
-                            type=int,
-                            required=True,
-                            help='Date Range: From Month')
-
-        parser.add_argument('--tomonth',
-                            type=int,
-                            required=True,
-                            help='Date Range: To Month')
-
-        parser.add_argument('--fromday',
-                            type=int,
-                            required=True,
-                            help='Date Range: From Day')
-
-        parser.add_argument('--today',
-                            type=int,
-                            required=True,
-                            help='Date Range: To Day')
-
-        parser.add_argument('--monthlystatsprefix',
-                            type=str,
-                            required=True,
-                            help='The string to append to monthly stats columns in report')
-
         parser.add_argument('--debug',
                             action='store_true',
                             help=('Print Debugs'))
 
         return parser.parse_args()
+
+    def cleanup_cerebro(self, runner):
+        # Clean up cerebro
+        runner.cerebro = None
+        StFetcher.cleanall()
+        gc.collect()
 
     def init_cerebro(self, runner, args, startcash):
         # Create an instance of cerebro
@@ -246,16 +253,18 @@ class BacktestingStep1(object):
     def get_strategy_enum(self, args):
         return BTStrategyEnum.get_strategy_enum_by_str(args.strategy)
 
-    def init_params(self, strat_enum, args, startcash):
+    def init_params(self, strat_enum, args, startcash, wfo_cycle_info):
+        fromdate = wfo_cycle_info.training_start_date.date()
+        todate = wfo_cycle_info.training_end_date.date()
         self._params = AppConfig.get_step1_strategy_params(strat_enum).copy()
         self._params.update({("debug", args.debug),
                              ("startcash", startcash),
-                             ("fromyear", args.fromyear),
-                             ("toyear", args.toyear),
-                             ("frommonth", args.frommonth),
-                             ("tomonth", args.tomonth),
-                             ("fromday", args.fromday),
-                             ("today", args.today)})
+                             ("fromyear", fromdate.year),
+                             ("toyear", todate.year),
+                             ("frommonth", fromdate.month),
+                             ("tomonth", todate.month),
+                             ("fromday", fromdate.day),
+                             ("today", todate.day)})
 
     def get_marketdata_filename(self, exchange, symbol, timeframe):
         return './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(exchange, symbol, timeframe, exchange, symbol, timeframe)
@@ -273,14 +282,18 @@ class BacktestingStep1(object):
 
         return niterable
 
-    def is_need_params_to_add_strategy(self, params_dict):
+    def get_wfo_cycles(self, args):
+        start_date = self.get_wfo_startdate(args)
+        return WFOHelper.get_wfo_cycles(start_date, args.num_wfo_cycles, args.wfo_training_period, args.wfo_test_period)
+
+    def validate_strategy_params(self, params_dict):
         try:
             return ParametersValidator.validate_params(params_dict)
         except ValueError:
             return False
 
-    def enqueue_strategies(self):
-        strategy_class = self._strategy_enum.value.clazz
+    def enqueue_strategies(self, strategy_enum):
+        strategy_class = strategy_enum.value.clazz
 
         kwargz = self._params
         optkeys = list(self._params)
@@ -291,21 +304,21 @@ class BacktestingStep1(object):
         list_strat_params = list(optkwargs)
 
         for params in list_strat_params:
-            if self.is_need_params_to_add_strategy(params) is True:
+            if self.validate_strategy_params(params):
                 StFetcher.register(strategy_class, **params)
 
         print("Number of strategies: {}".format(len(StFetcher.COUNT())))
         self._cerebro.optstrategy(StFetcher, idx=StFetcher.COUNT())
 
 
-    def check_market_data_csv_has_data(self, filename):
+    def check_market_data_csv_has_data(self, filename, wfo_cycle_info):
         df = pd.read_csv(filename)
-        startdate = self.get_fromdate(self._params)
-        enddate = self.get_todate(self._params)
+        fromdate = wfo_cycle_info.training_start_date
+        todate = wfo_cycle_info.training_end_date
         for index, row in df.iterrows():
             timestamp_str = row['Timestamp']
             timestamp = datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%S')
-            if startdate < timestamp and enddate < timestamp:
+            if fromdate < timestamp and todate < timestamp:
                 print("!!! There is no market data for the start/end date range provided. Finishing execution.")
                 quit()
             else:
@@ -323,24 +336,15 @@ class BacktestingStep1(object):
     def get_output_filename2(self, base_path, args):
         return '{}/{}_Step1_EquityCurveData.csv'.format(base_path, args.runid)
 
-    def get_fromdate(self, arr):
-        fromyear = arr["fromyear"]
-        frommonth = arr["frommonth"]
-        fromday = arr["fromday"]
-        return datetime(fromyear, frommonth, fromday)
+    def get_wfo_startdate(self, args):
+        return datetime(args.startyear, args.startmonth, args.startday)
 
-    def get_todate(self, arr):
-        toyear = arr["toyear"]
-        tomonth = arr["tomonth"]
-        today = arr["today"]
-        return datetime(toyear, tomonth, today)
+    def getdaterange(self, fromdate, todate):
+        return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(fromdate.year, fromdate.month, fromdate.day, todate.year, todate.month, todate.day)
 
-    def getdaterange(self, args):
-        return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(args.fromyear, args.frommonth, args.fromday, args.toyear, args.tomonth, args.today)
-
-    def add_datas(self, args):
-        fromdate = self.get_fromdate(self._params)
-        todate = self.get_todate(self._params)
+    def add_datas(self, args, wfo_cycle_info):
+        fromdate = wfo_cycle_info.training_start_date.date()
+        todate = wfo_cycle_info.training_end_date.date()
 
         data_tf = self.build_data(fromdate, todate, args.exchange, args.symbol, args.timeframe)
 
@@ -403,15 +407,17 @@ class BacktestingStep1(object):
         self._ofile2 = open(self._output_file2_full_name, "a")
         self._writer2 = csv.writer(self._ofile2, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-
     def run_strategies(self, runner):
         # Run over everything
         return runner.run_strategies()
 
-    def create_model(self, run_results, args):
-        model = BacktestModel(args.fromyear, args.frommonth, args.toyear, args.tomonth)
+    def create_model(self, run_results, args, wfo_cycle_info):
+        fromdate = wfo_cycle_info.training_start_date.date()
+        todate = wfo_cycle_info.training_end_date.date()
+        model = BacktestModel(fromdate.year, fromdate.month, todate.year, todate.month)
         generator = BacktestModelGenerator(self._ENABLE_FILTERING)
-        generator.populate_model_data(model, run_results, args.strategy, args.exchange, args.symbol, args.timeframe, args, args.lotsize, args.lottype, self.getdaterange(args))
+        model = generator.populate_model_data(wfo_cycle_info.wfo_cycle, model, run_results, args.strategy, args.exchange, args.symbol, args.timeframe, args, args.lotsize, args.lottype, self.getdaterange(fromdate, todate))
+        model.filter_top_results(STEP1_NUMBER_TOP_ROWS)
         return model
 
     def printfinalresultsheader(self, writer, model):
@@ -431,7 +437,7 @@ class BacktestingStep1(object):
             return
 
         # Designate the rows
-        h1 = model.get_equitycurvedata_model().get_header_names()
+        h1 = model.get_equity_curve_header_names()
 
         # Print header
         print_list = [h1]
@@ -456,48 +462,58 @@ class BacktestingStep1(object):
         self._ofile1.close()
         self._ofile2.close()
 
-    def run(self):
-        args = self.parse_args()
+    def run_wfo_cycle(self, wfo_cycle_info, args, strategy_enum, startcash):
+        fromdate = wfo_cycle_info.training_start_date.date()
+        todate = wfo_cycle_info.training_end_date.date()
+        print("\nRunning WFO Step 1 - Cycle {} - Training period {}".format(wfo_cycle_info.wfo_cycle, self.getdaterange(fromdate, todate)))
 
-        self._strategy_enum = self.get_strategy_enum(args)
+        self.init_params(strategy_enum, args, startcash, wfo_cycle_info)
 
-        startcash = AppConfig.get_global_default_cash_size()
-        self.init_params(self._strategy_enum, args, startcash)
+        self.init_output_files(args)
+
+        print("Writing WFO Step 1 results into: {}".format(self._output_file1_full_name))
 
         runner = CerebroRunner()
+        self.cleanup_cerebro(runner)
         self.init_cerebro(runner, args, startcash)
 
         self._market_data_input_filename = self.get_input_filename(args)
 
-        self.check_market_data_csv_has_data(self._market_data_input_filename)
+        self.check_market_data_csv_has_data(self._market_data_input_filename, wfo_cycle_info)
 
-        self.add_datas(args)
+        self.add_datas(args, wfo_cycle_info)
 
-        self.init_output_files(args)
-
-        self.enqueue_strategies()
-
-        print("Writing Step 1 backtesting run results to: {}".format(self._output_file1_full_name))
+        self.enqueue_strategies(strategy_enum)
 
         run_results = self.run_strategies(runner)
 
-        self._backtest_model = self.create_model(run_results, args)
+        self._backtest_model = self.create_model(run_results, args, wfo_cycle_info)
 
         self.printfinalresultsheader(self._writer1, self._backtest_model)
 
         self.printequitycurvedataheader(self._writer2, self._backtest_model)
 
-        self._backtest_model.sort_results()
-
         self.printfinalresults(self._writer1, self._backtest_model.get_model_data_arr())
 
-        self.printequitycurvedataresults(self._writer2, self._backtest_model.get_equitycurvedata_model().get_model_data_arr())
+        self.printequitycurvedataresults(self._writer2, self._backtest_model.get_equity_curve_report_data_arr())
 
         self.cleanup()
 
+    def run(self):
+        args = self.parse_args()
+
+        strategy_enum = self.get_strategy_enum(args)
+
+        startcash = AppConfig.get_global_default_cash_size()
+
+        wfo_cycles = self.get_wfo_cycles(args)
+
+        for wfo_cycle_info in wfo_cycles:
+            self.run_wfo_cycle(wfo_cycle_info, args, strategy_enum, startcash)
+
 
 def main():
-    step = BacktestingStep1()
+    step = WFOStep1()
     step.run()
 
 

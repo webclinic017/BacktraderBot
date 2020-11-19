@@ -8,7 +8,7 @@ class BacktestModel(object):
         self._monthlystatsprefix = None
         self._report_rows = []
         self._monthly_stats_column_names = self.resolve_monthly_stats_column_names(fromyear, frommonth, toyear, tomonth)
-        self._equitycurvedata_model = BacktestEquityCurveDataModel()
+        self._equity_curve_report_rows = []
 
     def get_month_num_days(self, year, month):
         return monthrange(year, month)[1]
@@ -27,21 +27,10 @@ class BacktestModel(object):
                     result.append(self.getdaterange_month(year, month, year, month))
         return result
 
-    def add_result_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
-                       processing_status, total_closed_trades, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count, tb_trades_count, tb_moved_count, dca_triggered_count,
-                       net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
-                       max_drawdown_length, net_profit_to_maxdd, win_rate_pct, trades_len_avg, trade_bars_ratio_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
-                       sqn_number, monthlystatsprefix, monthly_stats, equitycurvedata, equitycurveangle, equitycurveslope,
-                       equitycurveintercept, equitycurvervalue, equitycurversquaredvalue, equitycurvepvalue, equitycurvestderr, mc_riskofruin_pct, mc_mediandd_pct, mc_medianreturn_pct):
-        self._monthlystatsprefix = monthlystatsprefix
-        row = BacktestReportRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
-                                processing_status, total_closed_trades, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count, tb_trades_count, tb_moved_count,  dca_triggered_count,
-                                net_profit, net_profit_pct, avg_monthly_net_profit_pct,
-                                max_drawdown_pct, max_drawdown_length, net_profit_to_maxdd, win_rate_pct, trades_len_avg, trade_bars_ratio_pct, num_winning_months,
-                                profit_factor, buy_and_hold_return_pct, sqn_number, monthly_stats,
-                                equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurversquaredvalue, equitycurvepvalue, equitycurvestderr, mc_riskofruin_pct, mc_mediandd_pct, mc_medianreturn_pct)
+    def add_result_row(self, run_key, analyzer_data, equity_curve_data, montecarlo_data):
+        self._monthlystatsprefix = analyzer_data.monthlystatsprefix
+        row = BacktestReportRow(run_key, analyzer_data, equity_curve_data, montecarlo_data)
         self._report_rows.append(row)
-        self._equitycurvedata_model.add_row(strategyid, exchange, currency_pair, timeframe, parameters, daterange, equitycurvedata)
 
     def get_monthly_stats_column_names(self):
         result = []
@@ -58,7 +47,7 @@ class BacktestModel(object):
         return len(self._monthly_stats_column_names)
 
     def get_header_names(self):
-        result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Date Range', 'Start Cash', 'Lot Size',
+        result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'WFO Cycle', 'Date Range', 'Start Cash', 'Lot Size',
                   'Processing Status', 'Total Closed Trades', 'Trades # SL Count', 'Trades # TSL Count', 'TSL Moved Count', 'Trades # TP Count', 'Trades # TTP Count', 'TTP Moved Count',
                   'Trades # TB Count', 'TB Moved Count', 'Trades # DCA Triggered Count', 'Net Profit', 'Net Profit, %', 'Avg Monthly Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length',
                   'Net Profit To Max Drawdown', 'Win Rate, %', 'Avg # Bars In Trades', 'Bars In Trades Ratio, %',
@@ -71,9 +60,12 @@ class BacktestModel(object):
 
         return result
 
-    def sort_results(self):
-        arr = self._report_rows.copy()
-        self._report_rows = sorted(arr, key=lambda x: (x.net_profit_pct, x.max_drawdown_pct), reverse=True)
+    def get_equity_curve_header_names(self):
+        return ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'WFO Cycle', 'Date Range', 'Equity Curve Data Points']
+
+    def filter_top_results(self, number_top_rows):
+        self._report_rows = sorted(self._report_rows, key=lambda x: (x.run_key.wfo_cycle, x.analyzer_data.net_profit_to_maxdd), reverse=True)
+        self._report_rows = self._report_rows[:number_top_rows]
 
     def get_monthly_stats_data(self, entry):
         monthly_netprofit = round(entry.pnl.netprofit.total) if entry else 0
@@ -84,9 +76,10 @@ class BacktestModel(object):
 
     def get_monthly_stats_data_arr(self, report_row, column_names):
         result = []
+        monthly_stats_dict = report_row.analyzer_data.monthly_stats
         for column_item in column_names:
-            if column_item in report_row.monthly_stats.keys():
-                result.append(self.get_monthly_stats_data(report_row.monthly_stats[column_item]))
+            if column_item in monthly_stats_dict.keys():
+                result.append(self.get_monthly_stats_data(monthly_stats_dict[column_item]))
             else:
                 result.append(self.get_monthly_stats_data(None))
         return result
@@ -101,145 +94,81 @@ class BacktestModel(object):
             result.append(report_row)
         return result
 
-    def get_equitycurvedata_model(self):
-        return self._equitycurvedata_model
+    def get_equity_curve_report_data_arr(self):
+        return [r.equity_curve_report_data.get_report_data() for r in self._report_rows]
 
 
 class BacktestReportRow(object):
-    def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, startcash, lot_size,
-                 processing_status, total_closed_trades, sl_trades_count, tsl_trades_count, tsl_moved_count, tp_trades_count, ttp_trades_count, ttp_moved_count, tb_trades_count, tb_moved_count, dca_triggered_count,
-                 net_profit, net_profit_pct, avg_monthly_net_profit_pct, max_drawdown_pct,
-                 max_drawdown_length, net_profit_to_maxdd, win_rate_pct, trades_len_avg, trade_bars_ratio_pct, num_winning_months, profit_factor, buy_and_hold_return_pct,
-                 sqn_number, monthly_stats, equitycurveangle, equitycurveslope, equitycurveintercept,
-                 equitycurvervalue, equitycurversquaredvalue, equitycurvepvalue, equitycurvestderr, mc_riskofruin_pct, mc_mediandd_pct, mc_medianreturn_pct):
-        self.strategyid = strategyid
-        self.exchange = exchange
-        self.currency_pair = currency_pair
-        self.timeframe = timeframe
-        self.parameters = parameters
-        self.daterange = daterange
-        self.startcash = startcash
-        self.lot_size = lot_size
-        self.processing_status = processing_status
-        self.total_closed_trades = total_closed_trades
-        self.sl_trades_count = sl_trades_count
-        self.tsl_trades_count = tsl_trades_count
-        self.tsl_moved_count = tsl_moved_count
-        self.tp_trades_count = tp_trades_count
-        self.ttp_trades_count = ttp_trades_count
-        self.ttp_moved_count = ttp_moved_count
-        self.tb_trades_count = tb_trades_count
-        self.tb_moved_count = tb_moved_count
-        self.dca_triggered_count = dca_triggered_count
-        self.net_profit = net_profit
-        self.net_profit_pct = net_profit_pct
-        self.avg_monthly_net_profit_pct = avg_monthly_net_profit_pct
-        self.max_drawdown_pct = max_drawdown_pct
-        self.max_drawdown_length = max_drawdown_length
-        self.net_profit_to_maxdd = net_profit_to_maxdd
-        self.win_rate_pct = win_rate_pct
-        self.trades_len_avg = trades_len_avg
-        self.trade_bars_ratio_pct = trade_bars_ratio_pct
-        self.num_winning_months = num_winning_months
-        self.profit_factor = profit_factor
-        self.buy_and_hold_return_pct = buy_and_hold_return_pct
-        self.sqn_number = sqn_number
-        self.monthly_stats = monthly_stats
-        self.equitycurveangle = equitycurveangle
-        self.equitycurveslope = equitycurveslope
-        self.equitycurveintercept = equitycurveintercept
-        self.equitycurvervalue = equitycurvervalue
-        self.equitycurversquaredvalue = equitycurversquaredvalue
-        self.equitycurvepvalue = equitycurvepvalue
-        self.equitycurvestderr = equitycurvestderr
-        self.mc_riskofruin_pct = mc_riskofruin_pct
-        self.mc_mediandd_pct = mc_mediandd_pct
-        self.mc_medianreturn_pct = mc_medianreturn_pct
+    def __init__(self, run_key, analyzer_data, equity_curve_data, montecarlo_data):
+        self.run_key = run_key
+        self.analyzer_data = analyzer_data
+        self.equity_curve_data = equity_curve_data
+        self.montecarlo_data = montecarlo_data
+        self.equity_curve_report_data = BacktestEquityCurveReportData(run_key, analyzer_data.daterange, equity_curve_data.equitycurvedata)
 
     def get_row_data(self):
         result = [
-            self.strategyid,
-            self.exchange,
-            self.currency_pair,
-            self.timeframe,
-            self.parameters,
-            self.daterange,
-            self.startcash,
-            self.lot_size,
-            self.processing_status,
-            self.total_closed_trades,
-            self.sl_trades_count,
-            self.tsl_trades_count,
-            self.tsl_moved_count,
-            self.tp_trades_count,
-            self.ttp_trades_count,
-            self.ttp_moved_count,
-            self.tb_trades_count,
-            self.tb_moved_count,
-            self.dca_triggered_count,
-            self.net_profit,
-            self.net_profit_pct,
-            self.avg_monthly_net_profit_pct,
-            self.max_drawdown_pct,
-            self.max_drawdown_length,
-            self.net_profit_to_maxdd,
-            self.win_rate_pct,
-            self.trades_len_avg,
-            self.trade_bars_ratio_pct,
-            self.num_winning_months,
-            self.profit_factor,
-            self.buy_and_hold_return_pct,
-            self.sqn_number,
-            self.equitycurveangle,
-            self.equitycurveslope,
-            self.equitycurveintercept,
-            self.equitycurvervalue,
-            self.equitycurversquaredvalue,
-            self.equitycurvepvalue,
-            self.equitycurvestderr,
-            self.mc_riskofruin_pct,
-            self.mc_mediandd_pct,
-            self.mc_medianreturn_pct
+            self.run_key.strategyid,
+            self.run_key.exchange,
+            self.run_key.currency_pair,
+            self.run_key.timeframe,
+            self.run_key.parameters,
+            self.run_key.wfo_cycle,
+            self.analyzer_data.daterange,
+            self.analyzer_data.startcash,
+            self.analyzer_data.lot_size,
+            self.analyzer_data.processing_status,
+            self.analyzer_data.total_closed_trades,
+            self.analyzer_data.sl_trades_count,
+            self.analyzer_data.tsl_trades_count,
+            self.analyzer_data.tsl_moved_count,
+            self.analyzer_data.tp_trades_count,
+            self.analyzer_data.ttp_trades_count,
+            self.analyzer_data.ttp_moved_count,
+            self.analyzer_data.tb_trades_count,
+            self.analyzer_data.tb_moved_count,
+            self.analyzer_data.dca_triggered_count,
+            self.analyzer_data.net_profit,
+            self.analyzer_data.net_profit_pct,
+            self.analyzer_data.avg_monthly_net_profit_pct,
+            self.analyzer_data.max_drawdown_pct,
+            self.analyzer_data.max_drawdown_length,
+            self.analyzer_data.net_profit_to_maxdd,
+            self.analyzer_data.win_rate_pct,
+            self.analyzer_data.trades_len_avg,
+            self.analyzer_data.trade_bars_ratio_pct,
+            self.analyzer_data.num_winning_months,
+            self.analyzer_data.profit_factor,
+            self.analyzer_data.buy_and_hold_return_pct,
+            self.analyzer_data.sqn_number,
+            self.equity_curve_data.equitycurveangle,
+            self.equity_curve_data.equitycurveslope,
+            self.equity_curve_data.equitycurveintercept,
+            self.equity_curve_data.equitycurvervalue,
+            self.equity_curve_data.equitycurversquaredvalue,
+            self.equity_curve_data.equitycurvepvalue,
+            self.equity_curve_data.equitycurvestderr,
+            self.montecarlo_data.mc_riskofruin_pct,
+            self.montecarlo_data.mc_mediandd_pct,
+            self.montecarlo_data.mc_medianreturn_pct
         ]
         return result
 
 
-class BacktestEquityCurveDataModel(object):
-
-    _report_rows = []
-
-    def add_row(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, equitycurvedata):
-        row = BacktestEquityCurveDataRow(strategyid, exchange, currency_pair, timeframe, parameters, daterange, equitycurvedata)
-        self._report_rows.append(row)
-
-    def get_header_names(self):
-        return ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'Date Range', 'Equity Curve Data Points']
-
-    def get_model_data_arr(self):
-        result = []
-        for row in self._report_rows:
-            report_row = row.get_row_data()
-            result.append(report_row)
-        return result
-
-
-class BacktestEquityCurveDataRow(object):
-    def __init__(self, strategyid, exchange, currency_pair, timeframe, parameters, daterange, equitycurvedata):
-        self.strategyid = strategyid
-        self.exchange = exchange
-        self.currency_pair = currency_pair
-        self.timeframe = timeframe
-        self.parameters = parameters
+class BacktestEquityCurveReportData(object):
+    def __init__(self, run_key, daterange, equitycurvedata):
+        self.run_key = run_key
         self.daterange = daterange
         self.equitycurvedata = equitycurvedata
 
-    def get_row_data(self):
+    def get_report_data(self):
         result = [
-            self.strategyid,
-            self.exchange,
-            self.currency_pair,
-            self.timeframe,
-            self.parameters,
+            self.run_key.strategyid,
+            self.run_key.exchange,
+            self.run_key.currency_pair,
+            self.run_key.timeframe,
+            self.run_key.parameters,
+            self.run_key.wfo_cycle,
             self.daterange,
             self.equitycurvedata
         ]
