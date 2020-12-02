@@ -1,5 +1,5 @@
 '''
-Step 1 of backtesting process
+Step 1 - WFO Training process
 '''
  
 import backtrader as bt
@@ -20,6 +20,7 @@ from common.stfetcher import StFetcher
 from strategies.helper.validation import ParametersValidator
 from strategies.helper.utils import Utils
 from wfo.wfo_helper import WFOHelper
+from model.common import WFOMode, StrategyRunData, StrategyConfig
 import itertools
 import collections
 import os
@@ -38,6 +39,7 @@ STEP1_NUMBER_TOP_ROWS = 10
 zero_depth_bases = (str, bytes, Number, range, bytearray)
 iteritems = 'items'
 string_types = str
+
 
 class CerebroRunner(object):
 
@@ -113,7 +115,7 @@ class WFOStep1(object):
         self._ofile2 = None
         self._writer1 = None
         self._writer2 = None
-        self._backtest_model = None
+        self._wfo_training_model = None
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Walk Forward Optimization Step 1: Training')
@@ -151,7 +153,7 @@ class WFOStep1(object):
                             default=85,
                             help='WFO training (in-sample) period length in days')
 
-        parser.add_argument('--wfo_test_period',
+        parser.add_argument('--wfo_testing_period',
                             type=int,
                             required=False,
                             default=15,
@@ -254,17 +256,17 @@ class WFOStep1(object):
         return BTStrategyEnum.get_strategy_enum_by_str(args.strategy)
 
     def init_params(self, strat_enum, args, startcash, wfo_cycle_info):
-        fromdate = wfo_cycle_info.training_start_date.date()
-        todate = wfo_cycle_info.training_end_date.date()
+        training_start_date = wfo_cycle_info.training_start_date.date()
+        training_end_date = wfo_cycle_info.training_end_date.date()
         self._params = AppConfig.get_step1_strategy_params(strat_enum).copy()
         self._params.update({("debug", args.debug),
                              ("startcash", startcash),
-                             ("fromyear", fromdate.year),
-                             ("toyear", todate.year),
-                             ("frommonth", fromdate.month),
-                             ("tomonth", todate.month),
-                             ("fromday", fromdate.day),
-                             ("today", todate.day)})
+                             ("fromyear", training_start_date.year),
+                             ("toyear", training_end_date.year),
+                             ("frommonth", training_start_date.month),
+                             ("tomonth", training_end_date.month),
+                             ("fromday", training_start_date.day),
+                             ("today", training_end_date.day)})
 
     def get_marketdata_filename(self, exchange, symbol, timeframe):
         return './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(exchange, symbol, timeframe, exchange, symbol, timeframe)
@@ -284,13 +286,13 @@ class WFOStep1(object):
 
     def get_wfo_cycles(self, args):
         start_date = self.get_wfo_startdate(args)
-        return WFOHelper.get_wfo_cycles(start_date, args.num_wfo_cycles, args.wfo_training_period, args.wfo_test_period)
+        return WFOHelper.get_wfo_cycles(start_date, args.num_wfo_cycles, args.wfo_training_period, args.wfo_testing_period)
 
     def validate_strategy_params(self, params_dict):
-        try:
-            return ParametersValidator.validate_params(params_dict)
-        except ValueError:
-            return False
+        return ParametersValidator.validate_params(params_dict)
+
+    def update_params(self, curr_wfo_cycle_info):
+        self._params.update({("wfo_cycle_id", curr_wfo_cycle_info.wfo_cycle_id)})
 
     def enqueue_strategies(self, strategy_enum):
         strategy_class = strategy_enum.value.clazz
@@ -338,9 +340,6 @@ class WFOStep1(object):
 
     def get_wfo_startdate(self, args):
         return datetime(args.startyear, args.startmonth, args.startday)
-
-    def getdaterange(self, fromdate, todate):
-        return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(fromdate.year, fromdate.month, fromdate.day, todate.year, todate.month, todate.day)
 
     def add_datas(self, args, wfo_cycle_info):
         fromdate = wfo_cycle_info.training_start_date.date()
@@ -411,13 +410,15 @@ class WFOStep1(object):
         # Run over everything
         return runner.run_strategies()
 
-    def create_model(self, run_results, args, wfo_cycle_info):
-        fromdate = wfo_cycle_info.training_start_date.date()
-        todate = wfo_cycle_info.training_end_date.date()
-        model = BacktestModel(fromdate.year, fromdate.month, todate.year, todate.month)
+    def create_model(self, wfo_cycles, curr_wfo_cycle_info, run_results, args):
+        model = BacktestModel(WFOMode.WFO_MODE_TRAINING, wfo_cycles)
         generator = BacktestModelGenerator(self._ENABLE_FILTERING)
-        model = generator.populate_model_data(wfo_cycle_info.wfo_cycle, model, run_results, args.strategy, args.exchange, args.symbol, args.timeframe, args, args.lotsize, args.lottype, self.getdaterange(fromdate, todate))
-        model.filter_top_results(STEP1_NUMBER_TOP_ROWS)
+        strategy_run_data = StrategyRunData(args.strategy, args.exchange, args.symbol, args.timeframe)
+        strategy_config = StrategyConfig()
+        strategy_config.lotsize = args.lotsize
+        strategy_config.lottype = args.lottype
+        model = generator.populate_model_data(model, strategy_run_data, strategy_config, curr_wfo_cycle_info, run_results)
+        model.filter_wfo_training_top_results(STEP1_NUMBER_TOP_ROWS)
         return model
 
     def printfinalresultsheader(self, writer, model):
@@ -462,43 +463,6 @@ class WFOStep1(object):
         self._ofile1.close()
         self._ofile2.close()
 
-    def run_wfo_cycle(self, wfo_cycle_info, args, strategy_enum, startcash):
-        fromdate = wfo_cycle_info.training_start_date.date()
-        todate = wfo_cycle_info.training_end_date.date()
-        print("\nRunning WFO Step 1 - Cycle {} - Training period {}".format(wfo_cycle_info.wfo_cycle, self.getdaterange(fromdate, todate)))
-
-        self.init_params(strategy_enum, args, startcash, wfo_cycle_info)
-
-        self.init_output_files(args)
-
-        print("Writing WFO Step 1 results into: {}".format(self._output_file1_full_name))
-
-        runner = CerebroRunner()
-        self.cleanup_cerebro(runner)
-        self.init_cerebro(runner, args, startcash)
-
-        self._market_data_input_filename = self.get_input_filename(args)
-
-        self.check_market_data_csv_has_data(self._market_data_input_filename, wfo_cycle_info)
-
-        self.add_datas(args, wfo_cycle_info)
-
-        self.enqueue_strategies(strategy_enum)
-
-        run_results = self.run_strategies(runner)
-
-        self._backtest_model = self.create_model(run_results, args, wfo_cycle_info)
-
-        self.printfinalresultsheader(self._writer1, self._backtest_model)
-
-        self.printequitycurvedataheader(self._writer2, self._backtest_model)
-
-        self.printfinalresults(self._writer1, self._backtest_model.get_model_data_arr())
-
-        self.printequitycurvedataresults(self._writer2, self._backtest_model.get_equity_curve_report_data_arr())
-
-        self.cleanup()
-
     def run(self):
         args = self.parse_args()
 
@@ -508,8 +472,44 @@ class WFOStep1(object):
 
         wfo_cycles = self.get_wfo_cycles(args)
 
-        for wfo_cycle_info in wfo_cycles:
-            self.run_wfo_cycle(wfo_cycle_info, args, strategy_enum, startcash)
+        for curr_wfo_cycle_info in wfo_cycles:
+            training_start_date = curr_wfo_cycle_info.training_start_date.date()
+            training_end_date = curr_wfo_cycle_info.training_end_date.date()
+            print("\nRunning WFO Step 1 - Cycle {} - Training period {}".format(curr_wfo_cycle_info.wfo_cycle_id, WFOHelper.getdaterange(training_start_date, training_end_date)))
+
+            self.init_params(strategy_enum, args, startcash, curr_wfo_cycle_info)
+
+            self.init_output_files(args)
+
+            print("Writing WFO Step 1 results into: {}".format(self._output_file1_full_name))
+
+            runner = CerebroRunner()
+            self.cleanup_cerebro(runner)
+            self.init_cerebro(runner, args, startcash)
+
+            self._market_data_input_filename = self.get_input_filename(args)
+
+            self.check_market_data_csv_has_data(self._market_data_input_filename, curr_wfo_cycle_info)
+
+            self.add_datas(args, curr_wfo_cycle_info)
+
+            self.update_params(curr_wfo_cycle_info)
+
+            self.enqueue_strategies(strategy_enum)
+
+            run_results = self.run_strategies(runner)
+
+            self._wfo_training_model = self.create_model(wfo_cycles, curr_wfo_cycle_info, run_results, args)
+
+            self.printfinalresultsheader(self._writer1, self._wfo_training_model)
+
+            self.printequitycurvedataheader(self._writer2, self._wfo_training_model)
+
+            self.printfinalresults(self._writer1, self._wfo_training_model.get_model_data_arr())
+
+            self.printequitycurvedataresults(self._writer2, self._wfo_training_model.get_equity_curve_report_data_arr())
+
+            self.cleanup()
 
 
 def main():

@@ -9,6 +9,8 @@ MAX_NUMBER_TRADES = 100
 class Test01FlipCoinStrategy(GenericStrategy):
     params = (
         ("debug", False),
+        ("wfo_cycle_id", None),
+        ("wfo_cycle_training_id", None),
         ("startcash", 1500),
         ("needlong", True),
         ("needshort", True),

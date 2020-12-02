@@ -6,15 +6,15 @@ declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" 
 
 runid=$1
 
-declare -a wfo_startdate="2018-09-01"
+declare -a wfo_startdate="2018-04-01"
 
 startyear=${wfo_startdate:0:4}
 startmonth=${wfo_startdate:5:2}
 startday=${wfo_startdate:8:2}
 
-wfo_training_period=85
-wfo_test_period=15
-num_wfo_cycles=5
+wfo_training_period=200
+wfo_testing_period=30
+num_wfo_cycles=3
 
 #declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S003_AlexNoroRobotBitMEXFastRSIStrategy" "S004_AlexNoroBandsScalperStrategy" "S005_AlexNoroTripleRSIStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy" "S009_RSIMinMaxStrategy" "S010_AlexAroonTrendStrategy" "S011_EMACrossOverStrategy")
 declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy")
@@ -41,11 +41,11 @@ run_WFO_training() {
     _timeframe=${4}
 
     echo "---------------------------------------------------------------------------------------------------"
-    echo "Running WFO Step 1: Training Cycles for $_strategyid/$exchange/$symbol/$timeframe"
+    echo "Running WFO Step 1: Training Cycles for $_strategyid/$exchange/$_symbol/$_timeframe"
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
 
     echo "********** Started: $current_date_time"
-    python WFO_Step1.py -r $_runid --startyear $startyear --startmonth $startmonth --startday $startday --num_wfo_cycles $num_wfo_cycles --wfo_training_period $wfo_training_period --wfo_test_period $wfo_test_period -y $_strategyid -e $exchange -s $symbol -t $timeframe
+    python WFO_Step1.py -r $_runid --startyear $startyear --startmonth $startmonth --startday $startday --num_wfo_cycles $num_wfo_cycles --wfo_training_period $wfo_training_period --wfo_testing_period $wfo_testing_period -y $_strategyid -e $exchange -s $_symbol -t $_timeframe
     current_date_time="`date '+%Y-%m-%d - %H:%M:%S'`"
     echo "********** Finished: $current_date_time"
 }

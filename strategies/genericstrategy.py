@@ -363,8 +363,9 @@ class GenericStrategy(bt.Strategy):
                 self.log("%s - %.8f" % (self.status, self.data0.close[0]))
                 return
 
-            if self.handle_capital_stoploss():
-                return
+            # TODO: Consider removing or reimplementing for WFO Testing Mode
+            ## if self.handle_capital_stoploss():
+            ##    return
 
             self.calculate_signals()
 

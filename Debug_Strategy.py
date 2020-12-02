@@ -13,6 +13,9 @@ from plotting.equity_curve import EquityCurvePlotter
 from model.backtestmodel import BacktestModel
 from model.backtestmodelgenerator import BacktestModelGenerator
 from strategies.helper.utils import Utils
+from model.common import WFOMode
+from wfo.wfo_helper import WFOHelper
+from model.common import WFOMode, StrategyRunData, StrategyConfig
 import pandas as pd
 
 tradesopen = {}
@@ -30,6 +33,13 @@ class DebugStrategy(object):
         self._startcash = None
         self._lotsize = None
         self._lottype = None
+        self._startyear = None
+        self._startmonth = None
+        self._startday = None
+        self._num_wfo_cycles = None
+        self._wfo_training_period = None
+        self._wfo_testing_period = None
+
         self._cerebro = None
         self._strategy_enum = None
         self._params = None
@@ -55,14 +65,9 @@ class DebugStrategy(object):
                             help='The type of commission to apply to a trade')
 
         parser.add_argument('--commission',
-                            default=0.0015,
+                            default=0.002,
                             type=float,
                             help='The amount of commission to apply to a trade')
-
-        parser.add_argument('--risk',
-                            default=0.02,
-                            type=float,
-                            help='The percentage of available cash to risk on a trade')
 
         parser.add_argument('--debug',
                             action ='store_true',
@@ -104,13 +109,33 @@ class DebugStrategy(object):
         self._startcash = base_params["startcash"]
         self._lotsize = base_params["lotsize"]
         self._lottype = base_params["lottype"]
+        self._startyear = base_params["startyear"]
+        self._startmonth = base_params["startmonth"]
+        self._startday = base_params["startday"]
+        self._num_wfo_cycles = base_params["num_wfo_cycles"]
+        self._wfo_training_period = base_params["wfo_training_period"]
+        self._wfo_testing_period = base_params["wfo_test_period"]
+
         self._params = params_dict.copy()
         self._params.update(
             {
                 ("debug", args.debug),
-                ("startcash", self._startcash)
             }
         )
+
+    def update_wfo_params(self, wfo_cycle_info):
+        training_start_date = wfo_cycle_info.training_start_date.date()
+        training_end_date = wfo_cycle_info.training_end_date.date()
+        self._params.update({("wfo_cycle_id", 1),
+                             ("wfo_cycle_training_id", 1),
+                             ("startcash", self._startcash),
+                             ("fromyear", training_start_date.year),
+                             ("toyear", training_end_date.year),
+                             ("frommonth", training_start_date.month),
+                             ("tomonth", training_end_date.month),
+                             ("fromday", training_start_date.day),
+                             ("today", training_end_date.day)
+        })
 
     def get_marketdata_filename(self, exchange, symbol, timeframe):
         return './marketdata/{}/{}/{}/{}-{}-{}.csv'.format(exchange, symbol, timeframe, exchange, symbol, timeframe)
@@ -131,9 +156,9 @@ class DebugStrategy(object):
         today = arr["today"]
         return datetime(toyear, tomonth, today)
 
-    def add_datas(self):
-        fromdate = self.get_fromdate(self._params)
-        todate = self.get_todate(self._params)
+    def add_datas(self, wfo_cycle_info):
+        fromdate = wfo_cycle_info.training_start_date.date()
+        todate = wfo_cycle_info.training_end_date.date()
 
         data_tf = self.build_data(fromdate, todate, self._timeframe)
 
@@ -208,14 +233,6 @@ class DebugStrategy(object):
 
     def get_pct_fmt(self, val):
         return "{}%".format(round(val, 2))
-
-    def get_equity_curve_data(self, netprofit_data_arr):
-        equity = 0
-        result = [equity]
-        for netprofit_val in netprofit_data_arr:
-            equity += netprofit_val
-            result.append(equity)
-        return result
 
     def printTradeAnalysis(self, analyzer):
         '''
@@ -297,21 +314,21 @@ class DebugStrategy(object):
             print(keys)
             print(values)
 
-    def getdaterange(self, arr):
-        return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(arr["fromyear"], arr["frommonth"], arr["fromday"], arr["toyear"], arr["tomonth"], arr["today"])
-
-    def create_model(self, run_results, args):
-        debug_params = self._params
-        model = BacktestModel(debug_params["fromyear"], debug_params["frommonth"], debug_params["toyear"], debug_params["tomonth"])
+    def create_model(self, wfo_cycles, curr_wfo_cycle_info, run_results, args):
+        model = BacktestModel(WFOMode.WFO_MODE_TRAINING, wfo_cycles)
         generator = BacktestModelGenerator(False)
-        generator.populate_model_data(model, run_results, args.strategy, self._exchange, self._currency_pair, self._timeframe, args, self._lotsize, self._lottype, self.getdaterange(debug_params))
+        strategy_run_data = StrategyRunData(args.strategy, self._exchange, self._currency_pair, self._timeframe)
+        strategy_config = StrategyConfig()
+        strategy_config.lotsize = self._lotsize
+        strategy_config.lottype = self._lottype
+        generator.populate_model_data(model, strategy_run_data, strategy_config, curr_wfo_cycle_info, run_results)
         return model
 
     def render_equity_curve_image(self, bktest_model, args):
         bktest_results = bktest_model.get_model_data_arr()
         bktest_results_df = pd.DataFrame(bktest_results, columns=bktest_model.get_header_names())
-        equity_curve = bktest_model.get_equitycurvedata_model().get_model_data_arr()
-        equity_curve_df = pd.DataFrame(equity_curve, columns=bktest_model.get_equitycurvedata_model().get_header_names())
+        equity_curve = bktest_model.get_equity_curve_report_data_arr()
+        equity_curve_df = pd.DataFrame(equity_curve, columns=bktest_model.get_equity_curve_header_names())
         equity_curve_df = equity_curve_df.set_index(self._INDEX_COLUMNS)
         print("")
         self._equity_curve_plotter.generate_images(bktest_results_df, equity_curve_df, args)
@@ -322,11 +339,16 @@ class DebugStrategy(object):
         self._strategy_enum = self.get_strategy_enum(args)
         self.init_params(self._strategy_enum, args)
 
+        start_date = datetime(self._startyear, self._startmonth, self._startday)
+        wfo_cycles = WFOHelper.get_wfo_cycles(start_date, self._num_wfo_cycles, self._wfo_training_period, self._wfo_testing_period)
+        curr_wfo_cycle_info = wfo_cycles[0]
+        self.update_wfo_params(curr_wfo_cycle_info)
+
         self.init_cerebro(args, self._startcash, self._lotsize, self._lottype)
 
         self.add_strategy()
 
-        self.add_datas()
+        self.add_datas(curr_wfo_cycle_info)
 
         # Run the strategy
         strategies = self._cerebro.run()
@@ -334,7 +356,7 @@ class DebugStrategy(object):
 
         self.print_all_results(executed_strat, self._startcash)
 
-        bktest_model = self.create_model([strategies], args)
+        bktest_model = self.create_model(wfo_cycles, curr_wfo_cycle_info, [strategies], args)
         self.render_equity_curve_image(bktest_model, args)
 
 

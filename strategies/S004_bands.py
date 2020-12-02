@@ -9,6 +9,8 @@ class S004_AlexNoroBandsScalperStrategy(GenericStrategy):
 
     params = (
         ("debug", False),
+        ("wfo_cycle_id", None),
+        ("wfo_cycle_training_id", None),
         ("startcash", 100000),
         ("needlong", True),
         ("needshort", True),

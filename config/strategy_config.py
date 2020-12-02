@@ -13,7 +13,7 @@ class AppConfig(object):
             "STEP5_ENABLE_FILTERING": True,
             "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
             "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
-            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": True,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
+            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": False,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
         }
 
     _DEFAULT_STRATEGY_PARAMS_DICT = {
@@ -22,18 +22,24 @@ class AppConfig(object):
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSD",
                 "timeframe": "3h",
-                "startcash": 1500,
+                "startcash": 1159.979261,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 12,
+                "startday": 10,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 15,
+                "wfo_test_period": 15
             },
             {
                 "needlong": True,
                 "needshort": True,
                 "usefastsma": True,
                 "fastlen": 3,
-                "slowlen": 26,
-                "bars": 1,
-                "needex": False,
+                "slowlen": 20,
+                "bars": 2,
+                "needex": True,
                 "exitmode": 1,
                 "sl": 0,
                 "tslflag": False,
@@ -41,13 +47,7 @@ class AppConfig(object):
                 "ttpdist": 0,
                 "tbdist": 0,
                 "numdca": 0,
-                "dcainterval": 0,
-                "fromyear": 2017,
-                "toyear": 2017,
-                "frommonth": 8,
-                "tomonth": 8,
-                "fromday": 1,
-                "today": 31,
+                "dcainterval": 0
             }
         ],
         BTStrategyEnum.S002_ALEX_NORO_SILA_STRATEGY_ID: [
@@ -57,7 +57,13 @@ class AppConfig(object):
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 2019,
+                "startday": 3,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 85,
+                "wfo_test_period": 15
             },
             {
                 "needlong": True,
@@ -81,12 +87,6 @@ class AppConfig(object):
                 "tbdist": 0,
                 "numdca": 0,
                 "dcainterval": 0,
-                "fromyear": 2018,
-                "toyear": 2019,
-                "frommonth": 3,
-                "tomonth": 9,
-                "fromday": 1,
-                "today": 30,
             }],
         BTStrategyEnum.S003_ALEX_NORO_ROBOT_BITMEX_FAST_RSI_STRATEGY_ID: [
             {
@@ -95,7 +95,13 @@ class AppConfig(object):
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 2019,
+                "startday": 3,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 85,
+                "wfo_test_period": 15
             },
             {
                 "needlong": True,
@@ -119,13 +125,7 @@ class AppConfig(object):
                 "ttpdist": 1,
                 "tbdist": 1,
                 "numdca": 2,
-                "dcainterval": 3,
-                "fromyear": 2017,
-                "toyear": 2018,
-                "frommonth": 8,
-                "tomonth": 7,
-                "fromday": 1,
-                "today": 31,
+                "dcainterval": 3
             }],
         BTStrategyEnum.S004_ALEX_NORO_BANDS_SCALPER_STRATEGY_ID: [
             {
@@ -134,7 +134,13 @@ class AppConfig(object):
                 "timeframe": "1m",
                 "startcash": 1500,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 2019,
+                "startday": 3,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 85,
+                "wfo_test_period": 15
             },
             {
                 "needlong": True,
@@ -152,13 +158,7 @@ class AppConfig(object):
                 "ttpdist": 0,
                 "tbdist": 0,
                 "numdca": 0,
-                "dcainterval": 0,
-                "fromyear": 2020,
-                "toyear": 2020,
-                "frommonth": 1,
-                "tomonth": 3,
-                "fromday": 1,
-                "today": 30,
+                "dcainterval": 0
             }],
         BTStrategyEnum.S005_ALEX_NORO_TRIPLE_RSI_STRATEGY_ID: [
             {
@@ -167,7 +167,13 @@ class AppConfig(object):
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 2019,
+                "startday": 3,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 85,
+                "wfo_test_period": 15
             },  {
                 "needlong": True,
                 "needshort": True,
@@ -182,13 +188,7 @@ class AppConfig(object):
                 "ttpdist": 1,
                 "tbdist": 1,
                 "numdca": 2,
-                "dcainterval": 3,
-                "fromyear": 2017,
-                "toyear": 2018,
-                "frommonth": 8,
-                "tomonth": 7,
-                "fromday": 1,
-                "today": 31,
+                "dcainterval": 3
             }],
         BTStrategyEnum.S006_ALEX_NORO_SQUEEZE_MOMENTUM_STRATEGY_ID: [
             {
@@ -197,7 +197,13 @@ class AppConfig(object):
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 2019,
+                "startday": 3,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 85,
+                "wfo_test_period": 15
             },  {
                 "needlong": True,
                 "needshort": True,
@@ -214,13 +220,7 @@ class AppConfig(object):
                 "ttpdist": 0,
                 "tbdist": 2,
                 "numdca": 0,
-                "dcainterval": 0,
-                "fromyear": 2018,
-                "toyear": 2019,
-                "frommonth": 3,
-                "tomonth": 9,
-                "fromday": 1,
-                "today": 30,
+                "dcainterval": 0
             }],
         BTStrategyEnum.S007_ALEX_NORO_MULTIMA_STRATEGY_ID: [
             {
@@ -229,7 +229,13 @@ class AppConfig(object):
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 2019,
+                "startday": 3,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 85,
+                "wfo_test_period": 15
             },  {
                 "needlong": True,
                 "needshort": True,
@@ -245,13 +251,7 @@ class AppConfig(object):
                 "ttpdist": 0,
                 "tbdist": 0,
                 "numdca": 0,
-                "dcainterval": 0,
-                "fromyear": 2018,
-                "toyear": 2019,
-                "frommonth": 3,
-                "tomonth": 9,
-                "fromday": 1,
-                "today": 30,
+                "dcainterval": 0
             }],
         BTStrategyEnum.S008_ALEX_NORO_SUPERTREND_STRATEGY_ID: [
             {
@@ -260,7 +260,13 @@ class AppConfig(object):
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 2019,
+                "startday": 3,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 85,
+                "wfo_test_period": 15
             },  {
                 "needlong": True,
                 "needshort": True,
@@ -274,13 +280,7 @@ class AppConfig(object):
                 "ttpdist": 0,
                 "tbdist": 0,
                 "numdca": 0,
-                "dcainterval": 0,
-                "fromyear": 2018,
-                "toyear": 2019,
-                "frommonth": 3,
-                "tomonth": 9,
-                "fromday": 1,
-                "today": 30,
+                "dcainterval": 0
             }],
         BTStrategyEnum.S009_RSI_MIN_MAX_STRATEGY_ID: [
             {
@@ -289,7 +289,13 @@ class AppConfig(object):
                 "timeframe": "30m",
                 "startcash": 1500,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 2019,
+                "startday": 3,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 85,
+                "wfo_test_period": 15
             },  {
                 "needlong": True,
                 "needshort": True,
@@ -305,13 +311,7 @@ class AppConfig(object):
                 "ttpdist": 1,
                 "tbdist": 1,
                 "numdca": 2,
-                "dcainterval": 3,
-                "fromyear": 2017,
-                "toyear": 2018,
-                "frommonth": 1,
-                "tomonth": 6,
-                "fromday": 1,
-                "today": 30,
+                "dcainterval": 3
             }],
         BTStrategyEnum.S010_ALEX_AROON_TREND_STRATEGY_ID: [
             {
@@ -320,7 +320,13 @@ class AppConfig(object):
                 "timeframe": "1h",
                 "startcash": 1500,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 2019,
+                "startday": 3,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 85,
+                "wfo_test_period": 15
             },  {
                 "needlong": True,
                 "needshort": True,
@@ -336,13 +342,7 @@ class AppConfig(object):
                 "ttpdist": 0,
                 "tbdist": 0,
                 "numdca": 0,
-                "dcainterval": 0,
-                "fromyear": 2018,
-                "toyear": 2019,
-                "frommonth": 3,
-                "tomonth": 9,
-                "fromday": 1,
-                "today": 30,
+                "dcainterval": 0
             }],
         BTStrategyEnum.S011_EMA_CROSS_OVER_STRATEGY_ID: [
             {
@@ -351,7 +351,13 @@ class AppConfig(object):
                 "timeframe": "1m",
                 "startcash": 1500,
                 "lotsize": 1470,
-                "lottype": "Fixed"
+                "lottype": "Fixed",
+                "startyear": 2018,
+                "startmonth": 2019,
+                "startday": 3,
+                "num_wfo_cycles": 1,
+                "wfo_training_period": 85,
+                "wfo_test_period": 15
             },  {
                 "needlong": True,
                 "needshort": True,
@@ -364,13 +370,7 @@ class AppConfig(object):
                 "ttpdist": 0,
                 "tbdist": 0,
                 "numdca": 0,
-                "dcainterval": 0,
-                "fromyear": 2020,
-                "toyear": 2020,
-                "frommonth": 1,
-                "tomonth": 3,
-                "fromday": 1,
-                "today": 30,
+                "dcainterval": 0
             }],
         BTStrategyEnum.S012_GRID_MARKET_MAKER_STRATEGY_ID: [
             {

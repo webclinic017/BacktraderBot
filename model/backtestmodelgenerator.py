@@ -1,7 +1,8 @@
 from .common import BacktestRunKey
 from .common import BacktestAnalyzerData
-from .common import BacktestEquityCurveData
-from .common import BacktestMonteCarloData
+from .common import EquityCurveData
+from .common import MonteCarloData
+from wfo.wfo_helper import WFOHelper
 
 
 class BacktestModelGenerator(object):
@@ -25,6 +26,8 @@ class BacktestModelGenerator(object):
     def getparametersstr(self, params):
         coll = vars(params).copy()
         del coll["debug"]
+        del coll["wfo_cycle_id"]
+        del coll["wfo_cycle_training_id"]
         del coll["startcash"]
         del coll["fromyear"]
         del coll["frommonth"]
@@ -55,8 +58,8 @@ class BacktestModelGenerator(object):
     def get_pct_fmt(self, val):
         return "{}%".format(round(val, 2))
 
-    def populate_model_data(self, wfo_cycle, model, backtest_run_results, strategy_id, exchange, symbol, timeframe, args, lotsize, lottype, proc_daterange):
-        # Generate backtesting model data
+    def populate_model_data(self, model, strategy_run_data, strategy_config, wfo_cycle_info, backtest_run_results):
+        # Generate WFO Training model data
         for run in backtest_run_results:
             for strategy in run:
                 # print the analyzers
@@ -65,17 +68,21 @@ class BacktestModelGenerator(object):
                 dd_analysis = strategy.analyzers.dd.get_analysis()
 
                 run_key = BacktestRunKey()
-                run_key.strategyid = strategy_id
-                run_key.exchange = exchange
-                run_key.currency_pair = symbol
-                run_key.timeframe = timeframe
+                run_key.strategyid = strategy_run_data.strategyid
+                run_key.exchange = strategy_run_data.exchange
+                run_key.currency_pair = strategy_run_data.currency_pair
+                run_key.timeframe = strategy_run_data.timeframe
                 run_key.parameters = self.getparametersstr(strategy.params)
-                run_key.wfo_cycle = wfo_cycle
+                run_key.wfo_cycle_id = strategy.p.wfo_cycle_id
+                run_key.wfo_cycle_training_id = strategy.p.wfo_cycle_training_id
 
                 analyzer_data = BacktestAnalyzerData()
-                analyzer_data.daterange = proc_daterange
+                analyzer_data.wfo_training_period = wfo_cycle_info.wfo_training_period
+                analyzer_data.wfo_testing_period = wfo_cycle_info.wfo_testing_period
+                analyzer_data.trainingdaterange = WFOHelper.getdaterange(wfo_cycle_info.training_start_date.date(), wfo_cycle_info.training_end_date.date())
+                analyzer_data.testingdaterange = WFOHelper.getdaterange(wfo_cycle_info.testing_start_date.date(), wfo_cycle_info.testing_end_date.date())
                 analyzer_data.startcash = strategy.params.startcash
-                analyzer_data.lot_size = self.getlotsize(lotsize, lottype)
+                analyzer_data.lot_size = self.getlotsize(strategy_config.lotsize, strategy_config.lottype)
                 analyzer_data.processing_status = ta_analysis.processing_status if self.exists(ta_analysis, ['processing_status']) else "N/A"
                 analyzer_data.total_closed_trades = ta_analysis.total.closed if self.exists(ta_analysis, ['total', 'closed']) else 0
                 analyzer_data.sl_trades_count = ta_analysis.sl.count if self.exists(ta_analysis, ['sl', 'count']) else 0
@@ -105,9 +112,8 @@ class BacktestModelGenerator(object):
                 analyzer_data.profit_factor = round(ta_analysis.total.profitfactor, 3) if self.exists(ta_analysis, ['total', 'profitfactor']) else 0
                 analyzer_data.buy_and_hold_return_pct = round(ta_analysis.total.buyandholdreturnpct, 2) if self.exists(ta_analysis, ['total', 'buyandholdreturnpct']) else 0
                 analyzer_data.sqn_number = round(sqn_analysis.sqn, 2)
-                analyzer_data.monthlystatsprefix = args.monthlystatsprefix if "monthlystatsprefix" in args else ""
 
-                equity_curve_data = BacktestEquityCurveData()
+                equity_curve_data = EquityCurveData()
                 equity_curve_data.equitycurvedata = ta_analysis.total.equity.equitycurvedata if self.exists(ta_analysis, ['total', 'equity', 'equitycurvedata']) else {}
                 equity_curve_data.equitycurveangle = round(ta_analysis.total.equity.stats.angle) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'angle']) else 0
                 equity_curve_data.equitycurveslope = round(ta_analysis.total.equity.stats.slope, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'slope']) else 0
@@ -117,7 +123,7 @@ class BacktestModelGenerator(object):
                 equity_curve_data.equitycurvepvalue = round(ta_analysis.total.equity.stats.p_value, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'p_value']) else 0
                 equity_curve_data.equitycurvestderr = round(ta_analysis.total.equity.stats.std_err, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'std_err']) else 0
 
-                montecarlo_data = BacktestMonteCarloData()
+                montecarlo_data = MonteCarloData()
                 montecarlo_data.mc_riskofruin_pct =   self.get_pct_fmt(100 * ta_analysis.total.mcsimulation.risk_of_ruin) if self.exists(ta_analysis, ['total', 'mcsimulation', 'risk_of_ruin']) else "0.0%"
                 montecarlo_data.mc_mediandd_pct =     self.get_pct_fmt(100 * ta_analysis.total.mcsimulation.median_dd) if self.exists(ta_analysis, ['total', 'mcsimulation', 'median_dd']) else "0.0%"
                 montecarlo_data.mc_medianreturn_pct = self.get_pct_fmt(100 * ta_analysis.total.mcsimulation.median_return) if self.exists(ta_analysis, ['total', 'mcsimulation', 'median_return']) else "0.0%"

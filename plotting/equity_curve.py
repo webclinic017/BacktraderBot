@@ -5,7 +5,6 @@ from bokeh.models import Span, Label
 from bokeh.plotting import figure
 from bokeh.io import export_png
 from bokeh.models.tickers import FixedTicker
-from bokeh.models.tickers import DatetimeTicker
 from math import pi
 import itertools as it
 from datetime import datetime
@@ -150,103 +149,83 @@ class EquityCurvePlotter(object):
     def build_plot_label(self, y_coord, txt):
         return Label(x=10, y=y_coord, x_units='screen', y_units='screen', text=txt, text_font_size="10pt", render_mode='canvas', border_line_alpha=0, background_fill_alpha=0)
 
-    def get_column_value_by_name(self, row, name, prefix, is_fwtest):
-        if is_fwtest:
-            column_name = "{}: {}".format(prefix, name)
-            result = row[column_name]
-        else:
-            result = row[name]
-        return result
+    def get_column_value_by_name(self, row, name):
+        return row[name]
 
-    def create_text_lines(self, row, prefix, is_fwtest):
+    def create_text_lines(self, row):
         text_lines_arr = []
-        if is_fwtest is False:
-            strategy_str         = self.get_column_value_by_name(row, 'Strategy ID', prefix, False)
-            exchange_str         = self.get_column_value_by_name(row, 'Exchange', prefix, False)
-            symbol_str           = self.get_column_value_by_name(row, 'Currency Pair', prefix, False)
-            timeframe_str        = self.get_column_value_by_name(row, 'Timeframe', prefix, False)
-            parameters_str       = self.get_column_value_by_name(row, 'Parameters', prefix, False)
-            text_lines_arr.append("{}, {}, {}, {}".format(strategy_str, exchange_str, symbol_str, timeframe_str))
-            text_lines_arr.append("Parameters: {}".format(parameters_str))
+        strategy_str         = self.get_column_value_by_name(row, 'Strategy ID')
+        exchange_str         = self.get_column_value_by_name(row, 'Exchange')
+        symbol_str           = self.get_column_value_by_name(row, 'Currency Pair')
+        timeframe_str        = self.get_column_value_by_name(row, 'Timeframe')
+        parameters_str       = self.get_column_value_by_name(row, 'Parameters')
+        text_lines_arr.append("{}, {}, {}, {}".format(strategy_str, exchange_str, symbol_str, timeframe_str))
+        text_lines_arr.append("Parameters: {}".format(parameters_str))
 
-        daterange_str            = self.get_column_value_by_name(row, 'Date Range', prefix, is_fwtest)
-        startcash_str            = round(self.get_column_value_by_name(row, 'Start Cash', prefix, is_fwtest))
-        total_closed_trades      = self.get_column_value_by_name(row, 'Total Closed Trades', prefix, is_fwtest)
-        net_profit               = round(self.get_column_value_by_name(row, 'Net Profit', prefix, is_fwtest))
-        net_profit_pct           = self.get_column_value_by_name(row, 'Net Profit, %', prefix, is_fwtest)
-        max_drawdown_pct         = self.get_column_value_by_name(row, 'Max Drawdown, %', prefix, is_fwtest)
-        max_drawdown_length      = self.get_column_value_by_name(row, 'Max Drawdown Length', prefix, is_fwtest)
-        text_lines_arr.append("{} Date Range: {}, {} Start Cash: {}, {} Total Closed Trades: {}, {} Net Profit: {}, {} Net Profit,%: {}%, {} Max Drawdown,%: {}%, {} Max Drawdown Length: {}".format(prefix, daterange_str, prefix, startcash_str, prefix, total_closed_trades, prefix, net_profit, prefix, net_profit_pct, prefix, max_drawdown_pct, prefix, max_drawdown_length))
+        wfo_training_period_str  = self.get_column_value_by_name(row, 'WFO Training Period')
+        wfo_testing_period_str   = self.get_column_value_by_name(row, 'WFO Testing Period')
+        trainingdaterange_str    = self.get_column_value_by_name(row, 'Training Date Range')
+        testingdaterange_str     = self.get_column_value_by_name(row, 'Testing Date Range')
+        startcash_str            = round(self.get_column_value_by_name(row, 'Start Cash'))
+        total_closed_trades      = self.get_column_value_by_name(row, 'Total Closed Trades')
+        net_profit               = round(self.get_column_value_by_name(row, 'Net Profit'))
+        net_profit_pct           = self.get_column_value_by_name(row, 'Net Profit, %')
+        max_drawdown_pct         = self.get_column_value_by_name(row, 'Max Drawdown, %')
+        max_drawdown_length      = self.get_column_value_by_name(row, 'Max Drawdown Length')
+        text_lines_arr.append("WFO Training Period: {}, WFO Testing Period: {}, Training Date Range: {}, Testing Date Range: {}, Start Cash: {}, Total Closed Trades: {}, Net Profit: {}, Net Profit,%: {}%, Max Drawdown,%: {}%, Max Drawdown Length: {}".format(wfo_training_period_str, wfo_testing_period_str, trainingdaterange_str, testingdaterange_str, startcash_str, total_closed_trades, net_profit, net_profit_pct, max_drawdown_pct, max_drawdown_length))
 
-        net_profit_to_maxdd      = self.get_column_value_by_name(row, 'Net Profit To Max Drawdown', prefix, is_fwtest)
-        win_rate_pct             = self.get_column_value_by_name(row, 'Win Rate, %', prefix, is_fwtest)
-        winning_months_pct       = self.get_column_value_by_name(row, 'Winning Months, %', prefix, is_fwtest)
-        profit_factor            = round(self.get_column_value_by_name(row, 'Profit Factor', prefix, is_fwtest), 3)
-        sqn                      = self.get_column_value_by_name(row, 'SQN', prefix, is_fwtest)
-        mc_riskofruin_pct        = self.get_column_value_by_name(row, 'MC: Risk Of Ruin, %', prefix, is_fwtest)
-        text_lines_arr.append("{} Net Profit To Max Drawdown: {}, {} Win Rate,%: {}, {} Winning Months,%: {}%, {} Profit Factor: {}, {} SQN: {}, {} MC Risk Of Ruin, %: {}".format(prefix, net_profit_to_maxdd, prefix, win_rate_pct, prefix, winning_months_pct, prefix, profit_factor, prefix, sqn, prefix, mc_riskofruin_pct))
+        net_profit_to_maxdd      = self.get_column_value_by_name(row, 'Net Profit To Max Drawdown')
+        win_rate_pct             = self.get_column_value_by_name(row, 'Win Rate, %')
+        winning_months_pct       = self.get_column_value_by_name(row, 'Winning Months, %')
+        profit_factor            = round(self.get_column_value_by_name(row, 'Profit Factor'), 3)
+        sqn                      = self.get_column_value_by_name(row, 'SQN')
+        mc_riskofruin_pct        = self.get_column_value_by_name(row, 'MC: Risk Of Ruin, %')
+        text_lines_arr.append("Net Profit To Max Drawdown: {}, Win Rate,%: {}, Winning Months,%: {}%, Profit Factor: {}, SQN: {}, MC Risk Of Ruin, %: {}".format(net_profit_to_maxdd, win_rate_pct, winning_months_pct, profit_factor, sqn, mc_riskofruin_pct))
 
-        equitycurveangle         = self.get_column_value_by_name(row, 'Equity Curve Angle', prefix, is_fwtest)
-        equitycurveslope         = round(self.get_column_value_by_name(row, 'Equity Curve Slope', prefix, is_fwtest), 3)
-        equitycurveintercept     = round(self.get_column_value_by_name(row, 'Equity Curve Intercept', prefix, is_fwtest), 3)
-        equitycurvervalue        = round(self.get_column_value_by_name(row, 'Equity Curve R-value', prefix, is_fwtest), 3)
-        equitycurversquaredvalue = round(self.get_column_value_by_name(row, 'Equity Curve R-Squared value', prefix, is_fwtest), 3)
-        equitycurvepvalue        = round(self.get_column_value_by_name(row, 'Equity Curve P-value', prefix, is_fwtest), 3)
-        equitycurvestderr        = round(self.get_column_value_by_name(row, 'Equity Curve Stderr', prefix, is_fwtest), 3)
-        text_lines_arr.append("{} Equity Curve Angle={}°, {} Equity Curve Slope={}, {} Equity Curve Intercept={}, {} Equity Curve R-value={}, {} Equity Curve R-Squared value={}, {} Equity Curve P-value={}, {} Equity Curve Stderr={}".format(prefix, equitycurveangle, prefix, equitycurveslope, prefix, equitycurveintercept, prefix, equitycurvervalue, prefix, equitycurversquaredvalue, prefix, equitycurvepvalue, prefix, equitycurvestderr))
-
-        if is_fwtest is True:
-            combinednetprofit                   = round(self.get_column_value_by_name(row, 'Combined Net Profit', prefix, is_fwtest))
-            combinedequitycurveangle            = round(self.get_column_value_by_name(row, 'Combined Equity Curve Angle', prefix, is_fwtest))
-            combinedequitycurveslope            = round(self.get_column_value_by_name(row, 'Combined Equity Curve Slope', prefix, is_fwtest), 3)
-            combinedequitycurveintercept        = round(self.get_column_value_by_name(row, 'Combined Equity Curve Intercept', prefix, is_fwtest), 3)
-            combinedequitycurvervalue           = round(self.get_column_value_by_name(row, 'Combined Equity Curve R-value', prefix, is_fwtest), 3)
-            combinedequitycurversquaredvalue    = round(self.get_column_value_by_name(row, 'Combined Equity Curve R-Squared value', prefix, is_fwtest), 3)
-            text_lines_arr.append("Combined Net Profit={}, Combined Equity Curve Angle={}, Combined Equity Curve Slope={}, Combined Equity Curve Intercept={}, Combined Equity Curve R-value={}, Combined Equity Curve R-Squared value={}".format(combinednetprofit, combinedequitycurveangle, combinedequitycurveslope, combinedequitycurveintercept, combinedequitycurvervalue, combinedequitycurversquaredvalue))
+        equitycurveangle         = self.get_column_value_by_name(row, 'Equity Curve Angle')
+        equitycurveslope         = round(self.get_column_value_by_name(row, 'Equity Curve Slope'), 3)
+        equitycurveintercept     = round(self.get_column_value_by_name(row, 'Equity Curve Intercept'), 3)
+        equitycurvervalue        = round(self.get_column_value_by_name(row, 'Equity Curve R-value'), 3)
+        equitycurversquaredvalue = round(self.get_column_value_by_name(row, 'Equity Curve R-Squared value'), 3)
+        equitycurvepvalue        = round(self.get_column_value_by_name(row, 'Equity Curve P-value'), 3)
+        equitycurvestderr        = round(self.get_column_value_by_name(row, 'Equity Curve Stderr'), 3)
+        text_lines_arr.append("Equity Curve Angle={}°, Equity Curve Slope={}, Equity Curve Intercept={}, Equity Curve R-value={}, Equity Curve R-Squared value={}, Equity Curve P-value={}, Equity Curve Stderr={}".format(equitycurveangle, equitycurveslope, equitycurveintercept, equitycurvervalue, equitycurversquaredvalue, equitycurvepvalue, equitycurvestderr))
 
         return text_lines_arr
 
-    def build_description(self, row, is_fwtest):
-        start_text_y_coord = 210 if is_fwtest is True else 110
+    def build_description(self, row):
+        start_text_y_coord = 110
         result = figure(tools="", toolbar_location=None, plot_height=start_text_y_coord + 40, plot_width=self._EQUITY_CURVE_IMAGE_WIDTH, x_axis_location="above")
 
-        text_lines_arr = self.create_text_lines(row, "BkTest", False)
+        text_lines_arr = self.create_text_lines(row)
         result.add_layout(self.build_plot_label(start_text_y_coord - 0 * 20, text_lines_arr[0]))
         result.add_layout(self.build_plot_label(start_text_y_coord - 1 * 20, text_lines_arr[1]))
         result.add_layout(self.build_plot_label(start_text_y_coord - 2 * 20, text_lines_arr[2]))
         result.add_layout(self.build_plot_label(start_text_y_coord - 3 * 20, text_lines_arr[3]))
         result.add_layout(self.build_plot_label(start_text_y_coord - 4 * 20, text_lines_arr[4]))
         result.add_layout(self.build_plot_label(start_text_y_coord - 5 * 20, ""))
-        if is_fwtest is True:
-            text_lines_arr = self.create_text_lines(row, "FwTest", True)
-            result.add_layout(self.build_plot_label(start_text_y_coord - 6 * 20,  text_lines_arr[0]))
-            result.add_layout(self.build_plot_label(start_text_y_coord - 7 * 20,  text_lines_arr[1]))
-            result.add_layout(self.build_plot_label(start_text_y_coord - 8 * 20,  text_lines_arr[2]))
-            result.add_layout(self.build_plot_label(start_text_y_coord - 10 * 20,  text_lines_arr[3]))
 
         return result
 
     def draw_equity_curve(self, row, equity_curve_data_points_str, equitycurveslope, equitycurveintercept):
-        plot_name_prefix = "BkTest"
-
-        description = self.build_description(row, False)
+        description = self.build_description(row)
 
         equity_curve_data_points_dict = json.loads(equity_curve_data_points_str)
         x_data = self.get_equity_data_x_axis(equity_curve_data_points_dict.keys(), None)
         y_data = self.get_equity_data_y_axis(equity_curve_data_points_dict.values(), 0)
         equity_curve_plot = self.build_equity_curve_plot_figure(x_data)
-        equity_curve_plot.line(x_data, y_data, line_width=3, alpha=0.7, legend='{} equity curve'.format(plot_name_prefix))
+        equity_curve_plot.line(x_data, y_data, line_width=3, alpha=0.7, legend='Equity curve')
 
         lr_points = self.get_linear_regression_line_points(x_data, equitycurveslope, equitycurveintercept, 0)
-        equity_curve_plot.line(lr_points[0], lr_points[1], line_width=1, line_color="red", alpha=0.5, legend='{} linear regression'.format(plot_name_prefix))
+        equity_curve_plot.line(lr_points[0], lr_points[1], line_width=1, line_color="red", alpha=0.5, legend='Linear regression')
 
         if self.is_possible_to_draw_sma(x_data, self._EQUITY_CURVE_SMA1_LENGTH):
             equity_curve_sma1_y_data = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA1_LENGTH, y_data)
-            equity_curve_plot.line(x_data, equity_curve_sma1_y_data, color='orange', line_width=1, alpha=0.7, legend='{} equity curve SMA({})'.format(plot_name_prefix, self._EQUITY_CURVE_SMA1_LENGTH))
+            equity_curve_plot.line(x_data, equity_curve_sma1_y_data, color='orange', line_width=1, alpha=0.7, legend='Equity curve SMA({})'.format(self._EQUITY_CURVE_SMA1_LENGTH))
 
         if self.is_possible_to_draw_sma(x_data, self._EQUITY_CURVE_SMA2_LENGTH):
             equity_curve_sma2_y_data = self.get_equity_curve_sma_points(self._EQUITY_CURVE_SMA2_LENGTH, y_data)
-            equity_curve_plot.line(x_data, equity_curve_sma2_y_data, color='magenta', line_width=1, alpha=0.5, legend='{} equity curve SMA({})'.format(plot_name_prefix, self._EQUITY_CURVE_SMA2_LENGTH))
+            equity_curve_plot.line(x_data, equity_curve_sma2_y_data, color='magenta', line_width=1, alpha=0.5, legend='Equity curve SMA({})'.format(self._EQUITY_CURVE_SMA2_LENGTH))
         equity_curve_plot.legend.location = "top_left"
 
         return column(description, equity_curve_plot)

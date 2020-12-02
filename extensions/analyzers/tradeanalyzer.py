@@ -20,27 +20,9 @@ import math
 import json
 from montecarlo.montecarlo import MonteCarloSimulator
 import pandas as pd
+from model.common import LinearRegressionStats
 
 __all__ = ['TVTradeAnalyzer']
-
-
-class LinearRegressionStats(object):
-    angle = None
-    slope = None
-    intercept = None
-    r_value = None
-    p_value = None
-    std_err = None
-    r_squared = None
-
-    def __init__(self, angle, slope, intercept, r_value, r_squared, p_value, std_err):
-        self.angle = angle
-        self.slope = slope
-        self.intercept = intercept
-        self.r_value = r_value
-        self.r_squared = r_squared
-        self.p_value = p_value
-        self.std_err = std_err
 
 
 class TVTradeAnalyzer(Analyzer):

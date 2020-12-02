@@ -1,13 +1,15 @@
 
 from datetime import date
 from calendar import monthrange
+from model.reports_common import ColumnName
+from model.common import WFOMode
 
 
 class BacktestModel(object):
-    def __init__(self, fromyear, frommonth, toyear, tomonth):
-        self._monthlystatsprefix = None
+    def __init__(self, wfo_mode, wfo_cycles):
+        self._wfo_mode = wfo_mode
         self._report_rows = []
-        self._monthly_stats_column_names = self.resolve_monthly_stats_column_names(fromyear, frommonth, toyear, tomonth)
+        self._monthly_stats_column_names = self.resolve_monthly_stats_column_names(wfo_mode, wfo_cycles)
         self._equity_curve_report_rows = []
 
     def get_month_num_days(self, year, month):
@@ -16,8 +18,21 @@ class BacktestModel(object):
     def getdaterange_month(self, fromyear, frommonth, toyear, tomonth):
         return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(fromyear, frommonth, 1, toyear, tomonth, self.get_month_num_days(toyear, tomonth))
 
-    def resolve_monthly_stats_column_names(self, fromyear, frommonth, toyear, tomonth):
+    def resolve_monthly_stats_column_names(self, wfo_mode, wfo_cycles):
         result = []
+        first_wfo_cycle = wfo_cycles[0]
+        last_wfo_cycle = wfo_cycles[-1]
+        if wfo_mode == WFOMode.WFO_MODE_TRAINING:
+            fromyear  = first_wfo_cycle.training_start_date.date().year
+            frommonth = first_wfo_cycle.training_start_date.date().month
+            toyear    = last_wfo_cycle.training_end_date.date().year
+            tomonth   = last_wfo_cycle.training_end_date.date().month
+        else:
+            fromyear  = first_wfo_cycle.testing_start_date.date().year
+            frommonth = first_wfo_cycle.testing_start_date.date().month
+            toyear    = last_wfo_cycle.testing_end_date.date().year
+            tomonth   = last_wfo_cycle.testing_end_date.date().month
+
         fromdate = date(fromyear, frommonth, 1)
         todate = date(toyear, tomonth, 1)
         for year in range(fromyear, toyear + 1):
@@ -28,32 +43,65 @@ class BacktestModel(object):
         return result
 
     def add_result_row(self, run_key, analyzer_data, equity_curve_data, montecarlo_data):
-        self._monthlystatsprefix = analyzer_data.monthlystatsprefix
         row = BacktestReportRow(run_key, analyzer_data, equity_curve_data, montecarlo_data)
         self._report_rows.append(row)
 
     def get_monthly_stats_column_names(self):
-        result = []
-
-        if self._monthlystatsprefix is None or self._monthlystatsprefix == "":
-            return self._monthly_stats_column_names
-
-        for column_name in self._monthly_stats_column_names:
-            result.append("{}: {}".format(self._monthlystatsprefix, column_name))
-
-        return result
+        return self._monthly_stats_column_names
 
     def get_num_months(self):
         return len(self._monthly_stats_column_names)
 
     def get_header_names(self):
-        result = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'WFO Cycle', 'Date Range', 'Start Cash', 'Lot Size',
-                  'Processing Status', 'Total Closed Trades', 'Trades # SL Count', 'Trades # TSL Count', 'TSL Moved Count', 'Trades # TP Count', 'Trades # TTP Count', 'TTP Moved Count',
-                  'Trades # TB Count', 'TB Moved Count', 'Trades # DCA Triggered Count', 'Net Profit', 'Net Profit, %', 'Avg Monthly Net Profit, %', 'Max Drawdown, %', 'Max Drawdown Length',
-                  'Net Profit To Max Drawdown', 'Win Rate, %', 'Avg # Bars In Trades', 'Bars In Trades Ratio, %',
-                  'Winning Months, %', 'Profit Factor', 'Buy & Hold Return, %', 'SQN', 'Equity Curve Angle',
-                  'Equity Curve Slope', 'Equity Curve Intercept', 'Equity Curve R-value', 'Equity Curve R-Squared value', 'Equity Curve P-value', 'Equity Curve Stderr',
-                  'MC: Risk Of Ruin, %',  'MC: Median Drawdown, %', 'MC: Median Return, %']
+        result = [
+            ColumnName.STRATEGY_ID,
+            ColumnName.EXCHANGE,
+            ColumnName.CURRENCY_PAIR,
+            ColumnName.TIMEFRAME,
+            ColumnName.PARAMETERS,
+            ColumnName.WFO_CYCLE_ID,
+            ColumnName.WFO_CYCLE_TRAINING_ID,
+            ColumnName.WFO_TRAINING_PERIOD,
+            ColumnName.WFO_TESTING_PERIOD,
+            ColumnName.TRAINING_DATE_RANGE,
+            ColumnName.TESTING_DATE_RANGE,
+            ColumnName.START_CASH,
+            ColumnName.LOT_SIZE,
+            ColumnName.PROCESSING_STATUS,
+            ColumnName.TOTAL_CLOSED_TRADES,
+            ColumnName.TRADES_NUM_SL_COUNT,
+            ColumnName.TRADES_NUM_TSL_COUNT,
+            ColumnName.TSL_MOVED_COUNT,
+            ColumnName.TRADES_NUM_TP_COUNT,
+            ColumnName.TRADES_NUM_TTP_COUNT,
+            ColumnName.TTP_MOVED_COUNT,
+            ColumnName.TRADES_NUM_TB_COUNT,
+            ColumnName.TB_MOVED_COUNT,
+            ColumnName.TRADES_NUM_DCA_TRIGGERED_COUNT,
+            ColumnName.NET_PROFIT,
+            ColumnName.NET_PROFIT_PCT,
+            ColumnName.AVG_MONTHLY_NET_PROFIT_PCT,
+            ColumnName.MAX_DRAWDOWN_PCT,
+            ColumnName.MAX_DRAWDOWN_LENGTH,
+            ColumnName.NET_PROFIT_TO_MAX_DRAWDOWN,
+            ColumnName.WIN_RATE_PCT,
+            ColumnName.AVG_NUM_BARS_IN_TRADES,
+            ColumnName.BARS_IN_TRADES_RATIO_PCT,
+            ColumnName.WINNING_MONTHS_PCT,
+            ColumnName.PROFIT_FACTOR,
+            ColumnName.BUY_AND_HOLD_RETURN_PCT,
+            ColumnName.SQN,
+            ColumnName.EQUITY_CURVE_ANGLE,
+            ColumnName.EQUITY_CURVE_SLOPE,
+            ColumnName.EQUITY_CURVE_INTERCEPT,
+            ColumnName.EQUITY_CURVE_R_VALUE,
+            ColumnName.EQUITY_CURVE_R_SQUARED_VALUE,
+            ColumnName.EQUITY_CURVE_P_VALUE,
+            ColumnName.EQUITY_CURVE_STDERR,
+            ColumnName.MC_RISK_OF_RUIN_PCT,
+            ColumnName.MC_MEDIAN_DRAWDOWN_PCT,
+            ColumnName.MC_MEDIAN_RETURN_PCT
+        ]
 
         column_names = self.get_monthly_stats_column_names()
         result.extend(column_names)
@@ -61,11 +109,30 @@ class BacktestModel(object):
         return result
 
     def get_equity_curve_header_names(self):
-        return ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters', 'WFO Cycle', 'Date Range', 'Equity Curve Data Points']
+        return [
+            ColumnName.STRATEGY_ID,
+            ColumnName.EXCHANGE,
+            ColumnName.CURRENCY_PAIR,
+            ColumnName.TIMEFRAME,
+            ColumnName.PARAMETERS,
+            ColumnName.WFO_CYCLE_ID,
+            ColumnName.WFO_CYCLE_TRAINING_ID,
+            ColumnName.TRAINING_DATE_RANGE,
+            ColumnName.TESTING_DATE_RANGE,
+            ColumnName.EQUITY_CURVE_DATA_POINTS
+        ]
 
-    def filter_top_results(self, number_top_rows):
-        self._report_rows = sorted(self._report_rows, key=lambda x: (x.run_key.wfo_cycle, x.analyzer_data.net_profit_to_maxdd), reverse=True)
+    def filter_wfo_training_top_results(self, number_top_rows):
+        self._report_rows = sorted(self._report_rows, key=lambda x: (x.run_key.wfo_cycle_id, x.analyzer_data.net_profit_to_maxdd,  x.equity_curve_data.equitycurvervalue), reverse=True)
         self._report_rows = self._report_rows[:number_top_rows]
+
+        counter = 1
+        for report_row in self._report_rows:
+            report_row.run_key.wfo_cycle_training_id = counter
+            counter = counter + 1
+
+    def sort_wfo_testing_results(self):
+        self._report_rows = sorted(self._report_rows, key=lambda x: (x.run_key.strategyid, x.run_key.exchange, x.run_key.currency_pair, x.run_key.timeframe, x.run_key.wfo_cycle_training_id, x.run_key.wfo_cycle_id), reverse=False)
 
     def get_monthly_stats_data(self, entry):
         monthly_netprofit = round(entry.pnl.netprofit.total) if entry else 0
@@ -97,6 +164,12 @@ class BacktestModel(object):
     def get_equity_curve_report_data_arr(self):
         return [r.equity_curve_report_data.get_report_data() for r in self._report_rows]
 
+    def get_report_row_by_wfo_cycle(self, wfo_cycle_id, wfo_cycle_training_id):
+        for row in self._report_rows:
+            if row.run_key.wfo_cycle_id == wfo_cycle_id and row.run_key.wfo_cycle_training_id == wfo_cycle_training_id:
+                return row
+        return None
+
 
 class BacktestReportRow(object):
     def __init__(self, run_key, analyzer_data, equity_curve_data, montecarlo_data):
@@ -104,7 +177,7 @@ class BacktestReportRow(object):
         self.analyzer_data = analyzer_data
         self.equity_curve_data = equity_curve_data
         self.montecarlo_data = montecarlo_data
-        self.equity_curve_report_data = BacktestEquityCurveReportData(run_key, analyzer_data.daterange, equity_curve_data.equitycurvedata)
+        self.equity_curve_report_data = BacktestEquityCurveReportData(run_key, analyzer_data.trainingdaterange, analyzer_data.testingdaterange, equity_curve_data.equitycurvedata)
 
     def get_row_data(self):
         result = [
@@ -113,8 +186,12 @@ class BacktestReportRow(object):
             self.run_key.currency_pair,
             self.run_key.timeframe,
             self.run_key.parameters,
-            self.run_key.wfo_cycle,
-            self.analyzer_data.daterange,
+            self.run_key.wfo_cycle_id,
+            self.run_key.wfo_cycle_training_id,
+            self.analyzer_data.wfo_training_period,
+            self.analyzer_data.wfo_testing_period,
+            self.analyzer_data.trainingdaterange,
+            self.analyzer_data.testingdaterange,
             self.analyzer_data.startcash,
             self.analyzer_data.lot_size,
             self.analyzer_data.processing_status,
@@ -156,9 +233,10 @@ class BacktestReportRow(object):
 
 
 class BacktestEquityCurveReportData(object):
-    def __init__(self, run_key, daterange, equitycurvedata):
+    def __init__(self, run_key, trainingdaterange, testingdaterange, equitycurvedata):
         self.run_key = run_key
-        self.daterange = daterange
+        self.trainingdaterange = trainingdaterange
+        self.testingdaterange = testingdaterange
         self.equitycurvedata = equitycurvedata
 
     def get_report_data(self):
@@ -168,8 +246,10 @@ class BacktestEquityCurveReportData(object):
             self.run_key.currency_pair,
             self.run_key.timeframe,
             self.run_key.parameters,
-            self.run_key.wfo_cycle,
-            self.daterange,
+            self.run_key.wfo_cycle_id,
+            self.run_key.wfo_cycle_training_id,
+            self.trainingdaterange,
+            self.testingdaterange,
             self.equitycurvedata
         ]
         return result
