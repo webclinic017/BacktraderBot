@@ -27,14 +27,13 @@ import os
 import csv
 import pandas as pd
 import objgraph
-import inspect
 import sys
 from numbers import Number
 from collections.abc import Set, Mapping
 from collections import deque
 import gc
 
-STEP1_NUMBER_TOP_ROWS = 10
+STEP1_NUMBER_TOP_ROWS = 5
 
 zero_depth_bases = (str, bytes, Number, range, bytearray)
 iteritems = 'items'

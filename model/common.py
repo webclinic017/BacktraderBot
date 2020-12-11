@@ -1,22 +1,3 @@
-class LinearRegressionStats(object):
-    angle = None
-    slope = None
-    intercept = None
-    r_value = None
-    p_value = None
-    std_err = None
-    r_squared = None
-
-    def __init__(self, angle, slope, intercept, r_value, r_squared, p_value, std_err):
-        self.angle = angle
-        self.slope = slope
-        self.intercept = intercept
-        self.r_value = r_value
-        self.r_squared = r_squared
-        self.p_value = p_value
-        self.std_err = std_err
-
-
 class WFOMode(object):
     WFO_MODE_NONE = 1
     WFO_MODE_TRAINING = 2
@@ -57,6 +38,7 @@ class BacktestAnalyzerData(object):
         self.wfo_testing_period = None
         self.trainingdaterange = None
         self.testingdaterange = None
+        self.num_wfo_cycles = None
         self.startcash = None
         self.lot_size = None
         self.processing_status = None
@@ -88,14 +70,14 @@ class BacktestAnalyzerData(object):
 
 class EquityCurveData(object):
     def __init__(self):
-        self.equitycurvedata = None
-        self.equitycurveangle = None
-        self.equitycurveslope = None
-        self.equitycurveintercept = None
-        self.equitycurvervalue = None
-        self.equitycurversquaredvalue = None
-        self.equitycurvepvalue = None
-        self.equitycurvestderr = None
+        self.data = None
+        self.angle = None
+        self.slope = None
+        self.intercept = None
+        self.rvalue = None
+        self.rsquaredvalue = None
+        self.pvalue = None
+        self.stderr = None
 
 
 class MonteCarloData(object):
@@ -106,7 +88,7 @@ class MonteCarloData(object):
 
 
 class WFOCycleInfo(object):
-    def __init__(self, wfo_cycle_id, wfo_training_period, wfo_testing_period, training_start_date, training_end_date, testing_start_date, testing_end_date):
+    def __init__(self, wfo_cycle_id, wfo_training_period, wfo_testing_period, training_start_date, training_end_date, testing_start_date, testing_end_date, num_wfo_cycles):
         self.wfo_cycle_id = wfo_cycle_id
         self.wfo_training_period = wfo_training_period
         self.wfo_testing_period = wfo_testing_period
@@ -114,6 +96,7 @@ class WFOCycleInfo(object):
         self.training_end_date = training_end_date
         self.testing_start_date = testing_start_date
         self.testing_end_date = testing_end_date
+        self.num_wfo_cycles = num_wfo_cycles
 
 
 class WFOTestingData(object):
@@ -122,8 +105,11 @@ class WFOTestingData(object):
         self.exchange       = exchange
         self.currency_pair  = currency_pair
         self.timeframe      = timeframe
-        self.wfo_cycles_dict     = dict()   # dict:  WFO Cycle Id -> WFOCycleInfo
-        self.trained_params_dict = dict()   # dict:  WFO Cycle Training Id -> Dict: WFO Cycle Id -> Trained Parameters
+        self.wfo_cycles_dict         = dict()   # dict:  WFO Cycle Id -> WFOCycleInfo
+        self.training_id_params_dict = dict()   # dict:  WFO Cycle Training Id -> Dict: WFO Cycle Id -> Trained Parameters
+
+    def get_wfo_cycles_list(self):
+        return list(self.wfo_cycles_dict.values())
 
     def set_wfo_cycle(self, wfo_cycle_info):
         self.wfo_cycles_dict[wfo_cycle_info.wfo_cycle_id] = wfo_cycle_info
@@ -131,5 +117,21 @@ class WFOTestingData(object):
     def get_num_wfo_cycles(self):
         return len(self.wfo_cycles_dict.keys())
 
-    def get_num_trained_params(self):
-        return len(self.trained_params_dict.keys())
+    def get_num_training_ids(self):
+        return len(self.training_id_params_dict.keys())
+
+    def getdaterange(self, date1, date2):
+        return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(date1.year, date1.month, date1.day, date2.year, date2.month, date2.day)
+
+    def get_total_training_daterange_str(self):
+        wfo_cycles_list = list(self.wfo_cycles_dict.values())
+        first_cycle = wfo_cycles_list[0]
+        last_cycle = wfo_cycles_list[-1]
+        return self.getdaterange(first_cycle.training_start_date, last_cycle.training_end_date)
+
+    def get_total_testing_daterange_str(self):
+        wfo_cycles_list = list(self.wfo_cycles_dict.values())
+        first_cycle = wfo_cycles_list[0]
+        last_cycle = wfo_cycles_list[-1]
+        return self.getdaterange(first_cycle.testing_start_date, last_cycle.testing_end_date)
+

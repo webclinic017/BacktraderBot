@@ -81,6 +81,7 @@ class BacktestModelGenerator(object):
                 analyzer_data.wfo_testing_period = wfo_cycle_info.wfo_testing_period
                 analyzer_data.trainingdaterange = WFOHelper.getdaterange(wfo_cycle_info.training_start_date.date(), wfo_cycle_info.training_end_date.date())
                 analyzer_data.testingdaterange = WFOHelper.getdaterange(wfo_cycle_info.testing_start_date.date(), wfo_cycle_info.testing_end_date.date())
+                analyzer_data.num_wfo_cycles = wfo_cycle_info.num_wfo_cycles
                 analyzer_data.startcash = strategy.params.startcash
                 analyzer_data.lot_size = self.getlotsize(strategy_config.lotsize, strategy_config.lottype)
                 analyzer_data.processing_status = ta_analysis.processing_status if self.exists(ta_analysis, ['processing_status']) else "N/A"
@@ -103,7 +104,7 @@ class BacktestModelGenerator(object):
                 analyzer_data.avg_monthly_net_profit_pct = '{}%'.format(self.get_avg_monthly_net_profit_pct(monthly_stats, num_months))
                 analyzer_data.max_drawdown_pct = round(dd_analysis.max.drawdown, 2)
                 analyzer_data.max_drawdown_length = round(dd_analysis.max.len)
-                analyzer_data.net_profit_to_maxdd = round(abs(analyzer_data.net_profit_pct / dd_analysis.max.drawdown), 2) if analyzer_data.max_drawdown_pct != 0 else 0
+                analyzer_data.net_profit_to_maxdd = round(analyzer_data.net_profit_pct / abs(dd_analysis.max.drawdown), 2) if analyzer_data.max_drawdown_pct != 0 else 0
                 total_won = ta_analysis.won.total if self.exists(ta_analysis, ['won', 'total']) else 0
                 analyzer_data.win_rate_pct = '{}%'.format(round((total_won / analyzer_data.total_closed_trades) * 100, 2)) if analyzer_data.total_closed_trades > 0 else "0.0%"
                 analyzer_data.trades_len_avg = round(ta_analysis.len.average) if self.exists(ta_analysis, ['len', 'average']) else 0
@@ -114,18 +115,18 @@ class BacktestModelGenerator(object):
                 analyzer_data.sqn_number = round(sqn_analysis.sqn, 2)
 
                 equity_curve_data = EquityCurveData()
-                equity_curve_data.equitycurvedata = ta_analysis.total.equity.equitycurvedata if self.exists(ta_analysis, ['total', 'equity', 'equitycurvedata']) else {}
-                equity_curve_data.equitycurveangle = round(ta_analysis.total.equity.stats.angle) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'angle']) else 0
-                equity_curve_data.equitycurveslope = round(ta_analysis.total.equity.stats.slope, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'slope']) else 0
-                equity_curve_data.equitycurveintercept = round(ta_analysis.total.equity.stats.intercept, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'intercept']) else 0
-                equity_curve_data.equitycurvervalue = round(ta_analysis.total.equity.stats.r_value, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'r_value']) else 0
-                equity_curve_data.equitycurversquaredvalue = round(ta_analysis.total.equity.stats.r_squared, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'r_squared']) else 0
-                equity_curve_data.equitycurvepvalue = round(ta_analysis.total.equity.stats.p_value, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'p_value']) else 0
-                equity_curve_data.equitycurvestderr = round(ta_analysis.total.equity.stats.std_err, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'std_err']) else 0
+                equity_curve_data.data = ta_analysis.total.equity.equitycurvedata if self.exists(ta_analysis, ['total', 'equity', 'equitycurvedata']) else {}
+                equity_curve_data.angle = round(ta_analysis.total.equity.stats.angle) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'angle']) else 0
+                equity_curve_data.slope = round(ta_analysis.total.equity.stats.slope, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'slope']) else 0
+                equity_curve_data.intercept = round(ta_analysis.total.equity.stats.intercept, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'intercept']) else 0
+                equity_curve_data.rvalue = round(ta_analysis.total.equity.stats.r_value, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'r_value']) else 0
+                equity_curve_data.rsquaredvalue = round(ta_analysis.total.equity.stats.r_squared, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'r_squared']) else 0
+                equity_curve_data.pvalue = round(ta_analysis.total.equity.stats.p_value, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'p_value']) else 0
+                equity_curve_data.stderr = round(ta_analysis.total.equity.stats.std_err, 3) if self.exists(ta_analysis, ['total', 'equity', 'stats', 'std_err']) else 0
 
                 montecarlo_data = MonteCarloData()
-                montecarlo_data.mc_riskofruin_pct =   self.get_pct_fmt(100 * ta_analysis.total.mcsimulation.risk_of_ruin) if self.exists(ta_analysis, ['total', 'mcsimulation', 'risk_of_ruin']) else "0.0%"
-                montecarlo_data.mc_mediandd_pct =     self.get_pct_fmt(100 * ta_analysis.total.mcsimulation.median_dd) if self.exists(ta_analysis, ['total', 'mcsimulation', 'median_dd']) else "0.0%"
+                montecarlo_data.mc_riskofruin_pct   = self.get_pct_fmt(100 * ta_analysis.total.mcsimulation.risk_of_ruin) if self.exists(ta_analysis, ['total', 'mcsimulation', 'risk_of_ruin']) else "0.0%"
+                montecarlo_data.mc_mediandd_pct     = self.get_pct_fmt(100 * ta_analysis.total.mcsimulation.median_dd) if self.exists(ta_analysis, ['total', 'mcsimulation', 'median_dd']) else "0.0%"
                 montecarlo_data.mc_medianreturn_pct = self.get_pct_fmt(100 * ta_analysis.total.mcsimulation.median_return) if self.exists(ta_analysis, ['total', 'mcsimulation', 'median_return']) else "0.0%"
 
                 if self._needfiltering is False or self._needfiltering is True and analyzer_data.net_profit > 0 and analyzer_data.total_closed_trades > 0:

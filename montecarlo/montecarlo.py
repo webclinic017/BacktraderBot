@@ -18,14 +18,14 @@ class MonteCarloSimulator(object):
     def __init__(self):
         None
 
-    def calculate(self, netprofitdata_series, startcash):
+    def calculate(self, series, startcash):
 
-        if not isinstance(netprofitdata_series, pd.Series):
-            raise ValueError("Net profit data must be a Pandas Series")
+        if not isinstance(series, pd.Series):
+            raise ValueError("Data must be a Pandas Series")
 
-        results = [netprofitdata_series.values]
+        results = [series.values]
         for i in range(1, DEFAULT_SIMS_NUMBER):
-            results.append(netprofitdata_series.sample(frac=1).values)
+            results.append(series.sample(frac=1).values)
 
         df = pd.DataFrame(results).T
         df.rename(columns={0: 'original'}, inplace=True)

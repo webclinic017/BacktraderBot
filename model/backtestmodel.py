@@ -9,6 +9,7 @@ class BacktestModel(object):
     def __init__(self, wfo_mode, wfo_cycles):
         self._wfo_mode = wfo_mode
         self._report_rows = []
+        self._wfo_cycles = wfo_cycles
         self._monthly_stats_column_names = self.resolve_monthly_stats_column_names(wfo_mode, wfo_cycles)
         self._equity_curve_report_rows = []
 
@@ -65,6 +66,7 @@ class BacktestModel(object):
             ColumnName.WFO_TESTING_PERIOD,
             ColumnName.TRAINING_DATE_RANGE,
             ColumnName.TESTING_DATE_RANGE,
+            ColumnName.NUM_WFO_CYCLES,
             ColumnName.START_CASH,
             ColumnName.LOT_SIZE,
             ColumnName.PROCESSING_STATUS,
@@ -119,11 +121,12 @@ class BacktestModel(object):
             ColumnName.WFO_CYCLE_TRAINING_ID,
             ColumnName.TRAINING_DATE_RANGE,
             ColumnName.TESTING_DATE_RANGE,
+            ColumnName.NUM_WFO_CYCLES,
             ColumnName.EQUITY_CURVE_DATA_POINTS
         ]
 
     def filter_wfo_training_top_results(self, number_top_rows):
-        self._report_rows = sorted(self._report_rows, key=lambda x: (x.run_key.wfo_cycle_id, x.analyzer_data.net_profit_to_maxdd,  x.equity_curve_data.equitycurvervalue), reverse=True)
+        self._report_rows = sorted(self._report_rows, key=lambda x: (x.run_key.wfo_cycle_id, x.analyzer_data.net_profit_to_maxdd,  x.equity_curve_data.rvalue), reverse=True)
         self._report_rows = self._report_rows[:number_top_rows]
 
         counter = 1
@@ -177,7 +180,7 @@ class BacktestReportRow(object):
         self.analyzer_data = analyzer_data
         self.equity_curve_data = equity_curve_data
         self.montecarlo_data = montecarlo_data
-        self.equity_curve_report_data = BacktestEquityCurveReportData(run_key, analyzer_data.trainingdaterange, analyzer_data.testingdaterange, equity_curve_data.equitycurvedata)
+        self.equity_curve_report_data = BacktestEquityCurveReportData(run_key, analyzer_data, equity_curve_data.data)
 
     def get_row_data(self):
         result = [
@@ -192,6 +195,7 @@ class BacktestReportRow(object):
             self.analyzer_data.wfo_testing_period,
             self.analyzer_data.trainingdaterange,
             self.analyzer_data.testingdaterange,
+            self.analyzer_data.num_wfo_cycles,
             self.analyzer_data.startcash,
             self.analyzer_data.lot_size,
             self.analyzer_data.processing_status,
@@ -218,13 +222,13 @@ class BacktestReportRow(object):
             self.analyzer_data.profit_factor,
             self.analyzer_data.buy_and_hold_return_pct,
             self.analyzer_data.sqn_number,
-            self.equity_curve_data.equitycurveangle,
-            self.equity_curve_data.equitycurveslope,
-            self.equity_curve_data.equitycurveintercept,
-            self.equity_curve_data.equitycurvervalue,
-            self.equity_curve_data.equitycurversquaredvalue,
-            self.equity_curve_data.equitycurvepvalue,
-            self.equity_curve_data.equitycurvestderr,
+            self.equity_curve_data.angle,
+            self.equity_curve_data.slope,
+            self.equity_curve_data.intercept,
+            self.equity_curve_data.rvalue,
+            self.equity_curve_data.rsquaredvalue,
+            self.equity_curve_data.pvalue,
+            self.equity_curve_data.stderr,
             self.montecarlo_data.mc_riskofruin_pct,
             self.montecarlo_data.mc_mediandd_pct,
             self.montecarlo_data.mc_medianreturn_pct
@@ -233,10 +237,9 @@ class BacktestReportRow(object):
 
 
 class BacktestEquityCurveReportData(object):
-    def __init__(self, run_key, trainingdaterange, testingdaterange, equitycurvedata):
+    def __init__(self, run_key, analyzer_data, equitycurvedata):
         self.run_key = run_key
-        self.trainingdaterange = trainingdaterange
-        self.testingdaterange = testingdaterange
+        self.analyzer_data = analyzer_data
         self.equitycurvedata = equitycurvedata
 
     def get_report_data(self):
@@ -248,8 +251,9 @@ class BacktestEquityCurveReportData(object):
             self.run_key.parameters,
             self.run_key.wfo_cycle_id,
             self.run_key.wfo_cycle_training_id,
-            self.trainingdaterange,
-            self.testingdaterange,
+            self.analyzer_data.trainingdaterange,
+            self.analyzer_data.testingdaterange,
+            self.analyzer_data.num_wfo_cycles,
             self.equitycurvedata
         ]
         return result

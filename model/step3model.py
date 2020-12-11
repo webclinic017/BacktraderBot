@@ -1,89 +1,151 @@
-from model.backtestmodel import BacktestModel
+from model.reports_common import ColumnName
+import pandas as pd
 
 
 class Step3Model(object):
 
-    _INDEX_ALL_KEYS_ARR = ["Strategy ID", "Exchange", "Currency Pair", "Timeframe", "Parameters"]
+    _INDEX_COLUMNS = [ColumnName.STRATEGY_ID, ColumnName.EXCHANGE, ColumnName.CURRENCY_PAIR, ColumnName.TIMEFRAME]
 
-    def __init__(self, step2_df, fromyear, frommonth, toyear, tomonth, columnnameprefix):
-        self._step2_df = step2_df
-        self._step3_backtest_model = BacktestModel(fromyear, frommonth, toyear, tomonth)
-        self._columnnameprefix = columnnameprefix
-        self.combined_lr_stats = {}
+    def __init__(self):
+        self._report_rows = []
+        self._equity_curve_report_rows = []
 
-    def get_backtest_model(self):
-        return self._step3_backtest_model
-
-    def get_num_months(self):
-        return self._step3_backtest_model.get_num_months()
-
-    def append_prefix(self, arr):
-        return ["{}: {}".format(self._columnnameprefix, x) for x in arr]
+    def add_result_row(self, run_key, analyzer_data, equity_curve_data, montecarlo_data):
+        row = Step3ReportRow(run_key, analyzer_data, equity_curve_data, montecarlo_data)
+        self._report_rows.append(row)
 
     def get_header_names(self):
-        result = self._step2_df.columns.tolist()
-        bktest_header_names = self._step3_backtest_model.get_header_names()
-        bktest_header_names = self.strip_unnecessary_fields(bktest_header_names)
-        combined_arr = []
-        combined_arr.extend(bktest_header_names)
-        bktest_header_names = self.append_prefix(combined_arr)
-        result.extend(bktest_header_names)
-        combined_total_stats_columns = ['Combined Net Profit']
-        combined_total_stats_columns = self.append_prefix(combined_total_stats_columns)
-        result.extend(combined_total_stats_columns)
-        combined_lr_stats_columns = ['Combined Equity Curve Angle', 'Combined Equity Curve Slope', 'Combined Equity Curve Intercept', 'Combined Equity Curve R-value', 'Combined Equity Curve R-Squared value']
-        combined_lr_stats_columns = self.append_prefix(combined_lr_stats_columns)
-        result.extend(combined_lr_stats_columns)
-        return result
-
-    def get_equitycurvedata_model(self):
-        return self._step3_backtest_model.get_equitycurvedata_model()
-
-    def strip_unnecessary_fields(self, arr):
-        arr = arr[5:]
-        return arr
-
-    def get_combined_net_profit(self, step2_net_profit, step3_net_profit):
-        return step2_net_profit + step3_net_profit
-
-    def get_combined_total_stats_row(self, step2_row_df, step3_net_profit):
-        return [
-            self.get_combined_net_profit(step2_row_df["Net Profit"].values[0], step3_net_profit)
+        result = [
+            ColumnName.STRATEGY_ID,
+            ColumnName.EXCHANGE,
+            ColumnName.CURRENCY_PAIR,
+            ColumnName.TIMEFRAME,
+            ColumnName.PARAMETERS,
+            ColumnName.WFO_CYCLE_TRAINING_ID,
+            ColumnName.WFO_TRAINING_PERIOD,
+            ColumnName.WFO_TESTING_PERIOD,
+            ColumnName.TRAINING_DATE_RANGE,
+            ColumnName.TESTING_DATE_RANGE,
+            ColumnName.NUM_WFO_CYCLES,
+            ColumnName.START_CASH,
+            ColumnName.LOT_SIZE,
+            ColumnName.TOTAL_CLOSED_TRADES,
+            ColumnName.NET_PROFIT,
+            ColumnName.NET_PROFIT_PCT,
+            ColumnName.MAX_DRAWDOWN_PCT,
+            ColumnName.MAX_DRAWDOWN_LENGTH,
+            ColumnName.NET_PROFIT_TO_MAX_DRAWDOWN,
+            ColumnName.WIN_RATE_PCT,
+            ColumnName.EQUITY_CURVE_ANGLE,
+            ColumnName.EQUITY_CURVE_SLOPE,
+            ColumnName.EQUITY_CURVE_INTERCEPT,
+            ColumnName.EQUITY_CURVE_R_VALUE,
+            ColumnName.EQUITY_CURVE_R_SQUARED_VALUE,
+            ColumnName.EQUITY_CURVE_P_VALUE,
+            ColumnName.EQUITY_CURVE_STDERR,
+            ColumnName.MC_RISK_OF_RUIN_PCT,
+            ColumnName.MC_MEDIAN_DRAWDOWN_PCT,
+            ColumnName.MC_MEDIAN_RETURN_PCT
         ]
 
-    def get_combined_lr_stats_row(self, combined_lr_stats, row_key):
-        stats = combined_lr_stats[row_key]
-        return [round(stats.angle), round(stats.slope, 3), round(stats.intercept, 3), round(stats.r_value, 3), round(stats.r_squared, 3)]
+        return result
 
-    def merge_results(self, step2_df, step3_backtest_model):
-        final_results = []
-        step3_bktest_result_arr = step3_backtest_model.get_model_data_arr()
-        step2_df_copy = step2_df.copy()
-        step2_df_copy = step2_df_copy.set_index(self._INDEX_ALL_KEYS_ARR)
-        for step3_bk_row in step3_bktest_result_arr:
-            strategy = step3_bk_row[0]
-            exchange = step3_bk_row[1]
-            symbol = step3_bk_row[2]
-            timeframe = step3_bk_row[3]
-            params = step3_bk_row[4]
-            step3_net_profit = step3_bk_row[18]
-            step3_bk_row = self.strip_unnecessary_fields(step3_bk_row)
-            row_key = (strategy, exchange, symbol, timeframe, params)
-            step2_row_df = step2_df_copy.loc[[row_key]]
-            if len(step2_row_df) > 0:
-                result_arr = list(step2_row_df.index.values[0])
-                step2_row = list(step2_row_df.values[0])
-                result_arr.extend(step2_row)
-                result_arr.extend(step3_bk_row)
-                result_arr.extend(self.get_combined_total_stats_row(step2_row_df, step3_net_profit))
-                result_arr.extend(self.get_combined_lr_stats_row(self.combined_lr_stats, row_key))
-                final_results.append(result_arr)
-        return final_results
+    def get_equity_curve_header_names(self):
+        return [
+            ColumnName.STRATEGY_ID,
+            ColumnName.EXCHANGE,
+            ColumnName.CURRENCY_PAIR,
+            ColumnName.TIMEFRAME,
+            ColumnName.PARAMETERS,
+            ColumnName.WFO_CYCLE_TRAINING_ID,
+            ColumnName.TESTING_DATE_RANGE,
+            ColumnName.EQUITY_CURVE_DATA_POINTS
+        ]
 
     def get_model_data_arr(self):
-        result = self.merge_results(self._step2_df, self._step3_backtest_model)
+        result = []
+        for row in self._report_rows:
+            report_row = row.get_row_data()
+            result.append(report_row)
+        return result
+
+    def get_equity_curve_report_data_arr(self):
+        return [r.equity_curve_report_data.get_report_data() for r in self._report_rows]
+
+    def get_report_row_by_wfo_cycle(self, wfo_cycle_id, wfo_cycle_training_id):
+        for row in self._report_rows:
+            if row.run_key.wfo_cycle_id == wfo_cycle_id and row.run_key.wfo_cycle_training_id == wfo_cycle_training_id:
+                return row
+        return None
+
+    def get_model_df(self):
+        df = pd.DataFrame(data=self.get_model_data_arr(), columns=self.get_header_names())
+        return df.set_index(self._INDEX_COLUMNS)
+
+    def get_equity_curve_model_df(self):
+        df = pd.DataFrame(data=self.get_equity_curve_report_data_arr(), columns=self.get_equity_curve_header_names())
+        return df.set_index(self._INDEX_COLUMNS)
+
+
+class Step3ReportRow(object):
+    def __init__(self, run_key, analyzer_data, equity_curve_data, montecarlo_data):
+        self.run_key = run_key
+        self.analyzer_data = analyzer_data
+        self.equity_curve_data = equity_curve_data
+        self.montecarlo_data = montecarlo_data
+        self.equity_curve_report_data = Step3EquityCurveReportData(run_key, analyzer_data, equity_curve_data.data)
+
+    def get_row_data(self):
+        result = [
+            self.run_key.strategyid,
+            self.run_key.exchange,
+            self.run_key.currency_pair,
+            self.run_key.timeframe,
+            self.run_key.parameters,
+            self.run_key.wfo_cycle_training_id,
+            self.analyzer_data.wfo_training_period,
+            self.analyzer_data.wfo_testing_period,
+            self.analyzer_data.trainingdaterange,
+            self.analyzer_data.testingdaterange,
+            self.analyzer_data.num_wfo_cycles,
+            self.analyzer_data.startcash,
+            self.analyzer_data.lot_size,
+            self.analyzer_data.total_closed_trades,
+            self.analyzer_data.net_profit,
+            self.analyzer_data.net_profit_pct,
+            self.analyzer_data.max_drawdown_pct,
+            self.analyzer_data.max_drawdown_length,
+            self.analyzer_data.net_profit_to_maxdd,
+            self.analyzer_data.win_rate_pct,
+            self.equity_curve_data.angle,
+            self.equity_curve_data.slope,
+            self.equity_curve_data.intercept,
+            self.equity_curve_data.rvalue,
+            self.equity_curve_data.rsquaredvalue,
+            self.equity_curve_data.pvalue,
+            self.equity_curve_data.stderr,
+            self.montecarlo_data.mc_riskofruin_pct,
+            self.montecarlo_data.mc_mediandd_pct,
+            self.montecarlo_data.mc_medianreturn_pct
+        ]
         return result
 
 
+class Step3EquityCurveReportData(object):
+    def __init__(self, run_key, analyzer_data, equitycurvedata):
+        self.run_key = run_key
+        self.analyzer_data = analyzer_data
+        self.equitycurvedata = equitycurvedata
 
-
+    def get_report_data(self):
+        result = [
+            self.run_key.strategyid,
+            self.run_key.exchange,
+            self.run_key.currency_pair,
+            self.run_key.timeframe,
+            self.run_key.parameters,
+            self.run_key.wfo_cycle_training_id,
+            self.analyzer_data.testingdaterange,
+            self.equitycurvedata
+        ]
+        return result

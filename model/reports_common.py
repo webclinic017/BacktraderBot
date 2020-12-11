@@ -9,6 +9,7 @@ class ColumnName(object):
     WFO_CYCLE_TRAINING_ID = 'WFO Cycle Training ID'
     WFO_TRAINING_PERIOD = 'WFO Training Period'
     WFO_TESTING_PERIOD = 'WFO Testing Period'
+    NUM_WFO_CYCLES = 'Number Of WFO Cycles'
     TRAINING_DATE_RANGE = 'Training Date Range'
     TESTING_DATE_RANGE = 'Testing Date Range'
     START_CASH = 'Start Cash'

@@ -9,11 +9,7 @@ class AppConfig(object):
             "DEFAULT_LOT_TYPE": "Fixed",
             "STEP1_ENABLE_FILTERING": False,
             "STEP2_ENABLE_FILTERING": False,
-            "STEP4_ENABLE_FILTERING": False,
-            "STEP5_ENABLE_FILTERING": True,
-            "STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION": False,
-            "STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
-            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": False,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
+            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": True,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
         }
 
     _DEFAULT_STRATEGY_PARAMS_DICT = {
@@ -22,24 +18,24 @@ class AppConfig(object):
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSD",
                 "timeframe": "3h",
-                "startcash": 1159.979261,
+                "startcash": 1500,
                 "lotsize": 1470,
                 "lottype": "Fixed",
                 "startyear": 2018,
-                "startmonth": 12,
-                "startday": 10,
+                "startmonth": 4,
+                "startday": 1,
                 "num_wfo_cycles": 1,
-                "wfo_training_period": 15,
+                "wfo_training_period": 200,
                 "wfo_test_period": 15
             },
             {
                 "needlong": True,
                 "needshort": True,
                 "usefastsma": True,
-                "fastlen": 3,
-                "slowlen": 20,
+                "fastlen": 7,
+                "slowlen": 24,
                 "bars": 2,
-                "needex": True,
+                "needex": False,
                 "exitmode": 1,
                 "sl": 0,
                 "tslflag": False,
@@ -656,22 +652,6 @@ class AppConfig(object):
     @classmethod
     def is_global_step2_enable_filtering(cls):
         return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP2_ENABLE_FILTERING"]
-
-    @classmethod
-    def is_global_step4_enable_filtering(cls):
-        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP4_ENABLE_FILTERING"]
-
-    @classmethod
-    def is_global_step5_enable_filtering(cls):
-        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP5_ENABLE_FILTERING"]
-
-    @classmethod
-    def is_global_step2_enable_equitycurve_img_generation(cls):
-        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP2_ENABLE_EQUITYCURVE_IMG_GENERATION"]
-
-    @classmethod
-    def is_global_step4_enable_equitycurve_img_generation(cls):
-        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP4_ENABLE_EQUITYCURVE_IMG_GENERATION"]
 
     @classmethod
     def is_global_equitycurve_img_x_axis_trades(cls):

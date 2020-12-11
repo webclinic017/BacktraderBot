@@ -1,5 +1,5 @@
 '''
-Step 3 of backtesting process
+Step 2 - WFO Testing process
 '''
 
 import backtrader as bt
@@ -21,6 +21,7 @@ from model.backtestmodel import BacktestModel
 from model.backtestmodelgenerator import BacktestModelGenerator
 from model.common import WFOMode
 from config.strategy_config import AppConfig
+from wfo.wfo_helper import WFOHelper
 import os
 import csv
 import pandas as pd
@@ -156,16 +157,6 @@ class WFOStep2(object):
         df = df.sort_index()
         return df
 
-    def get_unique_index_values(self, df, name):
-        return df.index.get_level_values(name).unique()
-
-    def get_unique_index_value_lists(self, df):
-        strat_list = self.get_unique_index_values(df, ColumnName.STRATEGY_ID)
-        exc_list = self.get_unique_index_values(df, ColumnName.EXCHANGE)
-        sym_list = self.get_unique_index_values(df, ColumnName.CURRENCY_PAIR)
-        tf_list = self.get_unique_index_values(df, ColumnName.TIMEFRAME)
-        return strat_list, exc_list, sym_list, tf_list
-
     def get_output_path(self, base_dir, args):
         return '{}/strategyrun_results/{}'.format(base_dir, args.runid)
 
@@ -190,35 +181,6 @@ class WFOStep2(object):
         self._output_file2_full_name = self.get_output_filename2(output_path, args)
         self._ofile2 = open(self._output_file2_full_name, "w")
         self._writer2 = csv.writer(self._ofile2, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-
-    def get_processing_daterange(self, data):
-        result = {}
-
-        range_splitted = data.split('-')
-        start_date = range_splitted[0]
-        end_date = range_splitted[1]
-        s = datetime.strptime(start_date, '%Y%m%d')
-        e = datetime.strptime(end_date, '%Y%m%d')
-
-        result['fromyear'] = s.year
-        result['frommonth'] = s.month
-        result['fromday'] = s.day
-        result['toyear'] = e.year
-        result['tomonth'] = e.month
-        result['today'] = e.day
-        return result
-
-    def get_fromdate(self, arr):
-        fromyear = arr["fromyear"]
-        frommonth = arr["frommonth"]
-        fromday = arr["fromday"]
-        return datetime(fromyear, frommonth, fromday)
-
-    def get_todate(self, arr):
-        toyear = arr["toyear"]
-        tomonth = arr["tomonth"]
-        today = arr["today"]
-        return datetime(toyear, tomonth, today)
 
     def get_step1_key(self, strat, exch, sym, tf, params):
         return "{}-{}-{}-{}-{}".format(strat, exch, sym, tf, params)
@@ -270,7 +232,7 @@ class WFOStep2(object):
 
     def enqueue_strategies(self, wfo_testing_model, wfo_cycle_id, wfo_testing_data, testing_startdate, testing_enddate, args):
         strategy_enum = BTStrategyEnum.get_strategy_enum_by_str(wfo_testing_data.strategyid)
-        for wfo_cycle_training_id, wfo_cycle_params_dict in wfo_testing_data.trained_params_dict.items():
+        for wfo_cycle_training_id, wfo_cycle_params_dict in wfo_testing_data.training_id_params_dict.items():
             prev_cycle_run_model_row = wfo_testing_model.get_report_row_by_wfo_cycle(wfo_cycle_id - 1, wfo_cycle_training_id)
             startcash = self.calc_startcash(prev_cycle_run_model_row)
             testing_params = self.get_parameters_map(wfo_cycle_params_dict[wfo_cycle_id])
@@ -320,47 +282,11 @@ class WFOStep2(object):
 
         return stratruns
 
-    def parse_wfo_testing_data(self, df, strategy_list, exchange_list, symbol_list, timeframe_list):
-        strategy = strategy_list[0]
-        exchange = exchange_list[0]
-        symbol = symbol_list[0]
-        timeframe = timeframe_list[0]
-        wfo_testing_data = WFOTestingData(strategy, exchange, symbol, timeframe)
-        data_df = df.loc[[(strategy, exchange, symbol, timeframe)]]
-        num_wfo_cycles = data_df[ColumnName.WFO_CYCLE_ID].max()
-        num_trained_params = len(data_df.loc[data_df[ColumnName.WFO_CYCLE_ID] == 1])
-
-        for wfo_cycle_id in range(1, num_wfo_cycles + 1):
-            wfo_cycle_df = data_df.loc[data_df[ColumnName.WFO_CYCLE_ID] == wfo_cycle_id]
-            cycle_first_row = wfo_cycle_df.iloc[0]
-            wfo_training_period = cycle_first_row[ColumnName.WFO_TRAINING_PERIOD]
-            wfo_testing_period = cycle_first_row[ColumnName.WFO_TESTING_PERIOD]
-            training_daterange = self.get_processing_daterange(cycle_first_row[ColumnName.TRAINING_DATE_RANGE])
-            testing_daterange = self.get_processing_daterange(cycle_first_row[ColumnName.TESTING_DATE_RANGE])
-            wfo_cycle_info = WFOCycleInfo(wfo_cycle_id,
-                                          wfo_training_period,
-                                          wfo_testing_period,
-                                          self.get_fromdate(training_daterange),
-                                          self.get_todate(training_daterange),
-                                          self.get_fromdate(testing_daterange),
-                                          self.get_todate(testing_daterange))
-            wfo_testing_data.set_wfo_cycle(wfo_cycle_info)
-            for wfo_cycle_training_id in range(1, num_trained_params + 1):
-                wfo_trained_data_df = wfo_cycle_df.iloc[wfo_cycle_training_id - 1]
-                if wfo_cycle_training_id in wfo_testing_data.trained_params_dict:
-                    wfo_cycle_params_dict = wfo_testing_data.trained_params_dict[wfo_cycle_training_id]
-                else:
-                    wfo_cycle_params_dict = dict()
-                wfo_cycle_params_dict[wfo_cycle_id] = wfo_trained_data_df[ColumnName.PARAMETERS]
-                wfo_testing_data.trained_params_dict[wfo_cycle_training_id] = wfo_cycle_params_dict
-
-        return wfo_testing_data
-
     def run_wfo_testing(self, input_df, args):
         model_generator = BacktestModelGenerator(False)
-        strat_list, exc_list, sym_list, tf_list = self.get_unique_index_value_lists(input_df)
-        wfo_testing_data = self.parse_wfo_testing_data(input_df, strat_list, exc_list, sym_list, tf_list)
-        wfo_cycles = list(wfo_testing_data.wfo_cycles_dict.values())
+        strat_list, exc_list, sym_list, tf_list = WFOHelper.get_unique_index_value_lists(input_df)
+        wfo_testing_data = WFOHelper.parse_wfo_testing_data(input_df)
+        wfo_cycles = wfo_testing_data.get_wfo_cycles_list()
         wfo_testing_model = BacktestModel(WFOMode.WFO_MODE_TESTING, wfo_cycles)
 
         for strategy in strat_list:
@@ -382,9 +308,8 @@ class WFOStep2(object):
                             self.add_datas(exchange, symbol, timeframe, testing_startdate, testing_enddate)
                             self.enqueue_strategies(wfo_testing_model, wfo_cycle_id, wfo_testing_data, testing_startdate, testing_enddate, args)
 
-                            print("\n******** Running WFO Testing: {} iterations over {} WFO cycles for {}/{}/{}/{} ********".format(wfo_testing_data.get_num_trained_params(),
-                                                                                                                                     wfo_testing_data.get_num_wfo_cycles(),
-                                                                                                                                     strategy, exchange, symbol, timeframe))
+                            print("\n******** Running WFO Testing: {} iterations - Cycle {} - for {}/{}/{}/{} ********".format(wfo_testing_data.get_num_training_ids(), wfo_cycle_id,
+                                                                                                                                   strategy, exchange, symbol, timeframe))
                             run_results = self.run_strategies(runner)
 
                             curr_wfo_cycle_info = wfo_testing_data.wfo_cycles_dict[wfo_cycle_id]
@@ -438,7 +363,7 @@ class WFOStep2(object):
 
         self.init_output_files(args)
 
-        print("Writing WFO Step 2 results to: {}".format(self._output_file1_full_name))
+        print("Writing WFO Step 2 results into: {}".format(self._output_file1_full_name))
 
         self._step2_model = self.run_wfo_testing(self.step1_df, args)
 

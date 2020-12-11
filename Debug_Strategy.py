@@ -16,6 +16,7 @@ from strategies.helper.utils import Utils
 from model.common import WFOMode
 from wfo.wfo_helper import WFOHelper
 from model.common import WFOMode, StrategyRunData, StrategyConfig
+from model.reports_common import ColumnName
 import pandas as pd
 
 tradesopen = {}
@@ -24,7 +25,7 @@ tradesclosed = {}
 
 class DebugStrategy(object):
 
-    _INDEX_COLUMNS = ['Strategy ID', 'Exchange', 'Currency Pair', 'Timeframe', 'Parameters']
+    _INDEX_COLUMNS = [ColumnName.STRATEGY_ID, ColumnName.EXCHANGE, ColumnName.CURRENCY_PAIR, ColumnName.TIMEFRAME, ColumnName.PARAMETERS]
 
     def __init__(self):
         self._exchange = None

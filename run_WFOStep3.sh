@@ -11,4 +11,4 @@ elif [ -d "/Users/alex/anaconda3" ]; then
 fi
 conda activate Backtrader
 
-python Backtesting_Step4.py -r $runid
+python WFO_Step3.py -r $runid
