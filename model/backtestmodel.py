@@ -3,9 +3,13 @@ from datetime import date
 from calendar import monthrange
 from model.reports_common import ColumnName
 from model.common import WFOMode
+import pandas as pd
 
 
 class BacktestModel(object):
+
+    _INDEX_COLUMNS = [ColumnName.STRATEGY_ID, ColumnName.EXCHANGE, ColumnName.CURRENCY_PAIR, ColumnName.TIMEFRAME]
+
     def __init__(self, wfo_mode, wfo_cycles):
         self._wfo_mode = wfo_mode
         self._report_rows = []
@@ -172,6 +176,14 @@ class BacktestModel(object):
             if row.run_key.wfo_cycle_id == wfo_cycle_id and row.run_key.wfo_cycle_training_id == wfo_cycle_training_id:
                 return row
         return None
+
+    def get_model_df(self):
+        df = pd.DataFrame(data=self.get_model_data_arr(), columns=self.get_header_names())
+        return df.set_index(self._INDEX_COLUMNS)
+
+    def get_equity_curve_model_df(self):
+        df = pd.DataFrame(data=self.get_equity_curve_report_data_arr(), columns=self.get_equity_curve_header_names())
+        return df.set_index(self._INDEX_COLUMNS)
 
 
 class BacktestReportRow(object):

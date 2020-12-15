@@ -80,11 +80,15 @@ class Step3ModelGenerator(object):
         equity_curve_data_points_str = series[ColumnName.EQUITY_CURVE_DATA_POINTS]
         return json.loads(equity_curve_data_points_str)
 
-    def concat_equity_curve_data_rows(self, df):
+    def merge_equity_curve_data_rows(self, df):
         result_dict = dict()
+        equity_base = 0
         for index, row in df.iterrows():
-            equity_curve_dict = self.get_equity_curve_data_points(row)
-            result_dict.update(equity_curve_dict)
+            row_equity_curve_dict = self.get_equity_curve_data_points(row)
+            for idx, val in row_equity_curve_dict.items():
+                result_dict[idx] = equity_base + val
+            last_entry = list(result_dict.values())[-1]
+            equity_base = last_entry
         return result_dict
 
     def get_equitycurve_data(self, equity_curve_data_dict):
@@ -116,7 +120,7 @@ class Step3ModelGenerator(object):
         return pd.Series(netprofits_arr)
 
     def populate_model_data(self, model, wfo_testing_data, strategy_run_data, training_id, rows_df, equity_curve_rows_df):
-        equity_curve_data_dict = self.concat_equity_curve_data_rows(equity_curve_rows_df)
+        equity_curve_data_dict = self.merge_equity_curve_data_rows(equity_curve_rows_df)
         netprofits_series = self.convert_to_netprofits_series(equity_curve_data_dict)
 
         run_key = BacktestRunKey()

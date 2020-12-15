@@ -21,6 +21,7 @@ from strategies.helper.validation import ParametersValidator
 from strategies.helper.utils import Utils
 from wfo.wfo_helper import WFOHelper
 from model.common import WFOMode, StrategyRunData, StrategyConfig
+from model.reports_common import ColumnName
 import itertools
 import collections
 import os
@@ -31,9 +32,11 @@ import sys
 from numbers import Number
 from collections.abc import Set, Mapping
 from collections import deque
+from plotting.equity_curve import EquityCurvePlotter
 import gc
 
 STEP1_NUMBER_TOP_ROWS = 5
+STEP1_TOP_ROWS_IN_CYCLE_TO_RENDER = 1
 
 zero_depth_bases = (str, bytes, Number, range, bytearray)
 iteritems = 'items'
@@ -100,6 +103,8 @@ class CerebroRunner(object):
 
 class WFOStep1(object):
 
+    _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
+
     _ENABLE_FILTERING = AppConfig.is_global_step1_enable_filtering()
 
     def __init__(self):
@@ -114,7 +119,9 @@ class WFOStep1(object):
         self._ofile2 = None
         self._writer1 = None
         self._writer2 = None
-        self._wfo_training_model = None
+        self._step1_model = None
+
+        self._equity_curve_plotter = EquityCurvePlotter("Step1")
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Walk Forward Optimization Step 1: Training')
@@ -382,6 +389,9 @@ class WFOStep1(object):
     def check_outputfile_exists(self):
         return os.path.exists(self._output_file1_full_name)
 
+    def read_csv_data(self, filename):
+        return pd.read_csv(filename, index_col=self._INDEX_NUMBERS_ARR)
+
     def init_output_files(self, args):
         base_dir = self.whereAmI()
         output_path = self.get_output_path(base_dir, args)
@@ -458,6 +468,14 @@ class WFOStep1(object):
         for item in print_list:
             writer.writerow(item)
 
+    def generate_equitycurve_images(self, model, args):
+        results_df = model.get_model_df().reset_index(drop=False)
+        results_df = results_df[results_df[ColumnName.WFO_CYCLE_TRAINING_ID] <= STEP1_TOP_ROWS_IN_CYCLE_TO_RENDER]
+        equity_curve_df = model.get_equity_curve_model_df()
+        equity_curve_df = equity_curve_df[equity_curve_df[ColumnName.WFO_CYCLE_TRAINING_ID] <= STEP1_TOP_ROWS_IN_CYCLE_TO_RENDER]
+        if AppConfig.is_global_step1_enable_equitycurve_img_generation():
+            self._equity_curve_plotter.generate_images_step1(results_df, equity_curve_df, args)
+
     def cleanup(self):
         self._ofile1.close()
         self._ofile2.close()
@@ -498,15 +516,17 @@ class WFOStep1(object):
 
             run_results = self.run_strategies(runner)
 
-            self._wfo_training_model = self.create_model(wfo_cycles, curr_wfo_cycle_info, run_results, args)
+            self._step1_model = self.create_model(wfo_cycles, curr_wfo_cycle_info, run_results, args)
 
-            self.printfinalresultsheader(self._writer1, self._wfo_training_model)
+            self.printfinalresultsheader(self._writer1, self._step1_model)
 
-            self.printequitycurvedataheader(self._writer2, self._wfo_training_model)
+            self.printequitycurvedataheader(self._writer2, self._step1_model)
 
-            self.printfinalresults(self._writer1, self._wfo_training_model.get_model_data_arr())
+            self.printfinalresults(self._writer1, self._step1_model.get_model_data_arr())
 
-            self.printequitycurvedataresults(self._writer2, self._wfo_training_model.get_equity_curve_report_data_arr())
+            self.printequitycurvedataresults(self._writer2, self._step1_model.get_equity_curve_report_data_arr())
+
+            self.generate_equitycurve_images(self._step1_model, args)
 
             self.cleanup()
 

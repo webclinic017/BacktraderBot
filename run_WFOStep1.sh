@@ -23,7 +23,7 @@ declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy")
 declare -a arr_symbols=("BTCUSD" "ETHUSD")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
-declare -a arr_timeframes=("3h")
+declare -a arr_timeframes=("1h" "3h")
 
 if [ -d "/opt/anaconda3" ]; then
     source /opt/anaconda3/etc/profile.d/conda.sh

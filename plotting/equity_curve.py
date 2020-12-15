@@ -38,8 +38,11 @@ class EquityCurvePlotter(object):
     def get_output_equity_curve_images_path(self, base_dir, args):
         return '{}/strategyrun_results/{}/{}_EquityCurveImages'.format(base_dir, args.runid, self._step_name)
 
-    def get_output_image_filename(self, base_path, strategy_run_data, image_counter):
+    def get_output_image_filename_common(self, base_path, strategy_run_data, image_counter):
         return "{}/{:04d}-{}-{}-{}-{}.png".format(base_path, image_counter, strategy_run_data.strategyid, strategy_run_data.exchange, strategy_run_data.currency_pair, strategy_run_data.timeframe)
+
+    def get_output_image_filename_step1(self, base_path, strategy_run_data, wfo_cycle_id, wfo_cycle_training_id):
+        return "{}/{}-{}-{}-{}-{:02d}-{:03d}.png".format(base_path, strategy_run_data.strategyid, strategy_run_data.exchange, strategy_run_data.currency_pair, strategy_run_data.timeframe, wfo_cycle_id, wfo_cycle_training_id)
 
     def get_portfolio_output_image_filename(self, base_path):
         return "{}/Portfolio_Strategy_Equity_Curve.png".format(base_path)
@@ -124,8 +127,13 @@ class EquityCurvePlotter(object):
     def adjust_fwtest_data_by_startcash(self, fwtest_y_data, startcash):
         return [x + startcash for x in fwtest_y_data]
 
-    def get_equity_curve_data_points(self, equity_curve_df, strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str):
-        return equity_curve_df.loc[[(strategy_str, exchange_str, symbol_str, timeframe_str, parameters_str)], ColumnName.EQUITY_CURVE_DATA_POINTS].values[0]
+    def get_equity_curve_data_points_common(self, equity_curve_df, strategy_run_data, parameters_str):
+        return equity_curve_df.loc[[(strategy_run_data.strategyid, strategy_run_data.exchange, strategy_run_data.currency_pair, strategy_run_data.timeframe, parameters_str)], ColumnName.EQUITY_CURVE_DATA_POINTS].values[0]
+
+    def get_equity_curve_data_points_step1(self, equity_curve_df, strategy_run_data, wfo_cycle_id, wfo_cycle_training_id):
+        df = equity_curve_df.loc[[(strategy_run_data.strategyid, strategy_run_data.exchange, strategy_run_data.currency_pair, strategy_run_data.timeframe)]]
+        df = df.loc[(df[ColumnName.WFO_CYCLE_ID] == wfo_cycle_id) & (df[ColumnName.WFO_CYCLE_TRAINING_ID] == wfo_cycle_training_id)]
+        return df[ColumnName.EQUITY_CURVE_DATA_POINTS].values[0]
 
     def get_linear_regression_line_points(self, x_axis_data, equitycurveslope, equitycurveintercept, startcash):
         x1 = x_axis_data[0]
@@ -161,17 +169,21 @@ class EquityCurvePlotter(object):
         text_lines_arr.append("{}, {}, {}, {}".format(strategy_str, exchange_str, symbol_str, timeframe_str))
         text_lines_arr.append("Parameters: {}".format(parameters_str))
 
+        wfo_cycle_id             = self.get_column_value_by_name(row, ColumnName.WFO_CYCLE_ID)
+        wfo_cycle_training_id    = self.get_column_value_by_name(row, ColumnName.WFO_CYCLE_TRAINING_ID)
         wfo_training_period_str  = self.get_column_value_by_name(row, ColumnName.WFO_TRAINING_PERIOD)
         wfo_testing_period_str   = self.get_column_value_by_name(row, ColumnName.WFO_TESTING_PERIOD)
         trainingdaterange_str    = self.get_column_value_by_name(row, ColumnName.TRAINING_DATE_RANGE)
         testingdaterange_str     = self.get_column_value_by_name(row, ColumnName.TESTING_DATE_RANGE)
+        text_lines_arr.append("WFO Cycle ID: {}, WFO Cycle Training ID: {}, WFO Training Period: {}, WFO Testing Period: {}, Training Date Range: {}, Testing Date Range: {}".format(wfo_cycle_id, wfo_cycle_training_id, wfo_training_period_str, wfo_testing_period_str, trainingdaterange_str, testingdaterange_str))
+
         startcash_str            = round(self.get_column_value_by_name(row, ColumnName.START_CASH))
         total_closed_trades      = self.get_column_value_by_name(row, ColumnName.TOTAL_CLOSED_TRADES)
         net_profit               = round(self.get_column_value_by_name(row, ColumnName.NET_PROFIT))
         net_profit_pct           = self.get_column_value_by_name(row, ColumnName.NET_PROFIT_PCT)
         max_drawdown_pct         = self.get_column_value_by_name(row, ColumnName.MAX_DRAWDOWN_PCT)
         max_drawdown_length      = self.get_column_value_by_name(row, ColumnName.MAX_DRAWDOWN_LENGTH)
-        text_lines_arr.append("WFO Training Period: {}, WFO Testing Period: {}, Training Date Range: {}, Testing Date Range: {}, Start Cash: {}, Total Closed Trades: {}, Net Profit: {}, Net Profit,%: {}%, Max Drawdown,%: {}%, Max Drawdown Length: {}".format(wfo_training_period_str, wfo_testing_period_str, trainingdaterange_str, testingdaterange_str, startcash_str, total_closed_trades, net_profit, net_profit_pct, max_drawdown_pct, max_drawdown_length))
+        text_lines_arr.append("Start Cash: {}, Total Closed Trades: {}, Net Profit: {}, Net Profit,%: {}%, Max Drawdown,%: {}%, Max Drawdown Length: {}".format(startcash_str, total_closed_trades, net_profit, net_profit_pct, max_drawdown_pct, max_drawdown_length))
 
         net_profit_to_maxdd      = self.get_column_value_by_name(row, ColumnName.NET_PROFIT_TO_MAX_DRAWDOWN)
         win_rate_pct             = self.get_column_value_by_name(row, ColumnName.WIN_RATE_PCT)
@@ -202,7 +214,7 @@ class EquityCurvePlotter(object):
         result.add_layout(self.build_plot_label(start_text_y_coord - 2 * 20, text_lines_arr[2]))
         result.add_layout(self.build_plot_label(start_text_y_coord - 3 * 20, text_lines_arr[3]))
         result.add_layout(self.build_plot_label(start_text_y_coord - 4 * 20, text_lines_arr[4]))
-        result.add_layout(self.build_plot_label(start_text_y_coord - 5 * 20, ""))
+        result.add_layout(self.build_plot_label(start_text_y_coord - 5 * 20, text_lines_arr[5]))
 
         return result
 
@@ -232,21 +244,21 @@ class EquityCurvePlotter(object):
     def get_parameters_map(self, parameters_json):
         return ast.literal_eval(parameters_json)
 
-    def generate_images(self, results_df, equity_curve_df, args):
+    def generate_images_common(self, results_df, equity_curve_df, args):
         image_counter = 0
         output_path = self.initialize_dirs(args)
         print("Rendering {} equity curve images into {}".format(len(results_df), output_path))
         for index, row in results_df.iterrows():
             strategy_run_data = StrategyRunData(row[ColumnName.STRATEGY_ID], row[ColumnName.EXCHANGE], row[ColumnName.CURRENCY_PAIR], row[ColumnName.TIMEFRAME])
-            parameters_str = row['Parameters']
-            equitycurveslope = round(row['Equity Curve Slope'], 3)
-            equitycurveintercept = round(row['Equity Curve Intercept'], 3)
-            equity_curve_data_points_str = self.get_equity_curve_data_points(equity_curve_df, strategy_run_data.strategyid, strategy_run_data.exchange, strategy_run_data.currency_pair, strategy_run_data.timeframe, parameters_str)
+            parameters_str = row[ColumnName.PARAMETERS]
+            equitycurveslope = round(row[ColumnName.EQUITY_CURVE_SLOPE], 3)
+            equitycurveintercept = round(row[ColumnName.EQUITY_CURVE_INTERCEPT], 3)
+            equity_curve_data_points_str = self.get_equity_curve_data_points_common(equity_curve_df, strategy_run_data, parameters_str)
             img = self.draw_equity_curve(row, equity_curve_data_points_str, equitycurveslope, equitycurveintercept)
             image_counter += 1
             if image_counter % 10 == 0 or image_counter == len(results_df):
                 print("Rendered {} equity curve images...".format(image_counter))
-            image_filename = self.get_output_image_filename(output_path, strategy_run_data, image_counter)
+            image_filename = self.get_output_image_filename_common(output_path, strategy_run_data, image_counter)
             export_png(img, filename=image_filename)
 
     def deltas_to_absolute_netprofit(self, y_data):
@@ -345,12 +357,32 @@ class EquityCurvePlotter(object):
             x_data = self.get_equity_data_x_axis_as_dates(data_points_dict.keys())
             y_data = self.get_equity_data_y_axis(data_points_dict.values())
             wfo_cycle_training_id = row[ColumnName.WFO_CYCLE_TRAINING_ID]
-            equity_curve_plot.line(x_data, y_data, line_width=2, alpha=0.7, color=self._PALETTE[c], legend_label='{}: {}, {}, {}, {}'.format(
+            l_width = 6 if c == 0 else 2
+            equity_curve_plot.line(x_data, y_data, line_width=l_width, alpha=0.7, color=self._PALETTE[c], legend_label='{}: {}, {}, {}, {}'.format(
                 wfo_cycle_training_id, strategy_run_data.strategyid, strategy_run_data.exchange, strategy_run_data.currency_pair, strategy_run_data.timeframe))
             c += 1
 
-        equity_curve_plot.legend.location = "top_left"
+        equity_curve_plot.legend.location = "bottom_left"
         return column(equity_curve_plot)
+
+    def generate_images_step1(self, results_df, equity_curve_df, args):
+        image_counter = 0
+        output_path = self.initialize_dirs(args)
+        print("Rendering {} equity curve images into {}".format(len(results_df), output_path))
+        for index, row in results_df.iterrows():
+            strategy_run_data = StrategyRunData(row[ColumnName.STRATEGY_ID], row[ColumnName.EXCHANGE], row[ColumnName.CURRENCY_PAIR], row[ColumnName.TIMEFRAME])
+            wfo_cycle_id = row[ColumnName.WFO_CYCLE_ID]
+            wfo_cycle_training_id = row[ColumnName.WFO_CYCLE_TRAINING_ID]
+            equity_curve_data_points_str = self.get_equity_curve_data_points_step1(equity_curve_df, strategy_run_data, wfo_cycle_id, wfo_cycle_training_id)
+
+            equitycurveslope = round(row[ColumnName.EQUITY_CURVE_SLOPE], 3)
+            equitycurveintercept = round(row[ColumnName.EQUITY_CURVE_INTERCEPT], 3)
+            img = self.draw_equity_curve(row, equity_curve_data_points_str, equitycurveslope, equitycurveintercept)
+            image_counter += 1
+            if image_counter % 10 == 0 or image_counter == len(results_df):
+                print("Rendered {} equity curve images...".format(image_counter))
+            image_filename = self.get_output_image_filename_step1(output_path, strategy_run_data, wfo_cycle_id, wfo_cycle_training_id)
+            export_png(img, filename=image_filename)
 
     def generate_images_step3(self, wfo_testing_data, step3_model_df, step3_equity_curve_model_df, step3_avg_equity_curve_model_df, args):
         output_path = self.initialize_dirs(args)
@@ -369,6 +401,6 @@ class EquityCurvePlotter(object):
                         image_counter += 1
                         if image_counter % 10 == 0 or image_counter == len(step3_equity_curve_model_df):
                             print("Rendered {} equity curve images...".format(image_counter))
-                        image_filename = self.get_output_image_filename(output_path, strategy_run_data, image_counter)
+                        image_filename = self.get_output_image_filename_common(output_path, strategy_run_data, image_counter)
                         export_png(img, filename=image_filename)
 

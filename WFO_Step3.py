@@ -3,9 +3,8 @@ Step 3 of WFO process
 '''
 
 import argparse
-from datetime import datetime
 from model.reports_common import ColumnName
-from model.common import WFOTestingData, WFOCycleInfo, StrategyRunData
+from model.common import StrategyRunData
 from model.step3model import Step3Model
 from model.step3avgmodel import Step3AvgModel
 from model.step3modelgenerator import Step3ModelGenerator

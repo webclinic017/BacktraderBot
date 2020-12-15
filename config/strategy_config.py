@@ -9,6 +9,7 @@ class AppConfig(object):
             "DEFAULT_LOT_TYPE": "Fixed",
             "STEP1_ENABLE_FILTERING": False,
             "STEP2_ENABLE_FILTERING": False,
+            "STEP1_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
             "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": True,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
         }
 
@@ -664,3 +665,7 @@ class AppConfig(object):
     @classmethod
     def get_default_strategy_params(cls, strategy_enum):
         return cls._DEFAULT_STRATEGY_PARAMS_DICT[strategy_enum]
+
+    @classmethod
+    def is_global_step1_enable_equitycurve_img_generation(cls):
+        return cls._GLOBAL_STRATEGY_PARAMS_DICT["STEP1_ENABLE_EQUITYCURVE_IMG_GENERATION"]

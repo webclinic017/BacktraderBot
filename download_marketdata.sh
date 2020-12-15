@@ -6,7 +6,7 @@ declare exchange="bitfinex"
 declare -a arr_symbols=( "BTC/USD" "ETH/USD")
 
 #declare -a arr_timeframes=("1m" "5m" "15m" "30m" "1h" "3h" "6h" "12h" "1d")
-declare -a arr_timeframes=("1h" "3h")
+declare -a arr_timeframes=("30m")
 
 
 for symbol in "${arr_symbols[@]}"
