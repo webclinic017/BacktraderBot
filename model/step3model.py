@@ -72,12 +72,6 @@ class Step3Model(object):
     def get_equity_curve_report_data_arr(self):
         return [r.equity_curve_report_data.get_report_data() for r in self._report_rows]
 
-    def get_report_row_by_wfo_cycle(self, wfo_cycle_id, wfo_cycle_training_id):
-        for row in self._report_rows:
-            if row.run_key.wfo_cycle_id == wfo_cycle_id and row.run_key.wfo_cycle_training_id == wfo_cycle_training_id:
-                return row
-        return None
-
     def get_model_df(self):
         df = pd.DataFrame(data=self.get_model_data_arr(), columns=self.get_header_names())
         return df.set_index(self._INDEX_COLUMNS)

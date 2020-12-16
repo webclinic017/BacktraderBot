@@ -108,17 +108,8 @@ class WFOTestingData(object):
         self.wfo_cycles_dict         = dict()   # dict:  WFO Cycle Id -> WFOCycleInfo
         self.training_id_params_dict = dict()   # dict:  WFO Cycle Training Id -> Dict: WFO Cycle Id -> Trained Parameters
 
-    def get_wfo_cycles_list(self):
-        return list(self.wfo_cycles_dict.values())
-
     def set_wfo_cycle(self, wfo_cycle_info):
         self.wfo_cycles_dict[wfo_cycle_info.wfo_cycle_id] = wfo_cycle_info
-
-    def get_num_wfo_cycles(self):
-        return len(self.wfo_cycles_dict.keys())
-
-    def get_num_training_ids(self):
-        return len(self.training_id_params_dict.keys())
 
     def getdaterange(self, date1, date2):
         return "{}{:02d}{:02d}-{}{:02d}{:02d}".format(date1.year, date1.month, date1.day, date2.year, date2.month, date2.day)
@@ -134,4 +125,30 @@ class WFOTestingData(object):
         first_cycle = wfo_cycles_list[0]
         last_cycle = wfo_cycles_list[-1]
         return self.getdaterange(first_cycle.testing_start_date, last_cycle.testing_end_date)
+
+
+class WFOTestingDataList(object):
+    def __init__(self):
+        self._data_list = list()
+
+    def add_wfo_testing_data(self, wfo_testing_data):
+        self._data_list.append(wfo_testing_data)
+
+    def get_wfo_cycles_list(self):
+        data = self._data_list[0]
+        return list(data.wfo_cycles_dict.values())
+
+    def get_num_wfo_cycles(self):
+        data = self._data_list[0]
+        return len(data.wfo_cycles_dict.keys())
+
+    def get_num_training_ids(self):
+        data = self._data_list[0]
+        return len(data.training_id_params_dict.keys())
+
+    def get_wfo_testing_data(self, strategyid, exchange, currency_pair, timeframe):
+        for data in self._data_list:
+            if data.strategyid == strategyid and data.exchange == exchange and data.currency_pair == currency_pair and data.timeframe == timeframe:
+                return data
+        return None
 

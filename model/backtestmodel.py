@@ -171,9 +171,14 @@ class BacktestModel(object):
     def get_equity_curve_report_data_arr(self):
         return [r.equity_curve_report_data.get_report_data() for r in self._report_rows]
 
-    def get_report_row_by_wfo_cycle(self, wfo_cycle_id, wfo_cycle_training_id):
+    def find_report_row(self, wfo_testing_data, wfo_cycle_id, wfo_cycle_training_id):
         for row in self._report_rows:
-            if row.run_key.wfo_cycle_id == wfo_cycle_id and row.run_key.wfo_cycle_training_id == wfo_cycle_training_id:
+            if row.run_key.strategyid    == wfo_testing_data.strategyid and \
+               row.run_key.exchange      == wfo_testing_data.exchange and \
+               row.run_key.currency_pair == wfo_testing_data.currency_pair and \
+               row.run_key.timeframe     == wfo_testing_data.timeframe and \
+               row.run_key.wfo_cycle_id  == wfo_cycle_id and \
+               row.run_key.wfo_cycle_training_id == wfo_cycle_training_id:
                 return row
         return None
 

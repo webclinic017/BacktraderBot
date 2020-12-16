@@ -332,8 +332,8 @@ class EquityCurvePlotter(object):
         dt_boundaries.append(last_entry_dt)
         return dt_boundaries
 
-    def draw_wfo_cycles_boundaries(self, wfo_testing_data, equity_curve_plot):
-        wfo_cycles_list = list(wfo_testing_data.wfo_cycles_dict.values())
+    def draw_wfo_cycles_boundaries(self, wfo_testing_data_list, equity_curve_plot):
+        wfo_cycles_list = wfo_testing_data_list.get_wfo_cycles_list()
         wfo_cycle_boundaries = self.get_wfo_cycles_boundaries(wfo_cycles_list)
         first_boundary_val = int(wfo_cycle_boundaries[0].timestamp() * 1000)
         equity_curve_plot.line([first_boundary_val], 0, line_width=1, alpha=0, color='blue')
@@ -342,14 +342,14 @@ class EquityCurvePlotter(object):
             equity_curve_plot.add_layout(self.build_x_axis_line(date_val, "red"))
         return equity_curve_plot
 
-    def draw_step3_equity_curves(self, wfo_testing_data, strategy_run_data, rows_df, avg_row_df):
+    def draw_step3_equity_curves(self, wfo_testing_data_list, strategy_run_data, rows_df, avg_row_df):
         avg_row = avg_row_df.iloc[0]
         data_points_dict = json.loads(avg_row[ColumnName.EQUITY_CURVE_DATA_POINTS])
         x_data = self.get_equity_data_x_axis_as_dates(data_points_dict.keys())
         y_data = self.get_equity_data_y_axis(data_points_dict.values())
         equity_curve_plot = self.build_equity_curve_plot_figure_step3(x_data)
         equity_curve_plot.line(x_data, y_data, line_width=6, alpha=1, color='red', legend_label='Average')
-        equity_curve_plot = self.draw_wfo_cycles_boundaries(wfo_testing_data, equity_curve_plot)
+        equity_curve_plot = self.draw_wfo_cycles_boundaries(wfo_testing_data_list, equity_curve_plot)
 
         c = 0
         for index, row in rows_df.iterrows():
@@ -384,7 +384,7 @@ class EquityCurvePlotter(object):
             image_filename = self.get_output_image_filename_step1(output_path, strategy_run_data, wfo_cycle_id, wfo_cycle_training_id)
             export_png(img, filename=image_filename)
 
-    def generate_images_step3(self, wfo_testing_data, step3_model_df, step3_equity_curve_model_df, step3_avg_equity_curve_model_df, args):
+    def generate_images_step3(self, wfo_testing_data_list, step3_model_df, step3_equity_curve_model_df, step3_avg_equity_curve_model_df, args):
         output_path = self.initialize_dirs(args)
         strat_list, exc_list, sym_list, tf_list = WFOHelper.get_unique_index_value_lists(step3_model_df)
         print("Rendering WFO Step3 equity curve images into {}".format(output_path))
@@ -397,7 +397,7 @@ class EquityCurvePlotter(object):
                         strategy_run_data = StrategyRunData(strategy, exchange, symbol, timeframe)
                         rows_df = step3_equity_curve_model_df.loc[[(strategy, exchange, symbol, timeframe)]]
                         avg_rows_df = step3_avg_equity_curve_model_df.loc[[(strategy, exchange, symbol, timeframe)]]
-                        img = self.draw_step3_equity_curves(wfo_testing_data, strategy_run_data, rows_df, avg_rows_df)
+                        img = self.draw_step3_equity_curves(wfo_testing_data_list, strategy_run_data, rows_df, avg_rows_df)
                         image_counter += 1
                         if image_counter % 10 == 0 or image_counter == len(step3_equity_curve_model_df):
                             print("Rendered {} equity curve images...".format(image_counter))

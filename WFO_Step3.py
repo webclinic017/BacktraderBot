@@ -126,7 +126,7 @@ class WFOStep3(object):
         self._ofile3 = open(self._output_file3_full_name, "w")
         self._writer3 = csv.writer(self._ofile3, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 
-    def combine_wfo_testing_data(self, wfo_testing_data, input_df, equity_curve_df):
+    def combine_wfo_testing_data(self, wfo_testing_data_list, input_df, equity_curve_df):
         model_generator = Step3ModelGenerator()
         strat_list, exc_list, sym_list, tf_list = WFOHelper.get_unique_index_value_lists(input_df)
         step3_model = Step3Model()
@@ -135,9 +135,10 @@ class WFOStep3(object):
             for exchange in exc_list:
                 for symbol in sym_list:
                     for timeframe in tf_list:
-                        num_training_ids = wfo_testing_data.get_num_training_ids()
+                        num_training_ids = wfo_testing_data_list.get_num_training_ids()
                         strategy_run_data = StrategyRunData(strategy, exchange, symbol, timeframe)
                         for training_id in range(1, num_training_ids + 1):
+                            wfo_testing_data = wfo_testing_data_list.get_wfo_testing_data(strategy, exchange, symbol, timeframe)
                             key_df = input_df.loc[(strategy, exchange, symbol, timeframe)]
                             rows_df = key_df.loc[key_df[ColumnName.WFO_CYCLE_TRAINING_ID] == training_id]
                             key_equity_curve_df = equity_curve_df.loc[(strategy, exchange, symbol, timeframe)]
@@ -208,8 +209,8 @@ class WFOStep3(object):
 
         print("Writing WFO Step 3 results into: {}".format(self._output_file1_full_name))
 
-        wfo_testing_data = WFOHelper.parse_wfo_testing_data(self._step2_df)
-        self._step3_model = self.combine_wfo_testing_data(wfo_testing_data, self._step2_df, self._equity_curve_df)
+        wfo_testing_data_list = WFOHelper.parse_wfo_testing_data(self._step2_df)
+        self._step3_model = self.combine_wfo_testing_data(wfo_testing_data_list, self._step2_df, self._equity_curve_df)
         self._step3_avg_model = self.calculate_avg_data(self._step3_model)
 
         print("Writing WFO Step 3 equity curve data to: {}".format(self._output_file2_full_name))
@@ -222,7 +223,7 @@ class WFOStep3(object):
         self.printequitycurvedataresults(self._writer2, self._step3_model)
         self.printfinalresults(self._writer3, self._step3_avg_model)
 
-        self._equity_curve_plotter.generate_images_step3(wfo_testing_data, self._step3_model.get_model_df(), self._step3_model.get_equity_curve_model_df(), self._step3_avg_model.get_equity_curve_model_df(), args)
+        self._equity_curve_plotter.generate_images_step3(wfo_testing_data_list, self._step3_model.get_model_df(), self._step3_model.get_equity_curve_model_df(), self._step3_avg_model.get_equity_curve_model_df(), args)
 
         self.cleanup()
 

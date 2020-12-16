@@ -20,7 +20,7 @@ num_wfo_cycles=3
 declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy")
 
 #declare -a arr_symbols=("BTCUSD" "ETHUSD" "XRPUSD" "LTCUSD" "ETCUSD" "IOTAUSD" "EOSUSD" "NEOUSD" "ZECUSD" "ETPUSD" "XMRUSD" "DASHUSD")
-declare -a arr_symbols=("BTCUSD" "ETHUSD")
+declare -a arr_symbols=("BTCUSD")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
 declare -a arr_timeframes=("1h" "3h")

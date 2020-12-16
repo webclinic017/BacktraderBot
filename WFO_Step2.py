@@ -15,8 +15,7 @@ from datetime import timedelta
 from strategies.helper.utils import Utils
 from config.strategy_enum import BTStrategyEnum
 from common.stfetcher import StFetcher
-from model.reports_common import ColumnName
-from model.common import WFOTestingData, WFOCycleInfo, StrategyRunData, StrategyConfig
+from model.common import WFOTestingData, WFOTestingDataList, StrategyRunData, StrategyConfig
 from model.backtestmodel import BacktestModel
 from model.backtestmodelgenerator import BacktestModelGenerator
 from model.common import WFOMode
@@ -224,17 +223,17 @@ class WFOStep2(object):
     def get_parameters_map(self, parameters_json):
         return ast.literal_eval(parameters_json)
 
-    def calc_startcash(self, model_row):
-        if model_row and model_row.analyzer_data:
-            return model_row.analyzer_data.startcash + model_row.analyzer_data.net_profit
+    def calc_startcash(self, wfo_testing_model, wfo_cycle_id, wfo_cycle_training_id, wfo_testing_data):
+        prev_cycle_row = wfo_testing_model.find_report_row(wfo_testing_data, wfo_cycle_id - 1, wfo_cycle_training_id)
+        if prev_cycle_row and prev_cycle_row.analyzer_data:
+            return prev_cycle_row.analyzer_data.startcash + prev_cycle_row.analyzer_data.net_profit
         else:
             return AppConfig.get_global_default_cash_size()
 
     def enqueue_strategies(self, wfo_testing_model, wfo_cycle_id, wfo_testing_data, testing_startdate, testing_enddate, args):
         strategy_enum = BTStrategyEnum.get_strategy_enum_by_str(wfo_testing_data.strategyid)
         for wfo_cycle_training_id, wfo_cycle_params_dict in wfo_testing_data.training_id_params_dict.items():
-            prev_cycle_run_model_row = wfo_testing_model.get_report_row_by_wfo_cycle(wfo_cycle_id - 1, wfo_cycle_training_id)
-            startcash = self.calc_startcash(prev_cycle_run_model_row)
+            startcash = self.calc_startcash(wfo_testing_model, wfo_cycle_id, wfo_cycle_training_id, wfo_testing_data)
             testing_params = self.get_parameters_map(wfo_cycle_params_dict[wfo_cycle_id])
             testing_params.update({("debug",                 args.debug),
                                    ("wfo_cycle_id",          wfo_cycle_id),
@@ -285,17 +284,18 @@ class WFOStep2(object):
     def run_wfo_testing(self, input_df, args):
         model_generator = BacktestModelGenerator(False)
         strat_list, exc_list, sym_list, tf_list = WFOHelper.get_unique_index_value_lists(input_df)
-        wfo_testing_data = WFOHelper.parse_wfo_testing_data(input_df)
-        wfo_cycles = wfo_testing_data.get_wfo_cycles_list()
+        wfo_testing_data_list = WFOHelper.parse_wfo_testing_data(input_df)
+        wfo_cycles = wfo_testing_data_list.get_wfo_cycles_list()
         wfo_testing_model = BacktestModel(WFOMode.WFO_MODE_TESTING, wfo_cycles)
 
         for strategy in strat_list:
             for exchange in exc_list:
                 for symbol in sym_list:
                     for timeframe in tf_list:
-                        num_wfo_cycles = wfo_testing_data.get_num_wfo_cycles()
+                        num_wfo_cycles = wfo_testing_data_list.get_num_wfo_cycles()
                         strategy_run_data = StrategyRunData(strategy, exchange, symbol, timeframe)
                         for wfo_cycle_id in range(1, num_wfo_cycles + 1):
+                            wfo_testing_data = wfo_testing_data_list.get_wfo_testing_data(strategy, exchange, symbol, timeframe)
                             startcash = AppConfig.get_global_default_cash_size()
                             runner = CerebroRunner()
                             self.init_cerebro(runner, args, startcash)
@@ -308,7 +308,7 @@ class WFOStep2(object):
                             self.add_datas(exchange, symbol, timeframe, testing_startdate, testing_enddate)
                             self.enqueue_strategies(wfo_testing_model, wfo_cycle_id, wfo_testing_data, testing_startdate, testing_enddate, args)
 
-                            print("\n******** Running WFO Testing: {} iterations - Cycle {} - for {}/{}/{}/{} ********".format(wfo_testing_data.get_num_training_ids(), wfo_cycle_id,
+                            print("\n******** Running WFO Testing: {} iterations - Cycle {} - for {}/{}/{}/{} ********".format(wfo_testing_data_list.get_num_training_ids(), wfo_cycle_id,
                                                                                                                                    strategy, exchange, symbol, timeframe))
                             run_results = self.run_strategies(runner)
 

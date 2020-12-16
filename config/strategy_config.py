@@ -10,7 +10,7 @@ class AppConfig(object):
             "STEP1_ENABLE_FILTERING": False,
             "STEP2_ENABLE_FILTERING": False,
             "STEP1_ENABLE_EQUITYCURVE_IMG_GENERATION": True,
-            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": True,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
+            "DRAW_EQUITYCURVE_IMG_X_AXIS_TRADES": False,    # True: generating equity curve images with number of closed trades as x-axis, False: otherwise use closed trade dates as x-axis
         }
 
     _DEFAULT_STRATEGY_PARAMS_DICT = {
@@ -19,24 +19,24 @@ class AppConfig(object):
                 "exchange": "bitfinex",
                 "currency_pair": "BTCUSD",
                 "timeframe": "3h",
-                "startcash": 1500,
+                "startcash": 1407.147467,
                 "lotsize": 1470,
                 "lottype": "Fixed",
                 "startyear": 2018,
-                "startmonth": 4,
-                "startday": 1,
+                "startmonth": 6,
+                "startday": 9,
                 "num_wfo_cycles": 1,
-                "wfo_training_period": 200,
+                "wfo_training_period": 15,
                 "wfo_test_period": 15
             },
             {
                 "needlong": True,
                 "needshort": True,
                 "usefastsma": True,
-                "fastlen": 7,
-                "slowlen": 24,
-                "bars": 2,
-                "needex": False,
+                "fastlen": 3,
+                "slowlen": 22,
+                "bars": 1,
+                "needex": True,
                 "exitmode": 1,
                 "sl": 0,
                 "tslflag": False,
