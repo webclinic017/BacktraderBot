@@ -87,7 +87,7 @@ class Step3ModelGenerator(object):
             row_equity_curve_dict = self.get_equity_curve_data_points(row)
             for idx, val in row_equity_curve_dict.items():
                 result_dict[idx] = equity_base + val
-            last_entry = list(result_dict.values())[-1]
+            last_entry = list(result_dict.values())[-1] if len(result_dict.values()) > 0 else 0
             equity_base = last_entry
         return result_dict
 
@@ -171,14 +171,15 @@ class Step3ModelGenerator(object):
         return model
 
     def interpolate(self, key, k_arr, v_arr):
-        for c in range(1, len(k_arr) + 1):
+        for c in range(1, len(k_arr)):
             prev_k = k_arr[c - 1]
             curr_k = k_arr[c]
             prev_v = v_arr[c - 1]
             curr_v = v_arr[c]
             if key >= prev_k and key <= curr_k:
                 return (prev_v + curr_v) / 2
-        raise ValueError("Wrong data in interpolate() method: key={}".format(key))
+        if key > k_arr[-1]:
+            return v_arr[-1]
 
     def calculate_avg(self, key, input_arr):
         arr = []

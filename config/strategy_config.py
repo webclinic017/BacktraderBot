@@ -526,9 +526,9 @@ class AppConfig(object):
         BTStrategyEnum.S006_ALEX_NORO_SQUEEZE_MOMENTUM_STRATEGY_ID: {
             "needlong": True,
             "needshort": True,
-            "length": 20,
+            "length": (20, 40),
             "mult": 2.0,
-            "lengthKC": 20,
+            "lengthKC": (20, 40),
             "multKC": 1.5,
             "usecolor": (False, True),
             "usebody": (False, True),
