@@ -42,7 +42,7 @@ class EquityCurvePlotter(object):
         return "{}/{:04d}-{}-{}-{}-{}.png".format(base_path, image_counter, strategy_run_data.strategyid, strategy_run_data.exchange, strategy_run_data.currency_pair, strategy_run_data.timeframe)
 
     def get_output_image_filename_step1(self, base_path, strategy_run_data, wfo_cycle_id, wfo_cycle_training_id):
-        return "{}/{}-{}-{}-{}-{:02d}-{:03d}.png".format(base_path, strategy_run_data.strategyid, strategy_run_data.exchange, strategy_run_data.currency_pair, strategy_run_data.timeframe, wfo_cycle_id, wfo_cycle_training_id)
+        return "{}/{}-{}-{}-{}-{:02d}-{:04d}.png".format(base_path, strategy_run_data.strategyid, strategy_run_data.exchange, strategy_run_data.currency_pair, strategy_run_data.timeframe, wfo_cycle_id, wfo_cycle_training_id)
 
     def get_portfolio_output_image_filename(self, base_path):
         return "{}/Portfolio_Strategy_Equity_Curve.png".format(base_path)
@@ -348,7 +348,7 @@ class EquityCurvePlotter(object):
         x_data = self.get_equity_data_x_axis_as_dates(data_points_dict.keys())
         y_data = self.get_equity_data_y_axis(data_points_dict.values())
         equity_curve_plot = self.build_equity_curve_plot_figure_step3(x_data)
-        equity_curve_plot.line(x_data, y_data, line_width=6, alpha=1, color='red', legend_label='Average')
+        #equity_curve_plot.line(x_data, y_data, line_width=6, alpha=1, color='red', legend_label='Average')
         equity_curve_plot = self.draw_wfo_cycles_boundaries(wfo_testing_data_list, equity_curve_plot)
 
         c = 0

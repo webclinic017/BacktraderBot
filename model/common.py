@@ -68,6 +68,16 @@ class BacktestAnalyzerData(object):
         self.monthly_stats = None
 
 
+class BktestAnalyzerGroupingData(object):
+    def __init__(self):
+        self.parameters_grouping_key = None
+        self.parameters_best_record_in_group = None
+        self.total_rows = None
+        self.avg_net_profit_pct = None
+        self.bktest_profitable_records_num = None
+        self.bktest_profitable_records_pct = None
+
+
 class EquityCurveData(object):
     def __init__(self):
         self.data = None

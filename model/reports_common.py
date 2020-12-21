@@ -38,6 +38,7 @@ class ColumnName(object):
     PROFIT_FACTOR = 'Profit Factor'
     BUY_AND_HOLD_RETURN_PCT = 'Buy & Hold Return, %'
     SQN = 'SQN'
+    EQUITY_CURVE_DATA_POINTS = 'Equity Curve Data Points'
     EQUITY_CURVE_ANGLE = 'Equity Curve Angle'
     EQUITY_CURVE_SLOPE = 'Equity Curve Slope'
     EQUITY_CURVE_INTERCEPT = 'Equity Curve Intercept'
@@ -49,4 +50,10 @@ class ColumnName(object):
     MC_MEDIAN_DRAWDOWN_PCT = 'MC: Median Drawdown, %'
     MC_MEDIAN_RETURN_PCT = 'MC: Median Return, %'
 
-    EQUITY_CURVE_DATA_POINTS = 'Equity Curve Data Points'
+    PARAMETERS_GROUPING_KEY = 'Parameters Grouping Key'
+    PARAMETERS_BEST_RECORD_IN_GROUP = 'Parameters - Best Record In Group'
+    TOTAL_ROWS = 'Total Rows'
+    AVG_NET_PROFIT_PCT = 'Avg. Net Profit, %'
+    BACKTESTING_PROFITABLE_RECORDS = 'Backtesting Profitable Records'
+    BACKTESTING_PROFITABLE_RECORDS_PCT = 'Backtesting Profitable Records, %'
+

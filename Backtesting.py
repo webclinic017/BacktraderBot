@@ -1,5 +1,5 @@
 '''
-Step 1 - WFO Training process
+Backtesting process
 '''
  
 import backtrader as bt
@@ -35,8 +35,8 @@ from collections import deque
 from plotting.equity_curve import EquityCurvePlotter
 import gc
 
-STEP1_NUMBER_TOP_ROWS = 3
-STEP1_TOP_ROWS_IN_CYCLE_TO_RENDER = 1
+NUMBER_TOP_ROWS = 1296
+TOP_ROWS_IN_CYCLE_TO_RENDER = 1296
 
 zero_depth_bases = (str, bytes, Number, range, bytearray)
 iteritems = 'items'
@@ -101,7 +101,7 @@ class CerebroRunner(object):
         return self.cerebro.run()
 
 
-class WFOStep1(object):
+class Backtesting(object):
 
     _INDEX_NUMBERS_ARR = [0, 1, 2, 3, 4]
 
@@ -121,10 +121,10 @@ class WFOStep1(object):
         self._writer2 = None
         self._step1_model = None
 
-        self._equity_curve_plotter = EquityCurvePlotter("Step1")
+        self._equity_curve_plotter = EquityCurvePlotter("Backtesting")
 
     def parse_args(self):
-        parser = argparse.ArgumentParser(description='Walk Forward Optimization Step 1: Training')
+        parser = argparse.ArgumentParser(description='Backtesting process')
 
         parser.add_argument('-r', '--runid',
                             type=str,
@@ -147,23 +147,11 @@ class WFOStep1(object):
                             required=True,
                             help='Date Range: Start Day')
 
-        parser.add_argument('--num_wfo_cycles',
-                            type=int,
-                            required=False,
-                            default=1,
-                            help='WFO number of cycles')
-
         parser.add_argument('--wfo_training_period',
                             type=int,
                             required=False,
                             default=85,
                             help='WFO training (in-sample) period length in days')
-
-        parser.add_argument('--wfo_testing_period',
-                            type=int,
-                            required=False,
-                            default=15,
-                            help='WFO test (out-of-sample) period length in days')
 
         parser.add_argument('-y', '--strategy',
                             type=str,
@@ -292,7 +280,7 @@ class WFOStep1(object):
 
     def get_wfo_cycles(self, args):
         start_date = self.get_wfo_startdate(args)
-        return WFOHelper.get_wfo_cycles(start_date, args.num_wfo_cycles, args.wfo_training_period, args.wfo_testing_period)
+        return WFOHelper.get_wfo_cycles(start_date, 1, args.wfo_training_period, 15)
 
     def validate_strategy_params(self, params_dict):
         return ParametersValidator.validate_params(params_dict)
@@ -339,10 +327,10 @@ class WFOStep1(object):
         return '{}/strategyrun_results/{}'.format(base_dir, args.runid)
 
     def get_output_filename1(self, base_path, args):
-        return '{}/{}_Step1.csv'.format(base_path, args.runid)
+        return '{}/{}_Backtesting.csv'.format(base_path, args.runid)
 
     def get_output_filename2(self, base_path, args):
-        return '{}/{}_Step1_EquityCurveData.csv'.format(base_path, args.runid)
+        return '{}/{}_Backtesting_EquityCurveData.csv'.format(base_path, args.runid)
 
     def get_wfo_startdate(self, args):
         return datetime(args.startyear, args.startmonth, args.startday)
@@ -427,7 +415,7 @@ class WFOStep1(object):
         strategy_config.lotsize = args.lotsize
         strategy_config.lottype = args.lottype
         model = generator.populate_model_data(model, strategy_run_data, strategy_config, curr_wfo_cycle_info, run_results)
-        model.filter_wfo_training_top_results(STEP1_NUMBER_TOP_ROWS)
+        model.filter_wfo_training_top_results(NUMBER_TOP_ROWS)
         return model
 
     def printfinalresultsheader(self, writer, model):
@@ -470,9 +458,9 @@ class WFOStep1(object):
 
     def generate_equitycurve_images(self, model, args):
         results_df = model.get_model_df().reset_index(drop=False)
-        results_df = results_df[results_df[ColumnName.WFO_CYCLE_TRAINING_ID] <= STEP1_TOP_ROWS_IN_CYCLE_TO_RENDER]
+        results_df = results_df[results_df[ColumnName.WFO_CYCLE_TRAINING_ID] <= TOP_ROWS_IN_CYCLE_TO_RENDER]
         equity_curve_df = model.get_equity_curve_model_df()
-        equity_curve_df = equity_curve_df[equity_curve_df[ColumnName.WFO_CYCLE_TRAINING_ID] <= STEP1_TOP_ROWS_IN_CYCLE_TO_RENDER]
+        equity_curve_df = equity_curve_df[equity_curve_df[ColumnName.WFO_CYCLE_TRAINING_ID] <= TOP_ROWS_IN_CYCLE_TO_RENDER]
         if AppConfig.is_global_step1_enable_equitycurve_img_generation():
             self._equity_curve_plotter.generate_images_step1(results_df, equity_curve_df, args)
 
@@ -488,51 +476,50 @@ class WFOStep1(object):
         startcash = AppConfig.get_global_default_cash_size()
 
         wfo_cycles = self.get_wfo_cycles(args)
+        curr_wfo_cycle_info = wfo_cycles[0]
+        training_start_date = curr_wfo_cycle_info.training_start_date.date()
+        training_end_date = curr_wfo_cycle_info.training_end_date.date()
+        print("\nRunning Backtesting - Training period {}".format(WFOHelper.getdaterange(training_start_date, training_end_date)))
 
-        for curr_wfo_cycle_info in wfo_cycles:
-            training_start_date = curr_wfo_cycle_info.training_start_date.date()
-            training_end_date = curr_wfo_cycle_info.training_end_date.date()
-            print("\nRunning WFO Step 1 - Cycle {} - Training period {}".format(curr_wfo_cycle_info.wfo_cycle_id, WFOHelper.getdaterange(training_start_date, training_end_date)))
+        self.init_params(strategy_enum, args, startcash, curr_wfo_cycle_info)
 
-            self.init_params(strategy_enum, args, startcash, curr_wfo_cycle_info)
+        self.init_output_files(args)
 
-            self.init_output_files(args)
+        print("Writing Backtesting results into: {}".format(self._output_file1_full_name))
 
-            print("Writing WFO Step 1 results into: {}".format(self._output_file1_full_name))
+        runner = CerebroRunner()
+        self.cleanup_cerebro(runner)
+        self.init_cerebro(runner, args, startcash)
 
-            runner = CerebroRunner()
-            self.cleanup_cerebro(runner)
-            self.init_cerebro(runner, args, startcash)
+        self._market_data_input_filename = self.get_input_filename(args)
 
-            self._market_data_input_filename = self.get_input_filename(args)
+        self.check_market_data_csv_has_data(self._market_data_input_filename, curr_wfo_cycle_info)
 
-            self.check_market_data_csv_has_data(self._market_data_input_filename, curr_wfo_cycle_info)
+        self.add_datas(args, curr_wfo_cycle_info)
 
-            self.add_datas(args, curr_wfo_cycle_info)
+        self.update_params(curr_wfo_cycle_info)
 
-            self.update_params(curr_wfo_cycle_info)
+        self.enqueue_strategies(strategy_enum)
 
-            self.enqueue_strategies(strategy_enum)
+        run_results = self.run_strategies(runner)
 
-            run_results = self.run_strategies(runner)
+        self._step1_model = self.create_model(wfo_cycles, curr_wfo_cycle_info, run_results, args)
 
-            self._step1_model = self.create_model(wfo_cycles, curr_wfo_cycle_info, run_results, args)
+        self.printfinalresultsheader(self._writer1, self._step1_model)
 
-            self.printfinalresultsheader(self._writer1, self._step1_model)
+        self.printequitycurvedataheader(self._writer2, self._step1_model)
 
-            self.printequitycurvedataheader(self._writer2, self._step1_model)
+        self.printfinalresults(self._writer1, self._step1_model.get_model_data_arr())
 
-            self.printfinalresults(self._writer1, self._step1_model.get_model_data_arr())
+        self.printequitycurvedataresults(self._writer2, self._step1_model.get_equity_curve_report_data_arr())
 
-            self.printequitycurvedataresults(self._writer2, self._step1_model.get_equity_curve_report_data_arr())
+        self.generate_equitycurve_images(self._step1_model, args)
 
-            self.generate_equitycurve_images(self._step1_model, args)
-
-            self.cleanup()
+        self.cleanup()
 
 
 def main():
-    step = WFOStep1()
+    step = Backtesting()
     step.run()
 
 
