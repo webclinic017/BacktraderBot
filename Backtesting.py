@@ -35,8 +35,8 @@ from collections import deque
 from plotting.equity_curve import EquityCurvePlotter
 import gc
 
-NUMBER_TOP_ROWS = 1296
-TOP_ROWS_IN_CYCLE_TO_RENDER = 1296
+NUMBER_TOP_ROWS = None  # 100
+TOP_ROWS_IN_CYCLE_TO_RENDER = None  # 100
 
 zero_depth_bases = (str, bytes, Number, range, bytearray)
 iteritems = 'items'
@@ -283,7 +283,10 @@ class Backtesting(object):
         return WFOHelper.get_wfo_cycles(start_date, 1, args.wfo_training_period, 15)
 
     def validate_strategy_params(self, params_dict):
-        return ParametersValidator.validate_params(params_dict)
+        try:
+            return ParametersValidator.validate_params(params_dict)
+        except ValueError as ve:
+            return False
 
     def update_params(self, curr_wfo_cycle_info):
         self._params.update({("wfo_cycle_id", curr_wfo_cycle_info.wfo_cycle_id)})
@@ -458,9 +461,10 @@ class Backtesting(object):
 
     def generate_equitycurve_images(self, model, args):
         results_df = model.get_model_df().reset_index(drop=False)
-        results_df = results_df[results_df[ColumnName.WFO_CYCLE_TRAINING_ID] <= TOP_ROWS_IN_CYCLE_TO_RENDER]
         equity_curve_df = model.get_equity_curve_model_df()
-        equity_curve_df = equity_curve_df[equity_curve_df[ColumnName.WFO_CYCLE_TRAINING_ID] <= TOP_ROWS_IN_CYCLE_TO_RENDER]
+        if TOP_ROWS_IN_CYCLE_TO_RENDER:
+            results_df = results_df[results_df[ColumnName.WFO_CYCLE_TRAINING_ID] <= TOP_ROWS_IN_CYCLE_TO_RENDER]
+            equity_curve_df = equity_curve_df[equity_curve_df[ColumnName.WFO_CYCLE_TRAINING_ID] <= TOP_ROWS_IN_CYCLE_TO_RENDER]
         if AppConfig.is_global_step1_enable_equitycurve_img_generation():
             self._equity_curve_plotter.generate_images_step1(results_df, equity_curve_df, args)
 

@@ -131,7 +131,8 @@ class BacktestModel(object):
 
     def filter_wfo_training_top_results(self, number_top_rows):
         self._report_rows = sorted(self._report_rows, key=lambda x: (x.run_key.wfo_cycle_id, x.analyzer_data.net_profit_to_maxdd,  x.equity_curve_data.rvalue), reverse=True)
-        self._report_rows = self._report_rows[:number_top_rows]
+        if number_top_rows:
+            self._report_rows = self._report_rows[:number_top_rows]
 
         counter = 1
         for report_row in self._report_rows:
