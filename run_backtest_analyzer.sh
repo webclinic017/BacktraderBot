@@ -1,7 +1,7 @@
 #! /bin/bash
 
-declare -a runid="TTT0085"
-declare -a fname="TTT0085_Backtesting.csv"
+declare -a runid="TTT0076"
+declare -a fname="${runid}_Backtesting.csv"
 
 if [ -d "/opt/anaconda3" ]; then
     source /opt/anaconda3/etc/profile.d/conda.sh

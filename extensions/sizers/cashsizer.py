@@ -14,40 +14,46 @@ import backtrader as bt
 class FixedCashSizer(bt.Sizer):
     '''This sizer returns a number of contracts that can be acquired for fixed cash amount (e.g. USD, BTC..)
     Params:
-      - ``cashamount`` (default: ``10000``)
-      - ``debug`` (default: ``False``)
+      - ``lotsize`` (default: ``10000``)
+      - ``debug``   (default: ``False``)
     '''
 
-    _PRE_MARGIN_CALL_ADJUSTMENT_RATIO = 0.8
-    _SAFETY_BUFFER_MARGIN_CALL = 0.85
+    ADJUSTMENT_FACTOR = 0.95
 
     params = (
-        ('cashamount', 10000),
+        ('lotsize', 10000),
         ('commission', 0),
+        ('risk', 0),
         ('debug', False),
     )
 
     def __init__(self):
         if self.p.debug:
-            print('FixedCashSizer.__init__(): self.params.cashamount={}'.format(self.p.cashamount))
+            print('FixedCashSizer.__init__(): self.p.lotsize={}, self.p.commission={}, self.p.risk={}'.format(self.p.lotsize, self.p.commission, self.p.risk))
         pass
 
-    def is_pre_margin_call_condition(self):
-        return self.broker.get_value() <= self.p.cashamount * (1 + 2 * self.p.commission)
+    def is_pre_margin_call_condition(self, cashamount):
+        return self.broker.get_value() <= cashamount * (1 + 2 * self.p.commission)
 
-    def get_capital_value(self):
-        if self.is_pre_margin_call_condition():
-            return round(self.broker.get_value() * self._PRE_MARGIN_CALL_ADJUSTMENT_RATIO, 8)
+    def get_capital(self, cashamount):
+        if self.is_pre_margin_call_condition(cashamount):
+            return round(self.broker.get_value() * self.ADJUSTMENT_FACTOR, 8)
         else:
-            return self._SAFETY_BUFFER_MARGIN_CALL * self.p.cashamount
+            return self.ADJUSTMENT_FACTOR * cashamount
+
+    def get_size(self, capital, price, risk_pct, sl_pct):
+        if risk_pct and sl_pct and risk_pct <= sl_pct:
+            return round(risk_pct / 100 * (capital / (sl_pct * price / 100)), 8)
+        else:
+            return round(capital / (1.0 * price), 8)
 
     def _getsizing(self, comminfo, cash, data, isbuy):
-        value = self.get_capital_value()
+        capital = self.get_capital(self.p.lotsize)
         price = data.open[1]
-        size = round(value / (1.0 * price), 8)
+        risk_pct = self.p.risk * 100
+        sl_pct = self.strategy.get_current_sl_pct()
+        size = self.get_size(capital, price, risk_pct, sl_pct)
 
         if self.p.debug:
-            print(
-                'FixedCashSizer._getsizing(): self.get_capital_value()={}, data.close[0]={}, data.open[1]={}, price={}, size={}'.format(
-                    value, data.close[0], data.open[1], price, size))
+            print('FixedCashSizer._getsizing(): capital()={}, data.close[0]={}, data.open[1]={}, price={}, risk={}, sl_pct={}, size={}'.format(capital, data.close[0], data.open[1], price, self.p.risk, sl_pct, size))
         return size

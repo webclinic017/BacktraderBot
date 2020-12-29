@@ -18,6 +18,7 @@ from termcolor import colored
 import re
 
 DEFAULT_CAPITAL_STOPLOSS_VALUE_PCT = -60
+ATR_LENGTH = 100
 
 
 class StrategyProcessorFactory(object):
@@ -68,8 +69,8 @@ class GenericStrategy(bt.Strategy):
         self.skip_bar_flow_control_flag = False
         self.capital_stoploss_fired_flow_control_flag = False
 
-        self.atr_tf = btind.AverageTrueRange(self.data, period=14, movav=btind.MovAv.SMA)
-        self.sma_tf = btind.SimpleMovingAverage(self.data.close, period=14)
+        self.atr_tf = btind.AverageTrueRange(self.data, period=ATR_LENGTH, movav=btind.MovAv.SMA)
+        self.sma_tf = btind.SimpleMovingAverage(self.data.close, period=ATR_LENGTH)
         self.atr_tf_pct = (self.atr_tf / self.sma_tf) * 100
 
     def islivedata(self):
@@ -138,7 +139,7 @@ class GenericStrategy(bt.Strategy):
         self.sltpmanager.tp_deactivate()
 
     def is_allow_signals_execution(self):
-        return not self.sltpmanager.is_tp_mode_activated() and not self.trailingbuymanager.is_tb_mode_activated() and not self.dcamodemanager.is_dca_mode_activated()
+        return not self.trailingbuymanager.is_tb_mode_activated() and not self.dcamodemanager.is_dca_mode_activated()
 
     def notify_data(self, data, status, *args, **kwargs):
         return self.strategyprocessor.notify_data(data, status, args, kwargs)
@@ -430,6 +431,9 @@ class GenericStrategy(bt.Strategy):
             else:  # If margin call occurred during closing a position, then set curr_position to the same value as it was in previous cycle to give a chance to recover
                 self.curr_position = -1 if self.position.size < 0 else 1 if self.position.size > 0 else 0
             self.broker.cerebro.runstop()
+
+    def get_current_sl_pct(self):
+        return self.sltpmanager.get_current_sl_pct()
 
     def get_trade_log_profit_color(self, trade):
         return 'red' if trade.pnl < 0 else 'green'

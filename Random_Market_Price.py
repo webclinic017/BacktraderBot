@@ -84,6 +84,11 @@ class RandomMarketPrice(object):
                             type=float,
                             help='The amount of commission to apply to a trade')
 
+        parser.add_argument('--risk',
+                            default=AppConfig.get_global_default_risk(),
+                            type=float,
+                            help='The percentage of capital to risk on a trade')
+
         parser.add_argument('--debug',
                             action ='store_true',
                             help=('Print Debug logs'))
@@ -141,7 +146,7 @@ class RandomMarketPrice(object):
         if lottype != "" and lottype == "Percentage":
             self._cerebro.addsizer(VariablePercentSizer, percents=lotsize, debug=args.debug)
         else:
-            self._cerebro.addsizer(FixedCashSizer, cashamount=lotsize, commission=args.commission)
+            self._cerebro.addsizer(FixedCashSizer, lotsize=lotsize, commission=args.commission, risk=args.risk)
 
         if args.commtype.lower() == 'percentage':
             self._cerebro.broker.setcommission(args.commission)

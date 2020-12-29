@@ -38,6 +38,13 @@ class SLTPCalculator(object):
         else:
             return round(base_price * (1 - val_pct / 100.0), 8)
 
+    def get_sl_pct(self):
+        if self.exitmode == TradeExitMode.EXIT_MODE_DEFAULT:
+            return self.sl_pct
+        elif self.exitmode == TradeExitMode.EXIT_MODE_SET_DYNAMIC_SLTP_WITH_ATR:
+            atr_mult = self.sl_pct
+            return self.strategy.atr_tf_pct[0] * atr_mult
+
     def get_sl_price(self, base_price, is_long):
         if self.exitmode == TradeExitMode.EXIT_MODE_DEFAULT:
             return self.calc_low_side_pr(base_price, self.sl_pct, is_long)

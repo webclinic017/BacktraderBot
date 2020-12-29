@@ -93,9 +93,14 @@ class WFOStep2(object):
                             help='The type of commission to apply to a trade')
 
         parser.add_argument('--commission',
-                            default=0.002,
+                            default=AppConfig.get_global_default_commission(),
                             type=float,
                             help='The amount of commission to apply to a trade')
+
+        parser.add_argument('--risk',
+                            default=AppConfig.get_global_default_risk(),
+                            type=float,
+                            help='The percentage of capital to risk on a trade')
 
         parser.add_argument('-r', '--runid',
                             type=str,
@@ -127,7 +132,7 @@ class WFOStep2(object):
         if args.lottype != "" and args.lottype == "Percentage":
             self._cerebro.addsizer(VariablePercentSizer, percents=args.lotsize, debug=args.debug)
         else:
-            self._cerebro.addsizer(FixedCashSizer, cashamount=args.lotsize, commission=args.commission)
+            self._cerebro.addsizer(FixedCashSizer, lotsize=args.lotsize, commission=args.commission, risk=args.risk)
 
         if args.commtype.lower() == 'percentage':
             self._cerebro.broker.setcommission(args.commission)

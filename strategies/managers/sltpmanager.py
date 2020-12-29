@@ -90,6 +90,11 @@ class SLTPManager(object):
             if self.is_tp_activated and self.is_ttp_activated:
                 self.submit_new_ttp_order(is_long, self.tradeid, old_order.size, old_order.price)
 
+    def get_current_sl_pct(self):
+        if self.is_sl_enabled:
+            return self.sltpcalculator.get_sl_pct()
+        return 0
+
     def activate_sl(self, tradeid, pos_price, pos_size, is_long):
         if self.is_sl_enabled and not self.is_sl_activated:
             self.tradeid = tradeid
