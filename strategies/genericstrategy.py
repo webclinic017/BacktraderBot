@@ -139,7 +139,7 @@ class GenericStrategy(bt.Strategy):
         self.sltpmanager.tp_deactivate()
 
     def is_allow_signals_execution(self):
-        return not self.trailingbuymanager.is_tb_mode_activated() and not self.dcamodemanager.is_dca_mode_activated()
+        return not self.sltpmanager.is_tp_mode_activated() and not self.trailingbuymanager.is_tb_mode_activated() and not self.dcamodemanager.is_dca_mode_activated()
 
     def notify_data(self, data, status, *args, **kwargs):
         return self.strategyprocessor.notify_data(data, status, args, kwargs)

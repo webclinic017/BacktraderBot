@@ -36,7 +36,7 @@ from plotting.equity_curve import EquityCurvePlotter
 import gc
 
 NUMBER_TOP_ROWS = None  # 100
-TOP_ROWS_IN_CYCLE_TO_RENDER = 20
+TOP_ROWS_IN_CYCLE_TO_RENDER = None  # 20
 
 zero_depth_bases = (str, bytes, Number, range, bytearray)
 iteritems = 'items'

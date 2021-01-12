@@ -1,6 +1,6 @@
 #! /bin/bash
 
-declare -a runid="TTT0076"
+runid=$1
 declare -a fname="${runid}_Backtesting.csv"
 
 if [ -d "/opt/anaconda3" ]; then

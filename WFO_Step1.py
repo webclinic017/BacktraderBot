@@ -35,8 +35,8 @@ from collections import deque
 from plotting.equity_curve import EquityCurvePlotter
 import gc
 
-STEP1_NUMBER_TOP_ROWS = 3
-STEP1_TOP_ROWS_IN_CYCLE_TO_RENDER = 1
+STEP1_NUMBER_TOP_ROWS = 10
+STEP1_TOP_ROWS_IN_CYCLE_TO_RENDER = 10
 
 zero_depth_bases = (str, bytes, Number, range, bytearray)
 iteritems = 'items'

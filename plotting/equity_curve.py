@@ -348,7 +348,7 @@ class EquityCurvePlotter(object):
         x_data = self.get_equity_data_x_axis_as_dates(data_points_dict.keys())
         y_data = self.get_equity_data_y_axis(data_points_dict.values())
         equity_curve_plot = self.build_equity_curve_plot_figure_step3(x_data)
-        #equity_curve_plot.line(x_data, y_data, line_width=6, alpha=1, color='red', legend_label='Average')
+        equity_curve_plot.line(x_data, y_data, line_width=6, alpha=1, color='red', legend_label='Average')
         equity_curve_plot = self.draw_wfo_cycles_boundaries(wfo_testing_data_list, equity_curve_plot)
 
         c = 0

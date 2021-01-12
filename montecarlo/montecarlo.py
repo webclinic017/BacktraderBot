@@ -1,7 +1,7 @@
 import pandas as pd
 
 DEFAULT_SIMS_NUMBER = 10000
-DEFAULT_RUIN_VALUE_PCT = 5
+DEFAULT_RUIN_VALUE_PCT = 30
 
 
 class MonteCarloSimulation(object):

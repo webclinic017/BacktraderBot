@@ -6,19 +6,19 @@ declare -a arr_num_days=("31" "28" "31" "30" "31" "30" "31" "31" "30" "31" "30" 
 
 runid=$1
 
-declare -a wfo_startdate="2019-12-01"
+declare -a wfo_startdate="2018-03-01"
 
 startyear=${wfo_startdate:0:4}
 startmonth=${wfo_startdate:5:2}
 startday=${wfo_startdate:8:2}
 
-wfo_training_period=180
+wfo_training_period=720
 
 #declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S003_AlexNoroRobotBitMEXFastRSIStrategy" "S004_AlexNoroBandsScalperStrategy" "S005_AlexNoroTripleRSIStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy" "S009_RSIMinMaxStrategy" "S010_AlexAroonTrendStrategy" "S011_EMACrossOverStrategy")
-declare -a arr_strategies=("S001_AlexNoroTrendMAsStrategy" "S002_AlexNoroSILAStrategy" "S003_AlexNoroRobotBitMEXFastRSIStrategy" "S004_AlexNoroBandsScalperStrategy" "S005_AlexNoroTripleRSIStrategy" "S006_AlexNoroSqueezeMomentumStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy" "S009_RSIMinMaxStrategy" "S010_AlexAroonTrendStrategy" "S011_EMACrossOverStrategy")
+declare -a arr_strategies=("S002_AlexNoroSILAStrategy" "S007_AlexNoroMultimaStrategy" "S008_AlexNoroSuperTrendStrategy" "S010_AlexAroonTrendStrategy" "S011_EMACrossOverStrategy")
 
 #declare -a arr_symbols=("BTCUSD" "ETHUSD" "XRPUSD" "LTCUSD" "ETCUSD" "IOTAUSD" "EOSUSD" "NEOUSD" "ZECUSD" "ETPUSD" "XMRUSD" "DASHUSD")
-declare -a arr_symbols=("BTCUSD")
+declare -a arr_symbols=("BTCUSD" "XRPUSD")
 
 #declare -a arr_timeframes=("15m" "30m" "1h" "3h" "6h" "12h")
 declare -a arr_timeframes=("1h" "3h")
@@ -32,7 +32,7 @@ elif [ -d "/Users/alex/anaconda3" ]; then
 fi
 conda activate Backtrader
 
-run_WFO_training() {
+run_Backtesting() {
     _runid=${1}
     _strategyid=${2}
     _symbol=${3}
@@ -56,7 +56,7 @@ do
         do
             pkill python
 
-            run_WFO_training $runid $strategyid $symbol $timeframe
+            run_Backtesting $runid $strategyid $symbol $timeframe
         done
     done
 done

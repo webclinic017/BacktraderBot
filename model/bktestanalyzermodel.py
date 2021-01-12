@@ -25,7 +25,7 @@ class BktestAnalyzerModel(object):
             ColumnName.TRADES_NUM_TTP_COUNT,
             ColumnName.TRADES_NUM_TB_COUNT,
             ColumnName.TRADES_NUM_DCA_TRIGGERED_COUNT,
-            ColumnName.NET_PROFIT,
+            ColumnName.NET_PROFIT_PCT,
             ColumnName.MAX_DRAWDOWN_PCT,
             ColumnName.MAX_DRAWDOWN_LENGTH,
             ColumnName.NET_PROFIT_TO_MAX_DRAWDOWN,
