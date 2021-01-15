@@ -94,7 +94,7 @@ class EquityCurvePlotter(object):
         return equity_curve_plot
 
     def get_equity_data_x_axis(self, arr):
-        if AppConfig.is_global_equitycurve_img_x_axis_trades() is True:
+        if AppConfig.is_global_equitycurve_img_x_axis_trades():
             return self.get_equity_data_x_axis_as_trades(arr)
         else:
             return self.get_equity_data_x_axis_as_dates(arr)
@@ -326,35 +326,76 @@ class EquityCurvePlotter(object):
         return equity_curve_plot
 
     def get_wfo_cycles_boundaries(self, wfo_cycles_list):
-        dt_boundaries = [wfo_cycle.testing_start_date for wfo_cycle in wfo_cycles_list]
+        dt_boundaries = [pd.to_datetime(wfo_cycle.testing_start_date) for wfo_cycle in wfo_cycles_list]
         last_entry_dt = wfo_cycles_list[-1].testing_end_date
         last_entry_dt += timedelta(days=1)
-        dt_boundaries.append(last_entry_dt)
+        dt_boundaries.append(pd.to_datetime(last_entry_dt))
         return dt_boundaries
 
-    def draw_wfo_cycles_boundaries(self, wfo_testing_data_list, equity_curve_plot):
+    def get_boundary_trade_num(self, x_data_index, boundary_dt):
+        prev_dt = 0
+        prev_trade_num = 0
+        boundary_dt_tstamp = boundary_dt.timestamp()
+        for curr_dt, trade_num in x_data_index.items():
+            curr_dt_tstamp = curr_dt.timestamp()
+            if boundary_dt_tstamp >= prev_dt and boundary_dt_tstamp <= curr_dt_tstamp:
+                if prev_dt == 0:
+                    return trade_num
+                else:
+                    return prev_trade_num
+            prev_dt = curr_dt_tstamp
+            prev_trade_num = trade_num
+        last_entry = list(x_data_index.items())[-1]
+        if boundary_dt_tstamp > last_entry[0].timestamp():
+            return last_entry[1]
+
+    def draw_wfo_cycles_boundaries(self, x_axis_flag, x_data_index, wfo_testing_data_list, equity_curve_plot):
         wfo_cycles_list = wfo_testing_data_list.get_wfo_cycles_list()
         wfo_cycle_boundaries = self.get_wfo_cycles_boundaries(wfo_cycles_list)
-        first_boundary_val = int(wfo_cycle_boundaries[0].timestamp() * 1000)
-        equity_curve_plot.line([first_boundary_val], 0, line_width=1, alpha=0, color='blue')
-        for dt in wfo_cycle_boundaries:
-            date_val = int(dt.timestamp() * 1000)
-            equity_curve_plot.add_layout(self.build_x_axis_line(date_val, "red"))
+        for boundary_dt in wfo_cycle_boundaries:
+            if x_axis_flag:
+                val = self.get_boundary_trade_num(x_data_index, boundary_dt)
+            else:
+                val = int(boundary_dt.timestamp() * 1000)
+            equity_curve_plot.add_layout(self.build_x_axis_line(val, "red"))
         return equity_curve_plot
 
+    def get_step3_x_data_index(self, data_points_dict):
+        x_data_trades = self.get_equity_data_x_axis_as_trades(data_points_dict.keys())
+        x_data_dates = self.get_equity_data_x_axis_as_dates(data_points_dict.keys())
+        x_data = dict(zip(x_data_dates, x_data_trades))
+        return x_data
+
+    def get_step3_x_data_from_index(self, x_axis_flag, x_data_index, x_data_keys_str_arr):
+        result_arr = list()
+        x_data_keys_date_arr = self.get_equity_data_x_axis_as_dates(x_data_keys_str_arr)
+        for date_key in x_data_keys_date_arr:
+            if date_key in x_data_index:
+                if x_axis_flag:
+                    result_arr.append(x_data_index[date_key])
+                else:
+                    result_arr.append(date_key)
+        return result_arr
+
     def draw_step3_equity_curves(self, wfo_testing_data_list, strategy_run_data, rows_df, avg_row_df):
+        x_axis_flag = AppConfig.is_global_equitycurve_img_x_axis_trades()
         avg_row = avg_row_df.iloc[0]
         data_points_dict = json.loads(avg_row[ColumnName.EQUITY_CURVE_DATA_POINTS])
-        x_data = self.get_equity_data_x_axis_as_dates(data_points_dict.keys())
+        x_data_index = self.get_step3_x_data_index(data_points_dict)
+
+        x_data = self.get_step3_x_data_from_index(x_axis_flag, x_data_index, data_points_dict.keys())
         y_data = self.get_equity_data_y_axis(data_points_dict.values())
-        equity_curve_plot = self.build_equity_curve_plot_figure_step3(x_data)
+
+        equity_curve_plot = self.build_equity_curve_plot_figure(x_data)
+
         equity_curve_plot.line(x_data, y_data, line_width=6, alpha=1, color='red', legend_label='Average')
-        equity_curve_plot = self.draw_wfo_cycles_boundaries(wfo_testing_data_list, equity_curve_plot)
+
+        equity_curve_plot = self.draw_wfo_cycles_boundaries(x_axis_flag, x_data_index, wfo_testing_data_list, equity_curve_plot)
 
         c = 0
         for index, row in rows_df.iterrows():
             data_points_dict = json.loads(row[ColumnName.EQUITY_CURVE_DATA_POINTS])
-            x_data = self.get_equity_data_x_axis_as_dates(data_points_dict.keys())
+            x_data = self.get_step3_x_data_from_index(x_axis_flag, x_data_index, data_points_dict.keys())
             y_data = self.get_equity_data_y_axis(data_points_dict.values())
             wfo_cycle_training_id = row[ColumnName.WFO_CYCLE_TRAINING_ID]
             l_width = 6 if c == 0 else 2
