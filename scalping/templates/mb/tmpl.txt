@@ -1,0 +1,2 @@
+# Moon Bot Strategies
+{{STRATEGY_LIST}}

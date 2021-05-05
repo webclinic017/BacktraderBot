@@ -18,8 +18,8 @@ SHOT_DEPTH_TO_TP_MAX_RATIO = 0.50
 SS_FILTER_MIN_SHOTS_COUNT = 2
 
 MIN_TP_PCT = 0.1
-DEFAULT_MIN_STEP = 0.05
-TRIAL_STEP_PCT = 0.05
+DEFAULT_MIN_STEP = 0.03
+TRIAL_STEP_PCT = 0.03
 
 DEFAULT_MT_MIN_TP_PCT = 0.1  # For MoonTrader - this is a break-even TP
 
@@ -283,7 +283,7 @@ class ShotsPnlCalculator(object):
         shots_data_df = self.simulate_shots(groups_df, shots_data_dict)
 
         if len(shots_data_df) > 0:
-            self.write_pnl_data_to_file(args, shots_data_df, shot_type)
+            #self.write_pnl_data_to_file(args, shots_data_df, shot_type)
             shots_data_df = self.get_best_pnl_rows(shots_data_df)
             self.write_best_pnl_rows_to_file(args, total_shots_count, shots_data_df, shot_type)
 

@@ -18,10 +18,10 @@ SHOT_DEPTH_TO_TP_MAX_RATIO = 0.50
 SS_FILTER_MIN_SHOTS_COUNT = 2
 
 MIN_TP_PCT = 0.1
-DEFAULT_MIN_STEP = 0.05
-TRIAL_STEP_PCT = 0.05
+DEFAULT_MIN_STEP = 0.03
+TRIAL_STEP_PCT = 0.03
 
-DEFAULT_MB_MIN_TP_PCT = 0.2  # In MoonBot it is possible to switch TP order auto decreasing
+DEFAULT_MB_MIN_TP_PCT = 0.2  # In MoonBot auto decresing of TP order possible
 
 SIMULATION_PARAMS = {
     "MShotPriceMin": np.arange(0.15, 0.91, DEFAULT_MIN_STEP),
