@@ -248,9 +248,10 @@ class ShotsPnlCalculator(object):
 
     def get_best_pnl_rows(self, df):
         best_pnl_rating = df.head(1)['Profit Rating'].values[0]
-        df['criterion'] = df['Buffer'] / 2
+        df['criterion1'] = df['Buffer'] / 2
+        df['criterion2'] = df['SL'] / df['TP']
         df = df[df['Profit Rating'] == best_pnl_rating]
-        df = df.sort_values(by=['criterion', 'SL'], ascending=True)
+        df = df.sort_values(by=['criterion1', 'criterion2'], ascending=True)
         return df.head(1)
 
     def process_data(self, args, shot_type):
@@ -282,7 +283,7 @@ class ShotsPnlCalculator(object):
         shots_data_df = self.simulate_shots(groups_df, shots_data_dict)
 
         if len(shots_data_df) > 0:
-            #ßself.write_pnl_data_to_file(args, shots_data_df, shot_type)
+            self.write_pnl_data_to_file(args, shots_data_df, shot_type)
             shots_data_df = self.get_best_pnl_rows(shots_data_df)
             self.write_best_pnl_rows_to_file(args, total_shots_count, shots_data_df, shot_type)
 

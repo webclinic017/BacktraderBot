@@ -195,7 +195,7 @@ class ShotsDetector(object):
         idx = 0
         for index, row in groups_df.iterrows():
             if idx % 1000 == 0:
-                print("Processed {} shots. Number of shots found: {}".format(idx, len(shots_list)))
+                print("Processed {} pre-shots. Number of shots found: {}".format(idx, len(shots_list)))
             idx = idx + 1
             group_timestamp = row["Timestamp"]
             group_datetime = row["Datetime"]
@@ -346,7 +346,7 @@ class ShotsDetector(object):
             exit(-1)
         groups_df = self._trade_data_df.groupby(["Timestamp", "Datetime"]).size().reset_index(name='counts')
         groups_df = groups_df[groups_df['counts'] > PRESHOT_TRADES_MIN_NUMBER_THRESHOLD]
-        print("Number of potential Shots: {}\nFiltering shots...".format(len(groups_df)))
+        print("Number of pre-shots: {}\nFiltering pre-shots...".format(len(groups_df)))
 
         shots_list = self.find_shots(args.symbol, self._trade_data_df, groups_df)
 

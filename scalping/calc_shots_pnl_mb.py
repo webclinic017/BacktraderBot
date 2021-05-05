@@ -248,9 +248,10 @@ class ShotsPnlCalculator(object):
 
     def get_best_pnl_rows(self, df):
         best_pnl_rating = df.head(1)['Profit Rating'].values[0]
-        df['settings_diff'] = df['MShotPrice'] - df['MShotPriceMin']
+        df['criterion1'] = df['MShotPrice'] - df['MShotPriceMin']
+        df['criterion2'] = df['SL'] / df['TP']
         df = df[df['Profit Rating'] == best_pnl_rating]
-        df = df.sort_values(by=['settings_diff'], ascending=True)
+        df = df.sort_values(by=['criterion1','criterion2'], ascending=True)
         return df.head(1)
 
     def process_data(self, args, shot_type):
