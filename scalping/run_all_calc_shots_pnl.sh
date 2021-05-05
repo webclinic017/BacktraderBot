@@ -18,6 +18,6 @@ conda activate Backtrader
 
 for symbol in "${symbol_list[@]}"
 do
-    python calc_shots_pnl.py -e binance -s $symbol $future_flag
+    python calc_shots_pnl_mt.py -e binance -s $symbol $future_flag
 done
 

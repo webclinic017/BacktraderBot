@@ -4,7 +4,6 @@ import numpy as np
 import os
 import itertools
 import collections
-import time
 import csv
 
 string_types = str
@@ -22,12 +21,11 @@ MIN_TP_PCT = 0.1
 DEFAULT_MIN_STEP = 0.05
 TRIAL_STEP_PCT = 0.05
 
-DEFAULT_MT_MIN_TP_PCT = 0.1  # In MoonTrader strategy mode - this is a break-even TP
-DEFAULT_MB_MIN_TP_PCT = 0.2  # In MoonBot strategy mode it is possible to switch TP order auto decreasing
+DEFAULT_MB_MIN_TP_PCT = 0.2  # In MoonBot it is possible to switch TP order auto decreasing
 
 SIMULATION_PARAMS = {
-    "distance": np.arange(0.05, 1.01, DEFAULT_MIN_STEP),
-    "buffer": np.arange(0.2, 0.31, DEFAULT_MIN_STEP),
+    "MShotPriceMin": np.arange(0.15, 0.91, DEFAULT_MIN_STEP),
+    "MShotPrice": np.arange(0.15, 1.01, DEFAULT_MIN_STEP),
     "tp": 0,
     "sl": np.arange(0.2, 0.41, DEFAULT_MIN_STEP)
 }
@@ -54,10 +52,6 @@ class ShotsPnlCalculator(object):
         parser.add_argument('-f', '--future',
                             action='store_true',
                             help=('Is instrument of future type?'))
-
-        parser.add_argument('-b', '--moonbot',
-                            action='store_true',
-                            help=('Is MoonBot working mode? Otherwise it is MT mode.'))
 
         parser.add_argument('--debug',
                             action='store_true',
@@ -93,30 +87,31 @@ class ShotsPnlCalculator(object):
         os.makedirs(output_path, exist_ok=True)
 
         # Save it
-        filename = '{}/shots-pnl-{}-{}-{}-{}.csv'.format(output_path, args.exchange, symbol_type_str, args.symbol, shot_type)
+        filename = '{}/shots-pnl-{}-{}-{}-{}-mb.csv'.format(output_path, args.exchange, symbol_type_str, args.symbol, shot_type)
         df.to_csv(filename)
 
-    def write_best_pnl_rows_to_file(self, args, df, shot_type):
+    def write_best_pnl_rows_to_file(self, args, total_shots_count, df, shot_type):
         # Save it
         dirname = self.whereAmI()
         symbol_type_str = self.get_symbol_type_str(args)
         output_path = '{}/../marketdata/shots/{}/{}'.format(dirname, args.exchange, symbol_type_str)
         os.makedirs(output_path, exist_ok=True)
 
-        header = ['symbol_name', 'shot_type', 'Distance', 'Buffer', 'TP', 'SL', 'Profit Rating']
+        header = ['symbol_name', 'shot_type', 'total_shots_count', 'MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating']
         csv_rows = []
         for index, row in df.iterrows():
             csv_rows.append([
                                 args.symbol,
                                 shot_type,
-                                row['Distance'],
-                                row['Buffer'],
+                                total_shots_count,
+                                row['MShotPriceMin'],
+                                row['MShotPrice'],
                                 row['TP'],
                                 row['SL'],
                                 row['Profit Rating']
                              ])
 
-        filename = '{}/shots-best-pnl-{}-{}.csv'.format(output_path, args.exchange, symbol_type_str)
+        filename = '{}/shots-best-pnl-{}-{}-mb.csv'.format(output_path, args.exchange, symbol_type_str)
 
         file_exists = False
         if os.path.exists(filename):
@@ -183,13 +178,13 @@ class ShotsPnlCalculator(object):
         optkwargs = map(dict, okwargs1)
         return list(optkwargs)
 
-    def calculate_shot_trials(self, args, shot, c_distance, c_buffer, c_tp, c_sl):
+    def calculate_shot_trials(self, shot, c_mshot_price_min, c_mshot_price, c_tp, c_sl):
         shot_trials_pnl_arr = []
         shot_depth = shot['shot_depth']
         shot_bounce = shot['shot_bounce']
-        trials_range = np.arange(0, c_buffer + TRIAL_STEP_PCT, TRIAL_STEP_PCT)
+        trials_range = np.arange(0, (c_mshot_price - c_mshot_price_min) + 0.01, TRIAL_STEP_PCT)
         for trd in trials_range:
-            shot_trial_start = c_distance + c_buffer / 2 - trd
+            shot_trial_start = c_mshot_price - trd
             shot_trial_end = shot_trial_start - shot_depth
             if shot_trial_end > 0:  # Shot too short - limit order was not triggered. Skip this trial.
                 continue
@@ -202,14 +197,14 @@ class ShotsPnlCalculator(object):
                     # Shot has triggered TP
                     trial_pnl_pct = c_tp - COMMISSIONS_PCT
                 else:
-                    # Break-even TP (MoonTrader mode) or minimum TP through auto decreasing TP (MoonBot mode)
-                    assumed_tp = DEFAULT_MB_MIN_TP_PCT if args.moonbot else DEFAULT_MT_MIN_TP_PCT
+                    # In MoonBot - minimum TP through auto decreasing TP
+                    assumed_tp = DEFAULT_MB_MIN_TP_PCT
                     trial_pnl_pct = assumed_tp - COMMISSIONS_PCT
 
             shot_trials_pnl_arr.append(trial_pnl_pct)
         return shot_trials_pnl_arr
 
-    def simulate_shots(self, args, groups_df, shots_data_dict):
+    def simulate_shots(self, groups_df, shots_data_dict):
         arr_out = []
 
         shot_depth_list = list(groups_df["shot_depth"].values)
@@ -220,11 +215,11 @@ class ShotsPnlCalculator(object):
         for c_idx, c_dict in enumerate(combinations):
             if c_idx % 100 == 0:
                 print("{}/{}".format(c_idx, len(combinations)))
-            c_distance = c_dict["distance"]
-            c_buffer = c_dict["buffer"]
+            c_mshot_price_min = c_dict["MShotPriceMin"]
+            c_mshot_price = c_dict["MShotPrice"]
             c_tp = c_dict["tp"]
             c_sl = c_dict["sl"]
-            if c_distance <= c_buffer / 2:
+            if c_mshot_price <= c_mshot_price_min:
                 continue
 
             shot_pnl_arr = []
@@ -236,7 +231,7 @@ class ShotsPnlCalculator(object):
 
                 group_shots_list = shots_data_dict[shot_depth]
                 for shot in group_shots_list:
-                    shot_trials_pnl_arr = self.calculate_shot_trials(args, shot, c_distance, c_buffer, c_tp, c_sl)
+                    shot_trials_pnl_arr = self.calculate_shot_trials(shot, c_mshot_price_min, c_mshot_price, c_tp, c_sl)
 
                     if len(shot_trials_pnl_arr) > 0:
                         shot_trials_pnl_avg = np.mean(shot_trials_pnl_arr)
@@ -244,20 +239,35 @@ class ShotsPnlCalculator(object):
 
             if len(shot_pnl_arr) > 0:
                 total_pnl = sum(shot_pnl_arr)
-                arr = [round(c_distance, 2), round(c_buffer, 2), round(c_tp, 2), round(c_sl, 2), round(total_pnl, 4)]
+                arr = [round(c_mshot_price_min, 2), round(c_mshot_price, 2), round(c_tp, 2), round(c_sl, 2), round(total_pnl, 4)]
                 arr_out.append(arr)
 
-        df = pd.DataFrame(arr_out, columns=['Distance', 'Buffer', 'TP', 'SL', 'Profit Rating'])
+        df = pd.DataFrame(arr_out, columns=['MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating'])
         df = df.sort_values(by=['Profit Rating'], ascending=False)
         return df
+
+    def get_best_pnl_rows(self, df):
+        best_pnl_rating = df.head(1)['Profit Rating'].values[0]
+        df['settings_diff'] = df['MShotPrice'] - df['MShotPriceMin']
+        df = df[df['Profit Rating'] == best_pnl_rating]
+        df = df.sort_values(by=['settings_diff'], ascending=True)
+        return df.head(1)
 
     def process_data(self, args, shot_type):
         shots_data_df = self._shots_data_df[(self._shots_data_df['symbol_name'] == args.symbol) & (self._shots_data_df['shot_type'] == shot_type)]
         print("\nProcessing {} shot type...".format(shot_type))
-        print("Length of {} shots dataframe: {}".format(args.symbol, len(shots_data_df)))
+        total_shots_count = len(shots_data_df)
+        print("Length of {} shots dataframe: {}".format(args.symbol, total_shots_count))
+
+        if total_shots_count == 0:
+            print("No input shots data to process. Exiting.")
+            return
 
         groups_df = shots_data_df.groupby(["shot_depth"]).size().reset_index(name='counts')
         groups_df = groups_df[groups_df['counts'] >= SS_FILTER_MIN_SHOTS_COUNT]
+        if len(groups_df) == 0:
+            print("After filtering there is no shots data to process. Exiting.")
+            return
 
         shots_data_dict = {}
         for idx, row in groups_df.iterrows():
@@ -269,11 +279,12 @@ class ShotsPnlCalculator(object):
                                          'shot_depth': group_row['shot_depth'],
                                          'shot_bounce': group_row['shot_bounce']})
             shots_data_dict[shot_depth] = group_shots_list
-        shots_data_df = self.simulate_shots(args, groups_df, shots_data_dict)
+        shots_data_df = self.simulate_shots(groups_df, shots_data_dict)
 
         if len(shots_data_df) > 0:
-            self.write_pnl_data_to_file(args, shots_data_df, shot_type)
-            self.write_best_pnl_rows_to_file(args, shots_data_df.head(1), shot_type)
+            #self.write_pnl_data_to_file(args, shots_data_df, shot_type)
+            shots_data_df = self.get_best_pnl_rows(shots_data_df)
+            self.write_best_pnl_rows_to_file(args, total_shots_count, shots_data_df, shot_type)
 
     def run(self):
         args = self.parse_args()
