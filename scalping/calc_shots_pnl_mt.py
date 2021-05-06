@@ -25,9 +25,9 @@ DEFAULT_MT_MIN_TP_PCT = 0.1  # For MoonTrader - this is a break-even TP
 
 SIMULATION_PARAMS = {
     "distance": np.arange(0.15, 1.01, DEFAULT_MIN_STEP),
-    "buffer": np.arange(0.2, 0.41, DEFAULT_MIN_STEP),
+    "buffer": np.arange(0.2, 0.91, DEFAULT_MIN_STEP),
     "tp": 0,
-    "sl": np.arange(0.2, 0.41, DEFAULT_MIN_STEP)
+    "sl": np.arange(0.3, 0.51, DEFAULT_MIN_STEP)
 }
 
 
@@ -249,7 +249,7 @@ class ShotsPnlCalculator(object):
     def get_best_pnl_rows(self, df):
         best_pnl_rating = df.head(1)['Profit Rating'].values[0]
         df['criterion1'] = df['Buffer'] / 2
-        df['criterion2'] = df['SL'] / df['TP']
+        df['criterion2'] = df['TP'] / df['SL']
         df = df[df['Profit Rating'] == best_pnl_rating]
         df = df.sort_values(by=['criterion1', 'criterion2'], ascending=True)
         return df.head(1)
