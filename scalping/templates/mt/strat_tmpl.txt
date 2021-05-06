@@ -127,7 +127,7 @@
           },
           "stopLossStatus": {
             "name": "stopLossStatus",
-            "value": 1,
+            "value": 2,
             "argumentType": 13
           },
           "stopLossTrailingIsOn": {

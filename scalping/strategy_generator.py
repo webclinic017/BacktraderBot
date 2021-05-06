@@ -132,7 +132,7 @@ class ShotStrategyGenerator(object):
             mshot_price_min = pnl_row['MShotPriceMin']
             mshot_price = pnl_row['MShotPrice']
             return {
-                TOKEN001_STR: "Moonshot {} {}-{} {}".format(symbol_name, mshot_price_min, mshot_price, shot_type),
+                TOKEN001_STR: "Moonshot {} {}-{}-{}-{} {}".format(symbol_name, mshot_price_min, mshot_price, tp, sl, shot_type),
                 TOKEN002_STR: symbol_name,
                 TOKEN003_STR: "{:.4f}".format(tp),
                 TOKEN004_STR: "{:.8f}".format(sl),
@@ -145,7 +145,7 @@ class ShotStrategyGenerator(object):
             buffer = pnl_row['Buffer']
             return {
                 TOKEN001_STR: "{}".format(MT_STRATEGY_ID_START_FROM + index),
-                TOKEN002_STR: "Shot {} {}-{} {}".format(symbol_name, distance, buffer, shot_type),
+                TOKEN002_STR: "Shot {} {}-{}-{}-{} {}".format(symbol_name, distance, buffer, tp, sl, shot_type),
                 TOKEN003_STR: symbol_name,
                 TOKEN004_STR: "{}".format(distance),
                 TOKEN005_STR: "{}".format(buffer),
@@ -204,7 +204,6 @@ class ShotStrategyGenerator(object):
         out_filename = self.get_output_strategy_filename(args)
         self.write_file(out_filename, all_strategies_str)
         print("\nStrategy file {} has been generated!".format(out_filename))
-
 
 
 def main():
