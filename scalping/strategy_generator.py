@@ -5,7 +5,7 @@ import io
 from pathlib import Path
 
 MIN_TOTAL_SHOTS_COUNT = 5
-MAX_MIN_TOTAL_SHOTS_COUNT_RATIO = 2
+MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.4
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -20,7 +20,6 @@ TOKEN_STRATEGY_LIST_STR = "{{STRATEGY_LIST}}"
 
 MT_STRATEGY_ID_START_FROM = 1617219803226
 
-DEFAULT_OUTPUT_BASEPATH = "/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies"
 DEFAULT_OUTPUT_MB_FILENAME = "Binance-BTC-strat.txt"
 DEFAULT_OUTPUT_MT_FILENAME = "algorithms.config"
 
@@ -93,10 +92,12 @@ class ShotStrategyGenerator(object):
         return '{}/templates/{}/strat_tmpl.txt'.format(dirname, app_suffix_str)
 
     def get_output_strategy_filename(self, args):
+        dirname = self.whereAmI()
+        symbol_type_str = self.get_symbol_type_str(args)
         if args.moonbot:
-            return "{}/{}".format(DEFAULT_OUTPUT_BASEPATH, DEFAULT_OUTPUT_MB_FILENAME)
+            return '{}/../marketdata/shots/{}/{}/{}'.format(dirname, args.exchange, symbol_type_str, DEFAULT_OUTPUT_MB_FILENAME)
         else:
-            return "{}/{}".format(DEFAULT_OUTPUT_BASEPATH, DEFAULT_OUTPUT_MT_FILENAME)
+            return '{}/../marketdata/shots/{}/{}/{}'.format(dirname, args.exchange, symbol_type_str, DEFAULT_OUTPUT_MT_FILENAME)
 
     def read_file(self, filename):
         return Path(filename).read_text()
@@ -116,9 +117,8 @@ class ShotStrategyGenerator(object):
         df = df.sort_values(by=['total_shots_count'], ascending=False)
 
         df = df[df['total_shots_count'] >= MIN_TOTAL_SHOTS_COUNT]
-        max_total_shots_count = df['total_shots_count'].max()
-        filter_val = int(round(max_total_shots_count / MAX_MIN_TOTAL_SHOTS_COUNT_RATIO))
-        df = df[df['total_shots_count'] >= filter_val]
+        filter_val = int(round(len(df) * MAX_MIN_TOTAL_SHOTS_PERCENTILE))
+        df = df.head(filter_val)
 
         df = df.sort_values(by=['symbol_name', 'shot_type'], ascending=True)
         return df

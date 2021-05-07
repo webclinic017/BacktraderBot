@@ -17,17 +17,19 @@ SHOT_DEPTH_TO_TP_MAX_RATIO = 0.50
 
 SS_FILTER_MIN_SHOTS_COUNT = 2
 
-MIN_TP_PCT = 0.2
+MIN_TP_PCT = 0.15
 DEFAULT_MIN_STEP = 0.03
 TRIAL_STEP_PCT = 0.03
 
 DEFAULT_MB_MIN_TP_PCT = 0.2  # In MoonBot auto decresing of TP order possible
 
+CREATE_PNL_FILE_FLAG = True
+
 SIMULATION_PARAMS = {
     "MShotPriceMin": np.arange(0.15, 0.91, DEFAULT_MIN_STEP),
     "MShotPrice": np.arange(0.15, 1.01, DEFAULT_MIN_STEP),
     "tp": 0,
-    "sl": np.arange(0.3, 0.51, DEFAULT_MIN_STEP)
+    "sl": np.arange(0.2, 0.46, DEFAULT_MIN_STEP)
 }
 
 
@@ -239,7 +241,7 @@ class ShotsPnlCalculator(object):
 
             if len(shot_pnl_arr) > 0:
                 total_pnl = sum(shot_pnl_arr)
-                arr = [round(c_mshot_price_min, 2), round(c_mshot_price, 2), round(c_tp, 2), round(c_sl, 2), round(total_pnl, 4)]
+                arr = [round(c_mshot_price_min, 2), round(c_mshot_price, 2), round(c_tp, 2), round(c_sl, 2), round(total_pnl, 2)]
                 arr_out.append(arr)
 
         df = pd.DataFrame(arr_out, columns=['MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating'])
@@ -283,7 +285,8 @@ class ShotsPnlCalculator(object):
         shots_data_df = self.simulate_shots(groups_df, shots_data_dict)
 
         if len(shots_data_df) > 0:
-            #self.write_pnl_data_to_file(args, shots_data_df, shot_type)
+            if CREATE_PNL_FILE_FLAG:
+                self.write_pnl_data_to_file(args, shots_data_df, shot_type)
             shots_data_df = self.get_best_pnl_rows(shots_data_df)
             self.write_best_pnl_rows_to_file(args, total_shots_count, shots_data_df, shot_type)
 
