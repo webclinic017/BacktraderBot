@@ -19,7 +19,7 @@ start_date="$(date -j -f "%s" "${start_timestamp}" "+%Y-%m-%dT%H:%M:%S")"
 end_timestamp=$((start_timestamp + 3600 * start_hours_ago))
 end_date="$(date -j -f "%s" "${end_timestamp}" "+%Y-%m-%dT%H:%M:%S")"
 
-output_folder_prefix="$(date -j -f "%s" "${end_timestamp}" "+%Y%m%d_%H00")"
+output_folder_prefix="$(date -j -f "%s" "${end_timestamp}" "+%Y%m%d_%H%M")"
 output_folder="/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${output_folder_prefix}/"
 
 if [ -d "/opt/anaconda3" ]; then
@@ -55,7 +55,7 @@ done
 # Calculate best PnL for all the shots
 for symbol in "${symbol_list[@]}"
 do
-    python calc_shots_pnl_mt.py -e binance -s $symbol $future_flag
+    python calc_shots_pnl.py -e binance -s $symbol $future_flag $moonbot_flag
 done
 
 # Generate strategy files for MB/MT

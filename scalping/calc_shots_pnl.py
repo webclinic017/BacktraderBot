@@ -10,27 +10,51 @@ string_types = str
 
 BINS_SPLITTER = ":"
 
+MIN_TOTAL_SHOTS_COUNT = 5
+
 COMMISSIONS_PCT = 0.02 + 0.04
 SLIPPAGE_PCT = 0.02
 
 SHOT_DEPTH_TO_TP_MAX_RATIO = 0.50
 
-SS_FILTER_MIN_SHOTS_COUNT = 2
+SS_FILTER_MIN_SHOTS_COUNT = 0
 
+MIN_DISTANCE_PCT = 0.15
 MIN_TP_PCT = 0.15
 DEFAULT_MIN_STEP = 0.03
 TRIAL_STEP_PCT = 0.03
 
+DEFAULT_MT_MIN_TP_PCT = 0.1  # For MoonTrader - this is a break-even TP
 DEFAULT_MB_MIN_TP_PCT = 0.2  # In MoonBot auto decresing of TP order possible
 
 CREATE_PNL_FILE_FLAG = True
 
-SIMULATION_PARAMS = {
+SIMULATION_PARAMS = {}
+
+SIMULATION_PARAMS_MT = {
+    "distance": 0,
+    "buffer": np.arange(0.2, 0.36, DEFAULT_MIN_STEP),
+    "tp": 0,
+    "sl": np.arange(0.2, 0.46, DEFAULT_MIN_STEP)
+}
+
+SIMULATION_PARAMS_MB = {
     "MShotPriceMin": np.arange(0.15, 0.91, DEFAULT_MIN_STEP),
     "MShotPrice": np.arange(0.15, 1.01, DEFAULT_MIN_STEP),
     "tp": 0,
     "sl": np.arange(0.2, 0.46, DEFAULT_MIN_STEP)
 }
+
+
+class ShotTrialAnalyzer(object):
+    def __init__(self):
+        self.shot_trials_count = 0
+        self.shot_missed_count = 0
+        self.shot_triggered_sl_count = 0
+        self.shot_bounce_triggered_sl_count = 0
+        self.shot_triggered_tp_count = 0
+        self.shot_break_even_count = 0
+        self.shot_trials_pnl_arr = []
 
 
 class ShotsPnlCalculator(object):
@@ -54,6 +78,10 @@ class ShotsPnlCalculator(object):
         parser.add_argument('-f', '--future',
                             action='store_true',
                             help=('Is instrument of future type?'))
+
+        parser.add_argument('-b', '--moonbot',
+                            action='store_true',
+                            help=('Is MoonBot working mode? Otherwise it is MT mode.'))
 
         parser.add_argument('--debug',
                             action='store_true',
@@ -89,7 +117,8 @@ class ShotsPnlCalculator(object):
         os.makedirs(output_path, exist_ok=True)
 
         # Save it
-        filename = '{}/shots-pnl-{}-{}-{}-{}-mb.csv'.format(output_path, args.exchange, symbol_type_str, args.symbol, shot_type)
+        suffix = "mb" if args.moonbot else "mt"
+        filename = '{}/shots-pnl-{}-{}-{}-{}-{}.csv'.format(output_path, args.exchange, symbol_type_str, args.symbol, shot_type, suffix)
         df.to_csv(filename)
 
     def write_best_pnl_rows_to_file(self, args, total_shots_count, df, shot_type):
@@ -99,21 +128,26 @@ class ShotsPnlCalculator(object):
         output_path = '{}/../marketdata/shots/{}/{}'.format(dirname, args.exchange, symbol_type_str)
         os.makedirs(output_path, exist_ok=True)
 
-        header = ['symbol_name', 'shot_type', 'total_shots_count', 'MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating']
+        if args.moonbot:
+            header = ['symbol_name', 'shot_type', 'total_shots_count', 'MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating']
+        else:
+            header = ['symbol_name', 'shot_type', 'total_shots_count', 'Distance', 'Buffer', 'TP', 'SL', 'Profit Rating']
+
         csv_rows = []
         for index, row in df.iterrows():
             csv_rows.append([
                                 args.symbol,
                                 shot_type,
                                 total_shots_count,
-                                row['MShotPriceMin'],
-                                row['MShotPrice'],
+                                row['MShotPriceMin'] if args.moonbot else row['Distance'],
+                                row['MShotPrice'] if args.moonbot else row['Buffer'],
                                 row['TP'],
                                 row['SL'],
                                 row['Profit Rating']
                              ])
 
-        filename = '{}/shots-best-pnl-{}-{}-mb.csv'.format(output_path, args.exchange, symbol_type_str)
+        suffix = "mb" if args.moonbot else "mt"
+        filename = '{}/shots-best-pnl-{}-{}-{}.csv'.format(output_path, args.exchange, symbol_type_str, suffix)
 
         file_exists = False
         if os.path.exists(filename):
@@ -152,11 +186,18 @@ class ShotsPnlCalculator(object):
 
         return p_table_df
 
-    def update_simulation_params(self, shot_depth_list, shot_count_list):
+    def update_simulation_params(self, is_moonbot, shot_depth_list, shot_count_list):
+        global SIMULATION_PARAMS_MT
+        global SIMULATION_PARAMS_MB
         global SIMULATION_PARAMS
+
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
+
+        SIMULATION_PARAMS = SIMULATION_PARAMS_MB if is_moonbot else SIMULATION_PARAMS_MT
+        SIMULATION_PARAMS["distance"] = np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
         SIMULATION_PARAMS["tp"] = np.arange(MIN_TP_PCT, max_s * SHOT_DEPTH_TO_TP_MAX_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
+
 
     @staticmethod
     def iterize(iterable):
@@ -180,50 +221,80 @@ class ShotsPnlCalculator(object):
         optkwargs = map(dict, okwargs1)
         return list(optkwargs)
 
-    def calculate_shot_trials(self, shot, c_mshot_price_min, c_mshot_price, c_tp, c_sl):
-        shot_trials_pnl_arr = []
+    def calculate_shot_trials(self, is_moonbot, trial_analyzer, shot, param_arr):
+        trial_analyzer.shot_trials_pnl_arr = []
         shot_depth = shot['shot_depth']
         shot_bounce = shot['shot_bounce']
-        trials_range = np.arange(0, (c_mshot_price - c_mshot_price_min) + 0.01, TRIAL_STEP_PCT)
+        first_param = param_arr[0]
+        second_param = param_arr[1]
+        c_tp = param_arr[2]
+        c_sl = param_arr[3]
+
+        if is_moonbot:
+            trials_range = np.arange(0, (second_param - first_param) + 0.01, TRIAL_STEP_PCT)
+        else:
+            trials_range = np.arange(0, second_param + TRIAL_STEP_PCT, TRIAL_STEP_PCT)
+
         for trd in trials_range:
-            shot_trial_start = c_mshot_price - trd
+            trial_analyzer.shot_trials_count += 1
+            if is_moonbot:
+                shot_trial_start = second_param - trd
+            else:
+                shot_trial_start = first_param + second_param / 2 - trd
             shot_trial_end = shot_trial_start - shot_depth
             if shot_trial_end > 0:  # Shot too short - limit order was not triggered. Skip this trial.
+                trial_analyzer.shot_missed_count += 1
                 continue
             shot_bounce_end = shot_trial_end + shot_bounce
             if shot_trial_end < -c_sl or shot_bounce_end < -c_sl:
                 # Shot has triggered SL
                 trial_pnl_pct = -(c_sl + COMMISSIONS_PCT + SLIPPAGE_PCT)
+                if shot_trial_end < -c_sl:
+                    trial_analyzer.shot_triggered_sl_count += 1
+                elif shot_bounce_end < -c_sl:
+                    trial_analyzer.shot_bounce_triggered_sl_count += 1
             else:
                 if shot_bounce_end >= c_tp:
                     # Shot has triggered TP
                     trial_pnl_pct = c_tp - COMMISSIONS_PCT
+                    trial_analyzer.shot_triggered_tp_count += 1
                 else:
+                    # Break-even TP (MoonTrader mode)
                     # In MoonBot - minimum TP through auto decreasing TP
-                    assumed_tp = DEFAULT_MB_MIN_TP_PCT
+                    assumed_tp = DEFAULT_MB_MIN_TP_PCT if is_moonbot else DEFAULT_MT_MIN_TP_PCT
                     trial_pnl_pct = assumed_tp - COMMISSIONS_PCT
+                    trial_analyzer.shot_break_even_count += 1
 
-            shot_trials_pnl_arr.append(trial_pnl_pct)
-        return shot_trials_pnl_arr
+            trial_analyzer.shot_trials_pnl_arr.append(trial_pnl_pct)
+        return trial_analyzer
 
-    def simulate_shots(self, groups_df, shots_data_dict):
+    def simulate_shots(self, is_moonbot, groups_df, shots_data_dict):
         arr_out = []
 
         shot_depth_list = list(groups_df["shot_depth"].values)
         shot_count_list = list(groups_df["counts"].values)
-        self.update_simulation_params(shot_depth_list, shot_count_list)
+        self.update_simulation_params(is_moonbot, shot_depth_list, shot_count_list)
 
         combinations = self.get_sim_combinations()
         for c_idx, c_dict in enumerate(combinations):
             if c_idx % 100 == 0:
                 print("{}/{}".format(c_idx, len(combinations)))
-            c_mshot_price_min = c_dict["MShotPriceMin"]
-            c_mshot_price = c_dict["MShotPrice"]
             c_tp = c_dict["tp"]
             c_sl = c_dict["sl"]
-            if c_mshot_price <= c_mshot_price_min:
-                continue
+            if is_moonbot:
+                c_mshot_price_min = c_dict["MShotPriceMin"]
+                c_mshot_price = c_dict["MShotPrice"]
+                param_arr = [c_mshot_price_min, c_mshot_price, c_tp, c_sl]
+                if c_mshot_price <= c_mshot_price_min:
+                    continue
+            else:
+                c_distance = c_dict["distance"]
+                c_buffer = c_dict["buffer"]
+                param_arr = [c_distance, c_buffer, c_tp, c_sl]
+                if c_distance <= c_buffer / 2:
+                    continue
 
+            trial_analyzer = ShotTrialAnalyzer()
             shot_pnl_arr = []
 
             for index, shot_group in groups_df.iterrows():
@@ -233,30 +304,47 @@ class ShotsPnlCalculator(object):
 
                 group_shots_list = shots_data_dict[shot_depth]
                 for shot in group_shots_list:
-                    shot_trials_pnl_arr = self.calculate_shot_trials(shot, c_mshot_price_min, c_mshot_price, c_tp, c_sl)
+                    trial_analyzer = self.calculate_shot_trials(is_moonbot, trial_analyzer, shot, param_arr)
 
-                    if len(shot_trials_pnl_arr) > 0:
-                        shot_trials_pnl_avg = np.mean(shot_trials_pnl_arr)
+                    if trial_analyzer and len(trial_analyzer.shot_trials_pnl_arr) > 0:
+                        shot_trials_pnl_avg = np.mean(trial_analyzer.shot_trials_pnl_arr)
                         shot_pnl_arr.append(shot_trials_pnl_avg)
 
             if len(shot_pnl_arr) > 0:
                 total_pnl = sum(shot_pnl_arr)
-                arr = [round(c_mshot_price_min, 2), round(c_mshot_price, 2), round(c_tp, 2), round(c_sl, 2), round(total_pnl, 2)]
+                arr = [round(param_arr[0], 2),
+                       round(param_arr[1], 2),
+                       round(c_tp, 2),
+                       round(c_sl, 2),
+                       round(total_pnl, 1),
+                       trial_analyzer.shot_trials_count,
+                       trial_analyzer.shot_missed_count,
+                       trial_analyzer.shot_triggered_sl_count,
+                       trial_analyzer.shot_bounce_triggered_sl_count,
+                       trial_analyzer.shot_triggered_tp_count,
+                       trial_analyzer.shot_break_even_count]
                 arr_out.append(arr)
 
-        df = pd.DataFrame(arr_out, columns=['MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating'])
+        if is_moonbot:
+            df = pd.DataFrame(arr_out, columns=['MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating', 'shot_trials_count',
+                                               'shot_missed_count', 'shot_triggered_sl_count', 'shot_bounce_triggered_sl_count',
+                                               'shot_triggered_tp_count', 'shot_break_even_count'])
+        else:
+            df = pd.DataFrame(arr_out, columns=['Distance', 'Buffer', 'TP', 'SL', 'Profit Rating', 'shot_trials_count',
+                                               'shot_missed_count', 'shot_triggered_sl_count', 'shot_bounce_triggered_sl_count',
+                                               'shot_triggered_tp_count', 'shot_break_even_count'])
+
         df = df.sort_values(by=['Profit Rating'], ascending=False)
         return df
 
     def get_best_pnl_rows(self, df):
-        best_pnl_rating = df.head(1)['Profit Rating'].values[0]
-        df['criterion1'] = df['MShotPrice'] - df['MShotPriceMin']
-        df['criterion2'] = df['TP'] / df['SL']
-        df = df[df['Profit Rating'] == best_pnl_rating]
-        df = df.sort_values(by=['criterion1', 'criterion2'], ascending=True)
+        df['add_criteria1'] = df['Profit Rating']
+        df['add_criteria2'] = df['SL'] / df['TP']
+        df = df.sort_values(by=['add_criteria1', 'add_criteria2'], ascending=False)
         return df.head(1)
 
     def process_data(self, args, shot_type):
+        is_moonbot = True if args.moonbot else False
         shots_data_df = self._shots_data_df[(self._shots_data_df['symbol_name'] == args.symbol) & (self._shots_data_df['shot_type'] == shot_type)]
         print("\nProcessing {} shot type...".format(shot_type))
         total_shots_count = len(shots_data_df)
@@ -264,6 +352,10 @@ class ShotsPnlCalculator(object):
 
         if total_shots_count == 0:
             print("No input shots data to process. Exiting.")
+            return
+
+        if total_shots_count <= MIN_TOTAL_SHOTS_COUNT:
+            print("Number of shots is too low: {}. Exiting.".format(total_shots_count))
             return
 
         groups_df = shots_data_df.groupby(["shot_depth"]).size().reset_index(name='counts')
@@ -282,7 +374,7 @@ class ShotsPnlCalculator(object):
                                          'shot_depth': group_row['shot_depth'],
                                          'shot_bounce': group_row['shot_bounce']})
             shots_data_dict[shot_depth] = group_shots_list
-        shots_data_df = self.simulate_shots(groups_df, shots_data_dict)
+        shots_data_df = self.simulate_shots(is_moonbot, groups_df, shots_data_dict)
 
         if len(shots_data_df) > 0:
             if CREATE_PNL_FILE_FLAG:
