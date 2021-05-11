@@ -4,7 +4,7 @@ import os
 import io
 from pathlib import Path
 
-MIN_TOTAL_SHOTS_COUNT = 5
+MIN_TOTAL_SHOTS_COUNT = 1
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.4
 
 TOKEN001_STR = "{{TOKEN001}}"

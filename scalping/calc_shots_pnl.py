@@ -15,35 +15,25 @@ MIN_TOTAL_SHOTS_COUNT = 5
 COMMISSIONS_PCT = 0.02 + 0.04
 SLIPPAGE_PCT = 0.02
 
-SHOT_DEPTH_TO_TP_MAX_RATIO = 0.50
-
 SS_FILTER_MIN_SHOTS_COUNT = 0
 
-MIN_DISTANCE_PCT = 0.15
-MIN_TP_PCT = 0.15
-DEFAULT_MIN_STEP = 0.03
-TRIAL_STEP_PCT = 0.03
+MIN_DISTANCE_PCT = 0.2
+MIN_TP_PCT = 0.2
+DEFAULT_MIN_STEP = 0.02
+TRIAL_STEP_PCT = 0.02
 
 DEFAULT_MT_MIN_TP_PCT = 0.1  # For MoonTrader - this is a break-even TP
 DEFAULT_MB_MIN_TP_PCT = 0.2  # In MoonBot auto decresing of TP order possible
 
+MAX_MSHOT_PRICE_MIN = 0.91
+MAX_MSHOT_PRICE = 1.01
+MAX_BUFFER_PCT = 0.36
+MAX_SL_PCT = 0.45
+
+MIN_RR_RATIO = 2
+
+MAX_TP_TO_SHOT_RATIO = 0.5
 CREATE_PNL_FILE_FLAG = True
-
-SIMULATION_PARAMS = {}
-
-SIMULATION_PARAMS_MT = {
-    "distance": 0,
-    "buffer": np.arange(0.2, 0.36, DEFAULT_MIN_STEP),
-    "tp": 0,
-    "sl": np.arange(0.2, 0.46, DEFAULT_MIN_STEP)
-}
-
-SIMULATION_PARAMS_MB = {
-    "MShotPriceMin": np.arange(0.15, 0.91, DEFAULT_MIN_STEP),
-    "MShotPrice": np.arange(0.15, 1.01, DEFAULT_MIN_STEP),
-    "tp": 0,
-    "sl": np.arange(0.2, 0.46, DEFAULT_MIN_STEP)
-}
 
 
 class ShotTrialAnalyzer(object):
@@ -186,18 +176,24 @@ class ShotsPnlCalculator(object):
 
         return p_table_df
 
-    def update_simulation_params(self, is_moonbot, shot_depth_list, shot_count_list):
-        global SIMULATION_PARAMS_MT
-        global SIMULATION_PARAMS_MB
-        global SIMULATION_PARAMS
-
+    def get_simulation_params(self, is_moonbot, shot_depth_list, shot_count_list):
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
 
-        SIMULATION_PARAMS = SIMULATION_PARAMS_MB if is_moonbot else SIMULATION_PARAMS_MT
-        SIMULATION_PARAMS["distance"] = np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
-        SIMULATION_PARAMS["tp"] = np.arange(MIN_TP_PCT, max_s * SHOT_DEPTH_TO_TP_MAX_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
-
+        if is_moonbot:
+            return {
+                "MShotPriceMin": np.arange(0.2, MAX_MSHOT_PRICE_MIN, DEFAULT_MIN_STEP),
+                "MShotPrice": np.arange(0.2, MAX_MSHOT_PRICE, DEFAULT_MIN_STEP),
+                "tp": np.arange(MIN_TP_PCT, MAX_MSHOT_PRICE * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
+                "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
+            }
+        else:
+            return {
+                "distance": np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
+                "buffer": np.arange(0.2, MAX_BUFFER_PCT, DEFAULT_MIN_STEP),
+                "tp": np.arange(MIN_TP_PCT, (max_s + MAX_BUFFER_PCT / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
+                "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
+            }
 
     @staticmethod
     def iterize(iterable):
@@ -212,9 +208,10 @@ class ShotsPnlCalculator(object):
 
         return niterable
 
-    def get_sim_combinations(self):
-        kwargz = SIMULATION_PARAMS
-        optkeys = list(SIMULATION_PARAMS)
+    def get_sim_combinations(self, is_moonbot, shot_depth_list, shot_count_list):
+        simulation_params = self.get_simulation_params(is_moonbot, shot_depth_list, shot_count_list)
+        kwargz = simulation_params
+        optkeys = list(simulation_params)
         vals = self.iterize(kwargz.values())
         optvals = itertools.product(*vals)
         okwargs1 = map(zip, itertools.repeat(optkeys), optvals)
@@ -273,9 +270,8 @@ class ShotsPnlCalculator(object):
 
         shot_depth_list = list(groups_df["shot_depth"].values)
         shot_count_list = list(groups_df["counts"].values)
-        self.update_simulation_params(is_moonbot, shot_depth_list, shot_count_list)
 
-        combinations = self.get_sim_combinations()
+        combinations = self.get_sim_combinations(is_moonbot, shot_depth_list, shot_count_list)
         for c_idx, c_dict in enumerate(combinations):
             if c_idx % 100 == 0:
                 print("{}/{}".format(c_idx, len(combinations)))
@@ -287,11 +283,19 @@ class ShotsPnlCalculator(object):
                 param_arr = [c_mshot_price_min, c_mshot_price, c_tp, c_sl]
                 if c_mshot_price <= c_mshot_price_min:
                     continue
+                if c_tp > (c_mshot_price / MAX_TP_TO_SHOT_RATIO):
+                    continue
+                if c_sl / c_tp < MIN_RR_RATIO:
+                    continue
             else:
                 c_distance = c_dict["distance"]
                 c_buffer = c_dict["buffer"]
                 param_arr = [c_distance, c_buffer, c_tp, c_sl]
                 if c_distance <= c_buffer / 2:
+                    continue
+                if c_tp > ((c_distance + c_buffer / 2) / MAX_TP_TO_SHOT_RATIO):
+                    continue
+                if c_sl / c_tp < MIN_RR_RATIO:
                     continue
 
             trial_analyzer = ShotTrialAnalyzer()

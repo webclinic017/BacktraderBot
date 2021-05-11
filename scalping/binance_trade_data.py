@@ -42,7 +42,7 @@ def parse_args():
 args = parse_args()
 
 EXCHANGE_STR = "binance"
-API_LIMIT = 500
+API_LIMIT = 1000
 
 SMA_1_LEN = 3
 SMA_2_LEN = 20
