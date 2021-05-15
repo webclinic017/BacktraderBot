@@ -8,22 +8,18 @@ import csv
 
 string_types = str
 
-BINS_SPLITTER = ":"
-
-MIN_TOTAL_SHOTS_COUNT = 5
+MIN_TOTAL_SHOTS_COUNT = 3
 
 COMMISSIONS_PCT = 0.02 + 0.04
 SLIPPAGE_PCT = 0.02
 
 SS_FILTER_MIN_SHOTS_COUNT = 0
 
-MIN_DISTANCE_PCT = 0.2
-MIN_TP_PCT = 0.2
+MIN_DISTANCE_PCT = 0.3
+MIN_TP_PCT = 0.17
 DEFAULT_MIN_STEP = 0.02
 TRIAL_STEP_PCT = 0.02
 
-DEFAULT_MT_MIN_TP_PCT = 0.1  # For MoonTrader - this is a break-even TP
-DEFAULT_MB_MIN_TP_PCT = 0.2  # In MoonBot auto decresing of TP order possible
 
 MAX_MSHOT_PRICE_MIN = 0.91
 MAX_MSHOT_PRICE = 1.01
@@ -35,15 +31,18 @@ MIN_RR_RATIO = 2
 MAX_TP_TO_SHOT_RATIO = 0.5
 CREATE_PNL_FILE_FLAG = True
 
+RATING_VALUE_DENOMINATOR = 100
+DEFAULT_BIN_ROUND_BASE = 5
+
+MIN_TP_COUNT_GROUPS_THRESHOLD = 1
+
 
 class ShotTrialAnalyzer(object):
     def __init__(self):
         self.shot_trials_count = 0
         self.shot_missed_count = 0
         self.shot_triggered_sl_count = 0
-        self.shot_bounce_triggered_sl_count = 0
         self.shot_triggered_tp_count = 0
-        self.shot_break_even_count = 0
         self.shot_trials_pnl_arr = []
 
 
@@ -160,30 +159,14 @@ class ShotsPnlCalculator(object):
         ofile.flush()
         ofile.close()
 
-    def get_shot_depth_from_cat(self, shot_depth_cat):
-        depth_info_category = shot_depth_cat.split(BINS_SPLITTER)
-        min_val = float(depth_info_category[0])
-        max_val = float(depth_info_category[1])
-        return (min_val + max_val) / 2
-
-    def apply_ss_filter(self, p_table_df):
-        width = len(p_table_df.values[0])
-        height = len(p_table_df.values)
-        for i in range(height):
-            for j in range(width):
-                shot_count = p_table_df.values[i][j]
-                p_table_df.values[i][j] = shot_count if shot_count >= SS_FILTER_MIN_SHOTS_COUNT else 0
-
-        return p_table_df
-
     def get_simulation_params(self, is_moonbot, shot_depth_list, shot_count_list):
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
 
         if is_moonbot:
             return {
-                "MShotPriceMin": np.arange(0.2, MAX_MSHOT_PRICE_MIN, DEFAULT_MIN_STEP),
-                "MShotPrice": np.arange(0.2, MAX_MSHOT_PRICE, DEFAULT_MIN_STEP),
+                "MShotPriceMin": np.arange(MIN_DISTANCE_PCT, MAX_MSHOT_PRICE_MIN, DEFAULT_MIN_STEP),
+                "MShotPrice": np.arange(MIN_DISTANCE_PCT, MAX_MSHOT_PRICE, DEFAULT_MIN_STEP),
                 "tp": np.arange(MIN_TP_PCT, MAX_MSHOT_PRICE * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
                 "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
@@ -246,24 +229,32 @@ class ShotsPnlCalculator(object):
             if shot_trial_end < -c_sl or shot_bounce_end < -c_sl:
                 # Shot has triggered SL
                 trial_pnl_pct = -(c_sl + COMMISSIONS_PCT + SLIPPAGE_PCT)
-                if shot_trial_end < -c_sl:
-                    trial_analyzer.shot_triggered_sl_count += 1
-                elif shot_bounce_end < -c_sl:
-                    trial_analyzer.shot_bounce_triggered_sl_count += 1
+                trial_analyzer.shot_triggered_sl_count += 1
             else:
                 if shot_bounce_end >= c_tp:
                     # Shot has triggered TP
                     trial_pnl_pct = c_tp - COMMISSIONS_PCT
                     trial_analyzer.shot_triggered_tp_count += 1
                 else:
-                    # Break-even TP (MoonTrader mode)
-                    # In MoonBot - minimum TP through auto decreasing TP
-                    assumed_tp = DEFAULT_MB_MIN_TP_PCT if is_moonbot else DEFAULT_MT_MIN_TP_PCT
-                    trial_pnl_pct = assumed_tp - COMMISSIONS_PCT
-                    trial_analyzer.shot_break_even_count += 1
+                    dist_to_tp_pct = abs(c_tp - shot_bounce_end)
+                    dist_to_sl_pct = abs(-c_sl - shot_bounce_end)
+                    if dist_to_tp_pct <= dist_to_sl_pct:
+                        # Count as TP
+                        trial_pnl_pct = c_tp - COMMISSIONS_PCT
+                        trial_analyzer.shot_triggered_tp_count += 1
+                    else:
+                        # Count as SL
+                        trial_pnl_pct = -(c_sl + COMMISSIONS_PCT + SLIPPAGE_PCT)
+                        trial_analyzer.shot_triggered_sl_count += 1
 
             trial_analyzer.shot_trials_pnl_arr.append(trial_pnl_pct)
         return trial_analyzer
+
+    def round_base(self, x, base, prec):
+        return round(base * round(float(x)/base), prec)
+
+    def pct_val(self, val, total, base):
+        return self.round_base(100 * val / total, base, 0)
 
     def simulate_shots(self, is_moonbot, groups_df, shots_data_dict):
         arr_out = []
@@ -316,35 +307,42 @@ class ShotsPnlCalculator(object):
 
             if len(shot_pnl_arr) > 0:
                 total_pnl = sum(shot_pnl_arr)
+                distance = (param_arr[1] + param_arr[1] - param_arr[0]) if is_moonbot else (param_arr[0] + param_arr[1])
+                distance_rating = self.round_base(round(distance * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
+                profit_rating = self.round_base(round(total_pnl * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
+                trials_count = trial_analyzer.shot_trials_count
                 arr = [round(param_arr[0], 2),
                        round(param_arr[1], 2),
                        round(c_tp, 2),
                        round(c_sl, 2),
-                       round(total_pnl, 1),
-                       trial_analyzer.shot_trials_count,
-                       trial_analyzer.shot_missed_count,
-                       trial_analyzer.shot_triggered_sl_count,
-                       trial_analyzer.shot_bounce_triggered_sl_count,
-                       trial_analyzer.shot_triggered_tp_count,
-                       trial_analyzer.shot_break_even_count]
+                       distance_rating,
+                       profit_rating,
+                       trials_count,
+                       self.pct_val(trial_analyzer.shot_missed_count, trials_count, DEFAULT_BIN_ROUND_BASE),
+                       self.pct_val(trial_analyzer.shot_triggered_tp_count, trials_count, DEFAULT_BIN_ROUND_BASE),
+                       self.pct_val(trial_analyzer.shot_triggered_sl_count, trials_count, DEFAULT_BIN_ROUND_BASE)]
                 arr_out.append(arr)
 
         if is_moonbot:
-            df = pd.DataFrame(arr_out, columns=['MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating', 'shot_trials_count',
-                                               'shot_missed_count', 'shot_triggered_sl_count', 'shot_bounce_triggered_sl_count',
-                                               'shot_triggered_tp_count', 'shot_break_even_count'])
+            df = pd.DataFrame(arr_out, columns=['MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Distance Rating', 'Profit Rating', 'shot_trials_count',
+                                               'shot_missed_count, %', 'shot_triggered_tp_count, %', 'shot_triggered_sl_count, %'])
         else:
-            df = pd.DataFrame(arr_out, columns=['Distance', 'Buffer', 'TP', 'SL', 'Profit Rating', 'shot_trials_count',
-                                               'shot_missed_count', 'shot_triggered_sl_count', 'shot_bounce_triggered_sl_count',
-                                               'shot_triggered_tp_count', 'shot_break_even_count'])
+            df = pd.DataFrame(arr_out, columns=['Distance', 'Buffer', 'TP', 'SL', 'Distance Rating', 'Profit Rating', 'shot_trials_count',
+                                               'shot_missed_count, %', 'shot_triggered_tp_count, %', 'shot_triggered_sl_count, %'])
 
         df = df.sort_values(by=['Profit Rating'], ascending=False)
         return df
 
     def get_best_pnl_rows(self, df):
-        df['add_criteria1'] = df['Profit Rating']
-        df['add_criteria2'] = df['SL'] / df['TP']
-        df = df.sort_values(by=['add_criteria1', 'add_criteria2'], ascending=False)
+        unique_tp_count_arr = df['shot_triggered_tp_count, %'].unique()
+        unique_tp_count_arr_sorted = sorted(unique_tp_count_arr, key=lambda t: t)
+        if len(unique_tp_count_arr_sorted) > 1:
+            unique_tp_count_arr_sorted = unique_tp_count_arr_sorted[MIN_TP_COUNT_GROUPS_THRESHOLD:len(unique_tp_count_arr_sorted)]
+            min_tp_count_val = unique_tp_count_arr_sorted[0]
+        else:
+            min_tp_count_val = unique_tp_count_arr_sorted[0]
+        df = df[df['shot_triggered_tp_count, %'] >= min_tp_count_val]
+        df = df.sort_values(by=['Distance'], ascending=False)
         return df.head(1)
 
     def process_data(self, args, shot_type):
