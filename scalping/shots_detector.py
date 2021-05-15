@@ -189,7 +189,8 @@ class ShotsDetector(object):
         return "{}.{:03d}".format(datetime.fromtimestamp(int(timestamp / 1000)).strftime("%Y-%m-%dT%H:%M:%S"),
                                   timestamp % 1000)
 
-    def find_shots(self, symbol_name, df, groups_df):
+    def find_shots(self, args, df, groups_df):
+        symbol_name = args.symbol
         shots_list = []
         last_shot = None
         idx = 0
@@ -210,6 +211,9 @@ class ShotsDetector(object):
             preshot_depth_pct = self.calculate_depth_pct(first_price, last_price)
             max_price_val = last_price
             ci = last_trade.index.values[0]
+
+            if not args.future and shot_type == "SHORT":
+                continue
 
             if last_shot and group_timestamp < last_shot.end_timestamp + LAST_FOUND_SHOT_ALLOWANCE:
                 continue
@@ -348,7 +352,7 @@ class ShotsDetector(object):
         groups_df = groups_df[groups_df['counts'] > PRESHOT_TRADES_MIN_NUMBER_THRESHOLD]
         print("Number of pre-shots: {}\nFiltering pre-shots...".format(len(groups_df)))
 
-        shots_list = self.find_shots(args.symbol, self._trade_data_df, groups_df)
+        shots_list = self.find_shots(args, self._trade_data_df, groups_df)
 
         print("Total number of shots: {}".format(len(shots_list)))
 

@@ -393,8 +393,11 @@ class ShotsPnlCalculator(object):
             print("*** No shots data found! Exiting.")
             exit(-1)
 
-        self.process_data(args, "LONG")
-        self.process_data(args, "SHORT")
+        if args.future:
+            self.process_data(args, "LONG")
+            self.process_data(args, "SHORT")
+        else:
+            self.process_data(args, "LONG")
 
 
 def main():

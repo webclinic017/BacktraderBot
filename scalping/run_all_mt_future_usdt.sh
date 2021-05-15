@@ -63,4 +63,4 @@ python strategy_generator.py -e binance -t $order_size_mb -y $order_size_mt $fut
 
 mkdir $output_folder
 cp ./../marketdata/shots/binance/future/* $output_folder
-cp ./../marketdata/shots/binance/future/algorithms.config $output_folder/../
+cp ./../marketdata/shots/binance/future/algorithms.config_future $output_folder/../

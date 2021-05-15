@@ -6,6 +6,7 @@ from pathlib import Path
 
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.6
+SPOT_MAX_STRATEGIES_NUM = 3
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -95,9 +96,9 @@ class ShotStrategyGenerator(object):
         dirname = self.whereAmI()
         symbol_type_str = self.get_symbol_type_str(args)
         if args.moonbot:
-            return '{}/../marketdata/shots/{}/{}/{}'.format(dirname, args.exchange, symbol_type_str, DEFAULT_OUTPUT_MB_FILENAME)
+            return '{}/../marketdata/shots/{}/{}/{}_{}'.format(dirname, args.exchange, symbol_type_str, DEFAULT_OUTPUT_MB_FILENAME, symbol_type_str)
         else:
-            return '{}/../marketdata/shots/{}/{}/{}'.format(dirname, args.exchange, symbol_type_str, DEFAULT_OUTPUT_MT_FILENAME)
+            return '{}/../marketdata/shots/{}/{}/{}_{}'.format(dirname, args.exchange, symbol_type_str, DEFAULT_OUTPUT_MT_FILENAME, symbol_type_str)
 
     def read_file(self, filename):
         return Path(filename).read_text()
@@ -113,7 +114,10 @@ class ShotStrategyGenerator(object):
             return None
         return df
 
-    def filter_shots_pnl_rows(self, df):
+    def filter_shots_pnl_rows(self, args, df):
+        if not args.future:
+            df = df[df['shot_type'] == 'LONG']
+
         df = df.sort_values(by=['total_shots_count'], ascending=False)
 
         df = df[df['total_shots_count'] >= MIN_TOTAL_SHOTS_COUNT]
@@ -121,10 +125,15 @@ class ShotStrategyGenerator(object):
         df = df.head(filter_val)
 
         df = df.sort_values(by=['symbol_name', 'shot_type'], ascending=True)
+
+        if not args.future:
+            df = df.head(SPOT_MAX_STRATEGIES_NUM)
+
         return df
 
     def get_tokens_map(self, args, index, pnl_row):
         symbol_name = pnl_row['symbol_name']
+        symbol_type_str = self.get_symbol_type_str(args).upper()
         shot_type = pnl_row['shot_type']
         tp = pnl_row['TP']
         sl = pnl_row['SL']
@@ -132,7 +141,7 @@ class ShotStrategyGenerator(object):
             mshot_price_min = pnl_row['MShotPriceMin']
             mshot_price = pnl_row['MShotPrice']
             return {
-                TOKEN001_STR: "Moonshot {} {}-{}-{}-{} {}".format(symbol_name, mshot_price_min, mshot_price, tp, sl, shot_type),
+                TOKEN001_STR: "Moonshot {} {} {}-{}-{}-{} {}".format(symbol_type_str, symbol_name, mshot_price_min, mshot_price, tp, sl, shot_type),
                 TOKEN002_STR: symbol_name,
                 TOKEN003_STR: "{:.4f}".format(tp),
                 TOKEN004_STR: "{:.8f}".format(sl),
@@ -145,7 +154,7 @@ class ShotStrategyGenerator(object):
             buffer = pnl_row['Buffer']
             return {
                 TOKEN001_STR: "{}".format(MT_STRATEGY_ID_START_FROM + index),
-                TOKEN002_STR: "Shot {} {}-{}-{}-{} {}".format(symbol_name, distance, buffer, tp, sl, shot_type),
+                TOKEN002_STR: "Shot {} {} {}-{}-{}-{} {}".format(symbol_type_str, symbol_name, distance, buffer, tp, sl, shot_type),
                 TOKEN003_STR: symbol_name,
                 TOKEN004_STR: "{}".format(distance),
                 TOKEN005_STR: "{}".format(buffer),
@@ -184,7 +193,7 @@ class ShotStrategyGenerator(object):
             print("*** No shots PnL data found! Exiting.")
             exit(-1)
 
-        shots_pnl_data_df = self.filter_shots_pnl_rows(shots_pnl_data_df)
+        shots_pnl_data_df = self.filter_shots_pnl_rows(args, shots_pnl_data_df)
         if shots_pnl_data_df is None or shots_pnl_data_df.empty:
             print("*** No shots PnL data after applying filter! Exiting.")
             exit(-1)
