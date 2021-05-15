@@ -124,10 +124,10 @@ class ShotStrategyGenerator(object):
         filter_val = int(round(len(df) * MAX_MIN_TOTAL_SHOTS_PERCENTILE))
         df = df.head(filter_val)
 
-        df = df.sort_values(by=['symbol_name', 'shot_type'], ascending=True)
-
         if not args.future:
             df = df.head(SPOT_MAX_STRATEGIES_NUM)
+
+        df = df.sort_values(by=['symbol_name', 'shot_type'], ascending=True)
 
         return df
 

@@ -9,7 +9,7 @@ declare -a future_flag=""
 declare -a moonbot_flag=""
 
 declare -a order_size_mb=0.0002
-declare -a order_size_mt=400
+declare -a order_size_mt=100
 
 now_timestamp="$(date +'%s')"
 now_timestamp=$((now_timestamp - now_timestamp % 60))
@@ -20,7 +20,7 @@ end_timestamp=$((start_timestamp + 60 * start_minutes_ago))
 end_date="$(date -j -f "%s" "${end_timestamp}" "+%Y-%m-%dT%H:%M:%S")"
 
 output_folder_prefix="$(date -j -f "%s" "${end_timestamp}" "+%Y%m%d_%H%M")"
-output_folder="/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${output_folder_prefix}/"
+output_folder="/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${output_folder_prefix}_Spot_${start_minutes_ago}m/"
 
 if [ -d "/opt/anaconda3" ]; then
     source /opt/anaconda3/etc/profile.d/conda.sh
