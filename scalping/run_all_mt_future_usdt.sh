@@ -2,7 +2,7 @@
 
 declare -a symbol_list=("1000SHIBUSDT" "AAVEUSDT" "ADAUSDT" "AKROUSDT" "ALGOUSDT" "ALICEUSDT" "ALPHAUSDT" "ANKRUSDT" "AVAXUSDT" "AXSUSDT" "BCHUSDT" "BZRXUSDT" "CHRUSDT" "CHZUSDT" "COTIUSDT" "CTKUSDT" "DODOUSDT" "DOGEUSDT" "EOSUSDT" "ETCUSDT" "FILUSDT" "FLMUSDT" "FTMUSDT" "ICXUSDT" "IOTAUSDT" "KAVAUSDT" "LINKUSDT" "LITUSDT" "LUNAUSDT" "MANAUSDT" "MATICUSDT" "OCEANUSDT" "OMGUSDT" "ONEUSDT" "ONTUSDT" "QTUMUSDT" "REEFUSDT" "RLCUSDT" "SANDUSDT" "SKLUSDT" "STORJUSDT" "SUSHIUSDT" "SXPUSDT" "THETAUSDT" "TOMOUSDT" "TRBUSDT" "TRXUSDT" "UNFIUSDT" "UNIUSDT" "VETUSDT" "WAVESUSDT" "XLMUSDT" "XRPUSDT" "XTZUSDT" "YFIIUSDT" "YFIUSDT")
 
-declare -a start_minutes_ago=60
+declare -a start_minutes_ago=30
 
 declare -a future_flag="-f"
 
@@ -20,7 +20,7 @@ end_timestamp=$((start_timestamp + 60 * start_minutes_ago))
 end_date="$(date -j -f "%s" "${end_timestamp}" "+%Y-%m-%dT%H:%M:%S")"
 
 output_folder_prefix="$(date -j -f "%s" "${end_timestamp}" "+%Y%m%d_%H%M")"
-output_folder="/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${output_folder_prefix}/"
+output_folder="/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${output_folder_prefix}_Future_${start_minutes_ago}m/"
 
 if [ -d "/opt/anaconda3" ]; then
     source /opt/anaconda3/etc/profile.d/conda.sh

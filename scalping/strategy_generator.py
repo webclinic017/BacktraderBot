@@ -6,7 +6,7 @@ from pathlib import Path
 
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.6
-SPOT_MAX_STRATEGIES_NUM = 3
+SPOT_MAX_STRATEGIES_NUM = 8
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -17,6 +17,7 @@ TOKEN006_STR = "{{TOKEN006}}"
 TOKEN007_STR = "{{TOKEN007}}"
 TOKEN008_STR = "{{TOKEN008}}"
 TOKEN009_STR = "{{TOKEN009}}"
+TOKEN010_STR = "{{TOKEN010}}"
 TOKEN_STRATEGY_LIST_STR = "{{STRATEGY_LIST}}"
 
 MT_STRATEGY_ID_START_FROM = 1617219803226
@@ -152,6 +153,7 @@ class ShotStrategyGenerator(object):
         else:
             distance = pnl_row['Distance']
             buffer = pnl_row['Buffer']
+            market_type = 1 if not args.future else 3
             return {
                 TOKEN001_STR: "{}".format(MT_STRATEGY_ID_START_FROM + index),
                 TOKEN002_STR: "Shot {} {} {}-{}-{}-{} {}".format(symbol_type_str, symbol_name, distance, buffer, tp, sl, shot_type),
@@ -161,7 +163,8 @@ class ShotStrategyGenerator(object):
                 TOKEN006_STR: "{}".format(1 if shot_type == "LONG" else -1 if shot_type == "SHORT" else ""),
                 TOKEN007_STR: "{}".format(args.mtordersize),
                 TOKEN008_STR: "{}".format(tp),
-                TOKEN009_STR: "{}".format(sl)
+                TOKEN009_STR: "{}".format(sl),
+                TOKEN010_STR: "{}".format(market_type)
             }
 
     def get_template_token_map(self, strategy_list_str):
