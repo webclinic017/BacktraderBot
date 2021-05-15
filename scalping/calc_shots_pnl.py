@@ -16,15 +16,14 @@ SLIPPAGE_PCT = 0.02
 SS_FILTER_MIN_SHOTS_COUNT = 0
 
 MIN_DISTANCE_PCT = 0.3
-MIN_TP_PCT = 0.17
+MIN_TP_PCT_SPOT = 0.25
+MIN_TP_PCT_FUTURE = 0.17
 DEFAULT_MIN_STEP = 0.02
 TRIAL_STEP_PCT = 0.02
 
 
-MAX_MSHOT_PRICE_MIN = 0.91
-MAX_MSHOT_PRICE = 1.01
 MAX_BUFFER_PCT = 0.36
-MAX_SL_PCT = 0.45
+MAX_SL_PCT = 0.51
 
 MIN_RR_RATIO = 2
 
@@ -159,22 +158,23 @@ class ShotsPnlCalculator(object):
         ofile.flush()
         ofile.close()
 
-    def get_simulation_params(self, is_moonbot, shot_depth_list, shot_count_list):
+    def get_simulation_params(self, is_moonbot, is_future, shot_depth_list, shot_count_list):
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
+        min_tp_pct = MIN_TP_PCT_FUTURE if is_future else MIN_TP_PCT_SPOT
 
         if is_moonbot:
             return {
-                "MShotPriceMin": np.arange(MIN_DISTANCE_PCT, MAX_MSHOT_PRICE_MIN, DEFAULT_MIN_STEP),
-                "MShotPrice": np.arange(MIN_DISTANCE_PCT, MAX_MSHOT_PRICE, DEFAULT_MIN_STEP),
-                "tp": np.arange(MIN_TP_PCT, MAX_MSHOT_PRICE * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
+                "MShotPriceMin": np.arange(MIN_DISTANCE_PCT, max_s - 0.1 + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
+                "MShotPrice": np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
+                "tp": np.arange(min_tp_pct, (max_s + MAX_BUFFER_PCT / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
                 "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
         else:
             return {
                 "distance": np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
                 "buffer": np.arange(0.2, MAX_BUFFER_PCT, DEFAULT_MIN_STEP),
-                "tp": np.arange(MIN_TP_PCT, (max_s + MAX_BUFFER_PCT / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
+                "tp": np.arange(min_tp_pct, (max_s + MAX_BUFFER_PCT / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
                 "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
 
@@ -191,8 +191,8 @@ class ShotsPnlCalculator(object):
 
         return niterable
 
-    def get_sim_combinations(self, is_moonbot, shot_depth_list, shot_count_list):
-        simulation_params = self.get_simulation_params(is_moonbot, shot_depth_list, shot_count_list)
+    def get_sim_combinations(self, is_moonbot, is_future, shot_depth_list, shot_count_list):
+        simulation_params = self.get_simulation_params(is_moonbot, is_future, shot_depth_list, shot_count_list)
         kwargz = simulation_params
         optkeys = list(simulation_params)
         vals = self.iterize(kwargz.values())
@@ -256,13 +256,13 @@ class ShotsPnlCalculator(object):
     def pct_val(self, val, total, base):
         return self.round_base(100 * val / total, base, 0)
 
-    def simulate_shots(self, is_moonbot, groups_df, shots_data_dict):
+    def simulate_shots(self, is_moonbot, is_future, groups_df, shots_data_dict):
         arr_out = []
 
         shot_depth_list = list(groups_df["shot_depth"].values)
         shot_count_list = list(groups_df["counts"].values)
 
-        combinations = self.get_sim_combinations(is_moonbot, shot_depth_list, shot_count_list)
+        combinations = self.get_sim_combinations(is_moonbot, is_future, shot_depth_list, shot_count_list)
         for c_idx, c_dict in enumerate(combinations):
             if c_idx % 100 == 0:
                 print("{}/{}".format(c_idx, len(combinations)))
@@ -347,6 +347,7 @@ class ShotsPnlCalculator(object):
 
     def process_data(self, args, shot_type):
         is_moonbot = True if args.moonbot else False
+        is_future = True if args.future else False
         shots_data_df = self._shots_data_df[(self._shots_data_df['symbol_name'] == args.symbol) & (self._shots_data_df['shot_type'] == shot_type)]
         print("\nProcessing {} shot type...".format(shot_type))
         total_shots_count = len(shots_data_df)
@@ -376,7 +377,7 @@ class ShotsPnlCalculator(object):
                                          'shot_depth': group_row['shot_depth'],
                                          'shot_bounce': group_row['shot_bounce']})
             shots_data_dict[shot_depth] = group_shots_list
-        shots_data_df = self.simulate_shots(is_moonbot, groups_df, shots_data_dict)
+        shots_data_df = self.simulate_shots(is_moonbot, is_future, groups_df, shots_data_dict)
 
         if len(shots_data_df) > 0:
             if CREATE_PNL_FILE_FLAG:
