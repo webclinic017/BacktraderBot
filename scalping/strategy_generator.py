@@ -6,7 +6,7 @@ from pathlib import Path
 
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.6
-SPOT_MAX_STRATEGIES_NUM = 8
+SPOT_MAX_STRATEGIES_NUM = 5
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -142,7 +142,7 @@ class ShotStrategyGenerator(object):
             mshot_price_min = pnl_row['MShotPriceMin']
             mshot_price = pnl_row['MShotPrice']
             return {
-                TOKEN001_STR: "Moonshot {} {} {}-{}-{}-{} {}".format(symbol_type_str, symbol_name, mshot_price_min, mshot_price, tp, sl, shot_type),
+                TOKEN001_STR: "Moonshot [{}] [{}] {} {}-{}-{}-{}".format(symbol_type_str, shot_type, symbol_name, mshot_price_min, mshot_price, tp, sl),
                 TOKEN002_STR: symbol_name,
                 TOKEN003_STR: "{:.4f}".format(tp),
                 TOKEN004_STR: "{:.8f}".format(sl),
@@ -156,7 +156,7 @@ class ShotStrategyGenerator(object):
             market_type = 1 if not args.future else 3
             return {
                 TOKEN001_STR: "{}".format(MT_STRATEGY_ID_START_FROM + index),
-                TOKEN002_STR: "Shot {} {} {}-{}-{}-{} {}".format(symbol_type_str, symbol_name, distance, buffer, tp, sl, shot_type),
+                TOKEN002_STR: "Shot [{}] [{}] {} {}-{}-{}-{}".format(symbol_type_str, shot_type, symbol_name, distance, buffer, tp, sl),
                 TOKEN003_STR: symbol_name,
                 TOKEN004_STR: "{}".format(distance),
                 TOKEN005_STR: "{}".format(buffer),
