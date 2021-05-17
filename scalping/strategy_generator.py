@@ -3,10 +3,11 @@ import pandas as pd
 import os
 import io
 from pathlib import Path
+from datetime import datetime
 
 MIN_TOTAL_SHOTS_COUNT = 0
-MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.6
-SPOT_MAX_STRATEGIES_NUM = 5
+MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.3
+SPOT_MAX_STRATEGIES_NUM = 4
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -154,8 +155,9 @@ class ShotStrategyGenerator(object):
             distance = pnl_row['Distance']
             buffer = pnl_row['Buffer']
             market_type = 1 if not args.future else 3
+            id_start_from_idx = int(datetime.now().timestamp() * 1000) + index
             return {
-                TOKEN001_STR: "{}".format(MT_STRATEGY_ID_START_FROM + index),
+                TOKEN001_STR: "{}".format(MT_STRATEGY_ID_START_FROM + id_start_from_idx),
                 TOKEN002_STR: "Shot [{}] [{}] {} {}-{}-{}-{}".format(symbol_type_str, shot_type, symbol_name, distance, buffer, tp, sl),
                 TOKEN003_STR: symbol_name,
                 TOKEN004_STR: "{}".format(distance),

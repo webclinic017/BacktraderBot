@@ -9,7 +9,7 @@ declare -a future_flag=""
 declare -a moonbot_flag=""
 
 declare -a order_size_mb=0.0002
-declare -a order_size_mt=70
+declare -a order_size_mt=90
 
 now_timestamp="$(date +'%s')"
 now_timestamp=$((now_timestamp - now_timestamp % 60))
@@ -68,7 +68,7 @@ cp ./../marketdata/shots/binance/spot/algorithms.config_spot $output_folder/../
 BASE_OUT_FOLDER=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies
 FILE1=$BASE_OUT_FOLDER/algorithms.config_future
 FILE2=$BASE_OUT_FOLDER/algorithms.config_spot
-OUTFILE=$BASE_OUT_FOLDER/algorithms.config
+OUTFILE=$BASE_OUT_FOLDER/algorithms.config_future_spot
 
 if [[ -f "$FILE1" && -f "$FILE2" ]]; then
     echo "Merging $FILE2 into the $FILE1 file..."
@@ -81,4 +81,4 @@ sed '$d' $FILE1 | sed '$d' | sed '$d' > $OUTFILE
 echo "    }," >> $OUTFILE
 sed "1,2d; $d" $FILE2 >> $OUTFILE
 
-echo "Merging done!"
+echo "Merging done! File $OUTFILE has been created."
