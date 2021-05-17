@@ -1,0 +1,106 @@
+    {
+      "id": 1621270698528,
+      "name": "Markets Watcher",
+      "info": "MarketWatcher - SPOT",
+      "autoStart": false,
+      "args": {
+        "Arguments": {
+          "exchangeType": {
+            "name": "exchangeType",
+            "value": 1,
+            "argumentType": 7
+          },
+          "marketType": {
+            "name": "marketType",
+            "value": 1,
+            "argumentType": 8
+          },
+          "signalFrequency": {
+            "name": "signalFrequency",
+            "value": 120000,
+            "argumentType": 3
+          },
+          "bidDelta": {
+            "name": "bidDelta",
+            "value": 2.0,
+            "argumentType": 4
+          },
+          "askDelta": {
+            "name": "askDelta",
+            "value": 2.0,
+            "argumentType": 4
+          },
+          "quoteAssets": {
+            "name": "quoteAssets",
+            "value": "USDT",
+            "argumentType": 15
+          },
+          "whiteList": {
+            "name": "whiteList",
+            "value": "",
+            "argumentType": 15
+          },
+          "blackList": {
+            "name": "blackList",
+            "value": "",
+            "argumentType": 15
+          }
+        }
+      },
+      "argsJson": null,
+      "isRunning": false,
+      "isProcessing": false
+    },
+    {
+      "id": 1621270698529,
+      "name": "Markets Watcher",
+      "info": "MarketWatcher - Future",
+      "autoStart": false,
+      "args": {
+        "Arguments": {
+          "exchangeType": {
+            "name": "exchangeType",
+            "value": 1,
+            "argumentType": 7
+          },
+          "marketType": {
+            "name": "marketType",
+            "value": 3,
+            "argumentType": 8
+          },
+          "signalFrequency": {
+            "name": "signalFrequency",
+            "value": 120000,
+            "argumentType": 3
+          },
+          "bidDelta": {
+            "name": "bidDelta",
+            "value": 2.0,
+            "argumentType": 4
+          },
+          "askDelta": {
+            "name": "askDelta",
+            "value": 2.0,
+            "argumentType": 4
+          },
+          "quoteAssets": {
+            "name": "quoteAssets",
+            "value": "USDT",
+            "argumentType": 15
+          },
+          "whiteList": {
+            "name": "whiteList",
+            "value": "",
+            "argumentType": 15
+          },
+          "blackList": {
+            "name": "blackList",
+            "value": "",
+            "argumentType": 15
+          }
+        }
+      },
+      "argsJson": null,
+      "isRunning": false,
+      "isProcessing": false
+    }

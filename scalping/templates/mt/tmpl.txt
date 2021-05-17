@@ -1,5 +1,5 @@
 {
   "configs": [
-{{STRATEGY_LIST}}
+{{STRATEGY_LIST}}{{ADD_STRATEGIES}}
   ]
 }

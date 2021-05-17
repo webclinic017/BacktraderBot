@@ -20,6 +20,7 @@ TOKEN008_STR = "{{TOKEN008}}"
 TOKEN009_STR = "{{TOKEN009}}"
 TOKEN010_STR = "{{TOKEN010}}"
 TOKEN_STRATEGY_LIST_STR = "{{STRATEGY_LIST}}"
+TOKEN_ADD_STRATEGIES_STR = "{{ADD_STRATEGIES}}"
 
 MT_STRATEGY_ID_START_FROM = 1617219803226
 
@@ -93,6 +94,11 @@ class ShotStrategyGenerator(object):
         dirname = self.whereAmI()
         app_suffix_str = self.get_app_suffix_str(args)
         return '{}/templates/{}/strat_tmpl.txt'.format(dirname, app_suffix_str)
+
+    def get_add_strategies_template_filename(self, args):
+        dirname = self.whereAmI()
+        app_suffix_str = self.get_app_suffix_str(args)
+        return '{}/templates/{}/add_strat_tmpl.txt'.format(dirname, app_suffix_str)
 
     def get_output_strategy_filename(self, args):
         dirname = self.whereAmI()
@@ -169,9 +175,10 @@ class ShotStrategyGenerator(object):
                 TOKEN010_STR: "{}".format(market_type)
             }
 
-    def get_template_token_map(self, strategy_list_str):
+    def get_template_token_map(self, strategy_list_str, add_strat_template_str):
         return {
-            TOKEN_STRATEGY_LIST_STR: strategy_list_str
+            TOKEN_STRATEGY_LIST_STR: strategy_list_str,
+            TOKEN_ADD_STRATEGIES_STR: add_strat_template_str
         }
 
     def apply_template_tokens(self, strategy_template, tokens_map):
@@ -213,7 +220,12 @@ class ShotStrategyGenerator(object):
         strategy_list_str = ''.join(strategy_list)
 
         template = self.read_file(self.get_template_filename(args))
-        all_strategies_str = self.apply_template_tokens(template, self.get_template_token_map(strategy_list_str))
+        if not args.moonbot and args.future:
+            add_strat_template_str = self.read_file(self.get_add_strategies_template_filename(args))
+            strategy_list_str = self.append_divider(args, strategy_list_str, False)
+            all_strategies_str = self.apply_template_tokens(template, self.get_template_token_map(strategy_list_str, add_strat_template_str))
+        else:
+            all_strategies_str = self.apply_template_tokens(template, self.get_template_token_map(strategy_list_str, ""))
 
         out_filename = self.get_output_strategy_filename(args)
         self.write_file(out_filename, all_strategies_str)
