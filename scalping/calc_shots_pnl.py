@@ -341,7 +341,7 @@ class ShotsPnlCalculator(object):
             min_tp_count_val = unique_tp_count_arr_sorted[0]
         else:
             min_tp_count_val = unique_tp_count_arr_sorted[0]
-        df = df[df['shot_triggered_tp_count, %'] >= min_tp_count_val]
+        df = df[(df['Profit Rating'] > 0) & (df['shot_triggered_tp_count, %'] >= min_tp_count_val)]
         df = df.sort_values(by=['Distance'], ascending=False)
         return df.head(1)
 

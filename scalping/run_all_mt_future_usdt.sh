@@ -36,7 +36,7 @@ rm -rf ./../marketdata/shots/binance/future/*
 rm -rf ./../marketdata/tradedata/binance/future/*
 echo Done!
 
-echo Processing shots for the last $start_minutes_ago minutes:
+echo Processing shots for the past $start_minutes_ago minutes:
 echo $start_date
 echo $end_date
 

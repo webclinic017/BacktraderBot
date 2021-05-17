@@ -20,7 +20,7 @@ end_timestamp=$((start_timestamp + 60 * start_minutes_ago))
 end_date="$(date -j -f "%s" "${end_timestamp}" "+%Y-%m-%dT%H:%M:%S")"
 
 output_folder_prefix="$(date -j -f "%s" "${end_timestamp}" "+%Y%m%d_%H%M")"
-output_folder="/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${output_folder_prefix}_Spot_${start_minutes_ago}m/"
+output_folder="/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${output_folder_prefix}_Spot_${start_minutes_ago}m"
 
 if [ -d "/opt/anaconda3" ]; then
     source /opt/anaconda3/etc/profile.d/conda.sh
@@ -36,7 +36,7 @@ rm -rf ./../marketdata/shots/binance/spot/*
 rm -rf ./../marketdata/tradedata/binance/spot/*
 echo Done!
 
-echo Processing shots for the last $start_minutes_ago minutes:
+echo Processing shots for the past $start_minutes_ago minutes:
 echo $start_date
 echo $end_date
 
@@ -62,5 +62,23 @@ done
 python strategy_generator.py -e binance -t $order_size_mb -y $order_size_mt $future_flag $moonbot_flag
 
 mkdir $output_folder
-cp ./../marketdata/shots/binance/spot/* $output_folder
+cp ./../marketdata/shots/binance/spot/* $output_folder/
 cp ./../marketdata/shots/binance/spot/algorithms.config_spot $output_folder/../
+
+BASE_OUT_FOLDER=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies
+FILE1=$BASE_OUT_FOLDER/algorithms.config_future
+FILE2=$BASE_OUT_FOLDER/algorithms.config_spot
+OUTFILE=$BASE_OUT_FOLDER/algorithms.config
+
+if [[ -f "$FILE1" && -f "$FILE2" ]]; then
+    echo "Merging $FILE2 into the $FILE1 file..."
+else
+    echo "Some of the $FILE1 and $FILE2 files missing. Quitting."
+    exit 0
+fi
+
+sed '$d' $FILE1 | sed '$d' | sed '$d' > $OUTFILE
+echo "    }," >> $OUTFILE
+sed "1,2d; $d" $FILE2 >> $OUTFILE
+
+echo "Merging done!"
