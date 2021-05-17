@@ -8,6 +8,7 @@ from datetime import datetime
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.3
 SPOT_MAX_STRATEGIES_NUM = 4
+FUTURE_MAX_STRATEGIES_NUM = 8
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -134,6 +135,8 @@ class ShotStrategyGenerator(object):
 
         if not args.future:
             df = df.head(SPOT_MAX_STRATEGIES_NUM)
+        else:
+            df = df.head(FUTURE_MAX_STRATEGIES_NUM)
 
         df = df.sort_values(by=['symbol_name', 'shot_type'], ascending=True)
 
@@ -222,7 +225,6 @@ class ShotStrategyGenerator(object):
         template = self.read_file(self.get_template_filename(args))
         if not args.moonbot and args.future:
             add_strat_template_str = self.read_file(self.get_add_strategies_template_filename(args))
-            strategy_list_str = self.append_divider(args, strategy_list_str, False)
             all_strategies_str = self.apply_template_tokens(template, self.get_template_token_map(strategy_list_str, add_strat_template_str))
         else:
             all_strategies_str = self.apply_template_tokens(template, self.get_template_token_map(strategy_list_str, ""))
