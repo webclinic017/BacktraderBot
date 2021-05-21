@@ -6,9 +6,9 @@ from pathlib import Path
 from datetime import datetime
 
 MIN_TOTAL_SHOTS_COUNT = 0
-MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.3
-SPOT_MAX_STRATEGIES_NUM = 4
-FUTURE_MAX_STRATEGIES_NUM = 8
+MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
+SPOT_MAX_STRATEGIES_NUM = 13
+FUTURE_MAX_STRATEGIES_NUM = 34
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -20,10 +20,9 @@ TOKEN007_STR = "{{TOKEN007}}"
 TOKEN008_STR = "{{TOKEN008}}"
 TOKEN009_STR = "{{TOKEN009}}"
 TOKEN010_STR = "{{TOKEN010}}"
+TOKEN011_STR = "{{TOKEN011}}"
 TOKEN_STRATEGY_LIST_STR = "{{STRATEGY_LIST}}"
 TOKEN_ADD_STRATEGIES_STR = "{{ADD_STRATEGIES}}"
-
-MT_STRATEGY_ID_START_FROM = 1617219803226
 
 DEFAULT_OUTPUT_MB_FILENAME = "Binance-BTC-strat.txt"
 DEFAULT_OUTPUT_MT_FILENAME = "algorithms.config"
@@ -163,19 +162,22 @@ class ShotStrategyGenerator(object):
         else:
             distance = pnl_row['Distance']
             buffer = pnl_row['Buffer']
+            side = 1 if shot_type == "LONG" else -1 if shot_type == "SHORT" else ""
             market_type = 1 if not args.future else 3
-            id_start_from_idx = int(datetime.now().timestamp() * 1000) + index
+            trade_latency = 15 if not args.future else 1
+            id = int(datetime.now().timestamp() * 1000) + index
             return {
-                TOKEN001_STR: "{}".format(MT_STRATEGY_ID_START_FROM + id_start_from_idx),
+                TOKEN001_STR: "{}".format(id),
                 TOKEN002_STR: "Shot [{}] [{}] {} {}-{}-{}-{}".format(symbol_type_str, shot_type, symbol_name, distance, buffer, tp, sl),
                 TOKEN003_STR: symbol_name,
                 TOKEN004_STR: "{}".format(distance),
                 TOKEN005_STR: "{}".format(buffer),
-                TOKEN006_STR: "{}".format(1 if shot_type == "LONG" else -1 if shot_type == "SHORT" else ""),
+                TOKEN006_STR: "{}".format(side),
                 TOKEN007_STR: "{}".format(args.mtordersize),
                 TOKEN008_STR: "{}".format(tp),
                 TOKEN009_STR: "{}".format(sl),
-                TOKEN010_STR: "{}".format(market_type)
+                TOKEN010_STR: "{}".format(market_type),
+                TOKEN011_STR: "{}".format(trade_latency)
             }
 
     def get_template_token_map(self, strategy_list_str, add_strat_template_str):
@@ -223,7 +225,7 @@ class ShotStrategyGenerator(object):
         strategy_list_str = ''.join(strategy_list)
 
         template = self.read_file(self.get_template_filename(args))
-        if not args.moonbot and args.future:
+        if not args.moonbot and not args.future:
             add_strat_template_str = self.read_file(self.get_add_strategies_template_filename(args))
             all_strategies_str = self.apply_template_tokens(template, self.get_template_token_map(strategy_list_str, add_strat_template_str))
         else:

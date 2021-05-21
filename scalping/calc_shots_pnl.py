@@ -8,24 +8,24 @@ import csv
 
 string_types = str
 
-MIN_TOTAL_SHOTS_COUNT = 3
+MIN_TOTAL_SHOTS_COUNT = 0
 
 COMMISSIONS_PCT = 0.02 + 0.04
 SLIPPAGE_PCT = 0.02
 
 SS_FILTER_MIN_SHOTS_COUNT = 0
 
-MIN_DISTANCE_PCT = 0.3
-MIN_TP_PCT_SPOT = 0.25
+MIN_DISTANCE_PCT = 0.45
+MIN_TP_PCT_SPOT = 0.26
 MIN_TP_PCT_FUTURE = 0.17
 DEFAULT_MIN_STEP = 0.02
 TRIAL_STEP_PCT = 0.02
 
-
-MAX_BUFFER_PCT = 0.36
 MAX_SL_PCT = 0.51
 
-MIN_RR_RATIO = 2
+FUTURE_MIN_RR_RATIO = 2
+SPOT_TP_TO_DISTANCE_RATIO_MIN = 0.3
+SPOT_TP_TO_DISTANCE_RATIO_MAX = 0.4
 
 MAX_TP_TO_SHOT_RATIO = 0.5
 CREATE_PNL_FILE_FLAG = True
@@ -162,19 +162,20 @@ class ShotsPnlCalculator(object):
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
         min_tp_pct = MIN_TP_PCT_FUTURE if is_future else MIN_TP_PCT_SPOT
+        max_distance = MIN_DISTANCE_PCT if MIN_DISTANCE_PCT > (max_s + DEFAULT_MIN_STEP) else (max_s + DEFAULT_MIN_STEP)
 
         if is_moonbot:
             return {
-                "MShotPriceMin": np.arange(MIN_DISTANCE_PCT, max_s - 0.1 + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "MShotPrice": np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "tp": np.arange(min_tp_pct, (max_s + MAX_BUFFER_PCT / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
+                "MShotPriceMin": np.arange(MIN_DISTANCE_PCT, max_distance - 0.1, DEFAULT_MIN_STEP),
+                "MShotPrice": np.arange(MIN_DISTANCE_PCT, max_distance, DEFAULT_MIN_STEP),
+                "tp": np.arange(min_tp_pct, (max_s + 0.2 / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
                 "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
         else:
             return {
-                "distance": np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "buffer": np.arange(0.2, MAX_BUFFER_PCT, DEFAULT_MIN_STEP),
-                "tp": np.arange(min_tp_pct, (max_s + MAX_BUFFER_PCT / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
+                "distance": np.arange(MIN_DISTANCE_PCT, max_distance, DEFAULT_MIN_STEP),
+                "buffer": 0.2,
+                "tp": np.arange(min_tp_pct, (max_s + 0.2 / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
                 "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
 
@@ -276,8 +277,13 @@ class ShotsPnlCalculator(object):
                     continue
                 if c_tp > (c_mshot_price / MAX_TP_TO_SHOT_RATIO):
                     continue
-                if c_sl / c_tp < MIN_RR_RATIO:
-                    continue
+                if is_future:
+                    if c_sl / c_tp < FUTURE_MIN_RR_RATIO:
+                        continue
+                else:
+                    tp_to_distance_ratio = c_tp / c_mshot_price_min
+                    if tp_to_distance_ratio < SPOT_TP_TO_DISTANCE_RATIO_MIN or tp_to_distance_ratio > SPOT_TP_TO_DISTANCE_RATIO_MAX:
+                        continue
             else:
                 c_distance = c_dict["distance"]
                 c_buffer = c_dict["buffer"]
@@ -286,8 +292,13 @@ class ShotsPnlCalculator(object):
                     continue
                 if c_tp > ((c_distance + c_buffer / 2) / MAX_TP_TO_SHOT_RATIO):
                     continue
-                if c_sl / c_tp < MIN_RR_RATIO:
-                    continue
+                if is_future:
+                    if c_sl / c_tp < FUTURE_MIN_RR_RATIO:
+                        continue
+                else:
+                    tp_to_distance_ratio = c_tp / c_distance
+                    if tp_to_distance_ratio < SPOT_TP_TO_DISTANCE_RATIO_MIN or tp_to_distance_ratio > SPOT_TP_TO_DISTANCE_RATIO_MAX:
+                        continue
 
             trial_analyzer = ShotTrialAnalyzer()
             shot_pnl_arr = []

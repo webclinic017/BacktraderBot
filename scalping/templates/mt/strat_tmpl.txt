@@ -147,7 +147,7 @@
           },
           "stopIfTradeLatencyGreaterThan": {
             "name": "stopIfTradeLatencyGreaterThan",
-            "value": 1.0,
+            "value": {{TOKEN011}},
             "argumentType": 4
           }
         }
