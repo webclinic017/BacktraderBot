@@ -9,7 +9,7 @@ declare -a future_flag=""
 declare -a moonbot_flag=""
 
 declare -a order_size_mb=0.0002
-declare -a order_size_mt=30
+declare -a order_size_mt=40
 
 now_timestamp="$(date +'%s')"
 now_timestamp=$((now_timestamp - now_timestamp % 60))

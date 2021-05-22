@@ -11,8 +11,8 @@ PRESHOT_TRADES_MIN_NUMBER_THRESHOLD = 3
 PRESHOT_DEPTH_MIN_THRESHOLD_PCT = 0.1
 SHOT_DEPTH_MIN_THRESHOLD_PCT = 0.4
 SHOT_ROUNDING_PRECISION = 0.01
-LAST_FOUND_SHOT_ALLOWANCE = 50
 
+LAST_FOUND_SHOT_ALLOWANCE_MSEC = 50
 SHOT_BOUNCE_LOOKUP_START = 300
 SHOT_BOUNCE_LOOKUP_WINDOW = 200
 SHOT_BOUNCE_LOOKUP_LIMIT = 5000
@@ -215,7 +215,7 @@ class ShotsDetector(object):
             if not args.future and shot_type == "SHORT":
                 continue
 
-            if last_shot and group_timestamp < last_shot.end_timestamp + LAST_FOUND_SHOT_ALLOWANCE:
+            if last_shot and group_timestamp < last_shot.end_timestamp + LAST_FOUND_SHOT_ALLOWANCE_MSEC:
                 continue
 
             if preshot_depth_pct >= PRESHOT_DEPTH_MIN_THRESHOLD_PCT:

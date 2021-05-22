@@ -6,9 +6,9 @@ from pathlib import Path
 from datetime import datetime
 
 MIN_TOTAL_SHOTS_COUNT = 0
-MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
-SPOT_MAX_STRATEGIES_NUM = 13
-FUTURE_MAX_STRATEGIES_NUM = 34
+MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.3
+SPOT_MAX_STRATEGIES_NUM = 10
+FUTURE_MAX_STRATEGIES_NUM = 8
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -143,7 +143,7 @@ class ShotStrategyGenerator(object):
 
     def get_tokens_map(self, args, index, pnl_row):
         symbol_name = pnl_row['symbol_name']
-        symbol_type_str = self.get_symbol_type_str(args).upper()
+        symbol_type_str = self.get_symbol_type_str(args).upper()[0]
         shot_type = pnl_row['shot_type']
         tp = pnl_row['TP']
         sl = pnl_row['SL']
