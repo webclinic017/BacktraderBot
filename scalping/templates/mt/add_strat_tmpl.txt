@@ -107,7 +107,7 @@
     {
       "id": 1621691327069,
       "name": "Shots Group",
-      "info": "Shot HIGH RISK <COIN_NAME> [LONG] 0.35-0.2-0.1-0.15",
+      "info": "Shot HIGH RISK COIN_USDT [LONG] 0.35-0.2-0.1-0.15",
       "autoStart": false,
       "args": {
         "Arguments": {
@@ -133,7 +133,7 @@
           },
           "whiteList": {
             "name": "whiteList",
-            "value": "<COIN_NAME>",
+            "value": "COIN_USDT",
             "argumentType": 15
           },
           "blackList": {
@@ -265,7 +265,7 @@
     {
       "id": 1621691327070,
       "name": "Shots Group",
-      "info": "Shot HIGH RISK <COIN_NAME> [SHORT] 0.35-0.2-0.1-0.15",
+      "info": "Shot HIGH RISK COIN_USDT [SHORT] 0.35-0.2-0.1-0.15",
       "autoStart": false,
       "args": {
         "Arguments": {
@@ -291,7 +291,7 @@
           },
           "whiteList": {
             "name": "whiteList",
-            "value": "<COIN_NAME>",
+            "value": "COIN_USDT",
             "argumentType": 15
           },
           "blackList": {
