@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 
 MIN_TOTAL_SHOTS_COUNT = 0
-MAX_MIN_TOTAL_SHOTS_PERCENTILE = 0.3
+MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
 SPOT_MAX_STRATEGIES_NUM = 10
 FUTURE_MAX_STRATEGIES_NUM = 8
 
@@ -143,7 +143,7 @@ class ShotStrategyGenerator(object):
 
     def get_tokens_map(self, args, index, pnl_row):
         symbol_name = pnl_row['symbol_name']
-        symbol_type_str = self.get_symbol_type_str(args).upper()[0]
+        symbol_type_str = self.get_symbol_type_str(args).upper()
         shot_type = pnl_row['shot_type']
         tp = pnl_row['TP']
         sl = pnl_row['SL']
@@ -151,7 +151,7 @@ class ShotStrategyGenerator(object):
             mshot_price_min = pnl_row['MShotPriceMin']
             mshot_price = pnl_row['MShotPrice']
             return {
-                TOKEN001_STR: "Moonshot [{}] [{}] {} {}-{}-{}-{}".format(symbol_type_str, shot_type, symbol_name, mshot_price_min, mshot_price, tp, sl),
+                TOKEN001_STR: "Moonshot [{}] {} {} {}-{}-{}".format(symbol_type_str, symbol_name, shot_type, mshot_price, tp, sl),
                 TOKEN002_STR: symbol_name,
                 TOKEN003_STR: "{:.4f}".format(tp),
                 TOKEN004_STR: "{:.8f}".format(sl),
@@ -168,7 +168,7 @@ class ShotStrategyGenerator(object):
             id = int(datetime.now().timestamp() * 1000) + index
             return {
                 TOKEN001_STR: "{}".format(id),
-                TOKEN002_STR: "Shot [{}] [{}] {} {}-{}-{}-{}".format(symbol_type_str, shot_type, symbol_name, distance, buffer, tp, sl),
+                TOKEN002_STR: "Shot [{}] {} {} {}-{}-{}".format(symbol_type_str, symbol_name, shot_type, distance, tp, sl),
                 TOKEN003_STR: symbol_name,
                 TOKEN004_STR: "{}".format(distance),
                 TOKEN005_STR: "{}".format(buffer),

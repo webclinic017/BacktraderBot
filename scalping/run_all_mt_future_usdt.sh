@@ -2,7 +2,7 @@
 
 declare -a symbol_list=("1000SHIBUSDT" "1INCHUSDT" "AAVEUSDT" "ADAUSDT" "AKROUSDT" "ALGOUSDT" "ALICEUSDT" "ALPHAUSDT" "ANKRUSDT" "ATOMUSDT" "AVAXUSDT" "AXSUSDT" "BALUSDT" "BANDUSDT" "BATUSDT" "BCHUSDT" "BELUSDT" "BLZUSDT" "BTSUSDT" "BZRXUSDT" "CHRUSDT" "CHZUSDT" "COMPUSDT" "COTIUSDT" "CRVUSDT" "CTKUSDT" "CVCUSDT" "DASHUSDT" "DODOUSDT" "DOGEUSDT" "DOTUSDT" "EGLDUSDT" "ENJUSDT" "EOSUSDT" "ETCUSDT" "FILUSDT" "FLMUSDT" "FTMUSDT" "GRTUSDT" "HBARUSDT" "HNTUSDT" "ICXUSDT" "IOSTUSDT" "IOTAUSDT" "KAVAUSDT" "KNCUSDT" "KSMUSDT" "LINKUSDT" "LITUSDT" "LRCUSDT" "LUNAUSDT" "MANAUSDT" "MATICUSDT" "MKRUSDT" "NEARUSDT" "NEOUSDT" "OCEANUSDT" "OMGUSDT" "ONEUSDT" "ONTUSDT" "QTUMUSDT" "REEFUSDT" "RENUSDT" "RLCUSDT" "RSRUSDT" "RUNEUSDT" "RVNUSDT" "SANDUSDT" "SFPUSDT" "SKLUSDT" "SNXUSDT" "SOLUSDT" "SRMUSDT" "STMXUSDT" "STORJUSDT" "SUSHIUSDT" "SXPUSDT" "THETAUSDT" "TOMOUSDT" "TRBUSDT" "TRXUSDT" "UNFIUSDT" "UNIUSDT" "VETUSDT" "WAVESUSDT" "XEMUSDT" "XLMUSDT" "XMRUSDT" "XRPUSDT" "XTZUSDT" "YFIIUSDT" "YFIUSDT" "ZECUSDT" "ZENUSDT" "ZILUSDT" "ZRXUSDT")
 
-declare -a start_minutes_ago=60
+declare -a start_minutes_ago=10
 
 declare -a future_flag="-f"
 
@@ -40,21 +40,15 @@ echo Processing shots for the past $start_minutes_ago minutes:
 echo $start_date
 echo $end_date
 
-# Download tick trade data for all symbols
 for symbol in "${symbol_list[@]}"
 do
+    # Download tick trade data for all symbols
     python binance_trade_data.py -s $symbol -t $start_date -e $end_date $future_flag
-done
 
-# Detect shots information for all symbols
-for symbol in "${symbol_list[@]}"
-do
+    # Detect shots information for all symbols
     python shots_detector.py -e binance -s $symbol $future_flag $moonbot_flag
-done
 
-# Calculate best PnL for all the shots
-for symbol in "${symbol_list[@]}"
-do
+    # Calculate best PnL for all the shots
     python calc_shots_pnl.py -e binance -s $symbol $future_flag $moonbot_flag
 done
 
