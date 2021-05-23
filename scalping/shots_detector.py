@@ -162,7 +162,7 @@ class ShotsDetector(object):
                 sma_row = lookup_window_df[FIND_BOUNCE_SMA_FIELD_NAME]
                 sma_min = sma_row.min()
                 sma_max = sma_row.max()
-                sma_diff_pct = round(100 * (sma_max - sma_min) / sma_min, 3)
+                sma_diff_pct = 9999 if sma_min == 0 else round(100 * (sma_max - sma_min) / sma_min, 3)
                 if sma_diff_pct <= SHOT_BOUNCE_SMA_DIFF_THRESHOLD:
                     #print("Found interval with trade data. sma_min={}, sma_max={}, sma_diff_pct={}".format(sma_min, sma_max, sma_diff_pct))
                     bounce_pct = self.get_bounce_df_pct(lookup_window_df, shot_type, shot_end_price)

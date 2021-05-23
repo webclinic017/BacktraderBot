@@ -4,7 +4,7 @@ declare -a symbol_list=("1INCHUSDT" "AAVEUSDT" "ACMUSDT" "ADAUSDT" "AIONUSDT" "A
 
 declare -a start_minutes_ago=30
 
-declare -a future_flag="-f"
+declare -a future_flag=""
 
 declare -a moonbot_flag=""
 
@@ -19,8 +19,6 @@ start_date="$(date -j -f "%s" "${start_timestamp}" "+%Y-%m-%dT%H:%M:%S")"
 end_timestamp=$((start_timestamp + 60 * start_minutes_ago))
 end_date="$(date -j -f "%s" "${end_timestamp}" "+%Y-%m-%dT%H:%M:%S")"
 
-output_folder_prefix="$(date -j -f "%s" "${end_timestamp}" "+%Y%m%d_%H%M")"
-output_folder="/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${output_folder_prefix}_Spot_${start_minutes_ago}m"
 
 if [ -d "/opt/anaconda3" ]; then
     source /opt/anaconda3/etc/profile.d/conda.sh
@@ -31,7 +29,20 @@ elif [ -d "/Users/alex/anaconda3" ]; then
 fi
 conda activate Backtrader
 
+BASE_OUT_FOLDER=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies
+FILE1=$BASE_OUT_FOLDER/algorithms.config_future
+FILE2=$BASE_OUT_FOLDER/algorithms.config_spot
+OUTFILE=$BASE_OUT_FOLDER/algorithms.config_future_spot
 
-# Generate strategy files for MB/MT
-python strategy_generator.py -e binance -t $order_size_mb -y $order_size_mt $future_flag $moonbot_flag
+if [[ -f "$FILE1" && -f "$FILE2" ]]; then
+    echo "Merging $FILE2 into the $FILE1 file..."
+else
+    echo "Files ${FILE1}/${FILE2} missing. Quitting."
+    exit 0
+fi
 
+sed '$d' $FILE1 | sed '$d' | sed '$d' > $OUTFILE
+echo "    }," >> $OUTFILE
+sed "1,2d; $d" $FILE2 >> $OUTFILE
+
+echo "Merging done! File $OUTFILE has been created."

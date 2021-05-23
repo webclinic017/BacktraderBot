@@ -8,12 +8,8 @@ import csv
 
 string_types = str
 
-MIN_TOTAL_SHOTS_COUNT = 0
-
 COMMISSIONS_PCT = 0.02 + 0.04
 SLIPPAGE_PCT = 0.02
-
-SS_FILTER_MIN_SHOTS_COUNT = 0
 
 MIN_DISTANCE_PCT = 0.25
 MIN_TP_PCT_SPOT = 0.26
@@ -98,7 +94,7 @@ class ShotsPnlCalculator(object):
             return None
         return df
 
-    def write_pnl_data_to_file(self, args, df, shot_type):
+    def write_pnl_data_to_file(self, args, df):
         dirname = self.whereAmI()
         symbol_type_str = self.get_symbol_type_str(args)
         output_path = '{}/../marketdata/shots/{}/{}'.format(dirname, args.exchange, symbol_type_str)
@@ -106,10 +102,10 @@ class ShotsPnlCalculator(object):
 
         # Save it
         suffix = "mb" if args.moonbot else "mt"
-        filename = '{}/shots-pnl-{}-{}-{}-{}-{}.csv'.format(output_path, args.exchange, symbol_type_str, args.symbol, shot_type, suffix)
+        filename = '{}/shots-pnl-{}-{}-{}-{}.csv'.format(output_path, args.exchange, symbol_type_str, args.symbol, suffix)
         df.to_csv(filename)
 
-    def write_best_pnl_rows_to_file(self, args, total_shots_count, df, shot_type):
+    def write_best_pnl_rows_to_file(self, args, total_shots_count, df):
         # Save it
         dirname = self.whereAmI()
         symbol_type_str = self.get_symbol_type_str(args)
@@ -117,15 +113,14 @@ class ShotsPnlCalculator(object):
         os.makedirs(output_path, exist_ok=True)
 
         if args.moonbot:
-            header = ['symbol_name', 'shot_type', 'total_shots_count', 'MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating']
+            header = ['symbol_name', 'total_shots_count', 'MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating']
         else:
-            header = ['symbol_name', 'shot_type', 'total_shots_count', 'Distance', 'Buffer', 'TP', 'SL', 'Profit Rating']
+            header = ['symbol_name', 'total_shots_count', 'Distance', 'Buffer', 'TP', 'SL', 'Profit Rating']
 
         csv_rows = []
         for index, row in df.iterrows():
             csv_rows.append([
                                 args.symbol,
-                                shot_type,
                                 total_shots_count,
                                 row['MShotPriceMin'] if args.moonbot else row['Distance'],
                                 row['MShotPrice'] if args.moonbot else row['Buffer'],
@@ -356,27 +351,24 @@ class ShotsPnlCalculator(object):
         df = df.sort_values(by=['Distance'], ascending=False)
         return df.head(1)
 
-    def process_data(self, args, shot_type):
+    def process_data(self, args):
+        symbol = args.symbol
         is_moonbot = True if args.moonbot else False
         is_future = True if args.future else False
-        shots_data_df = self._shots_data_df[(self._shots_data_df['symbol_name'] == args.symbol) & (self._shots_data_df['shot_type'] == shot_type)]
-        print("\nProcessing {} shot type...".format(shot_type))
+        if args.future:
+            shots_data_df = self._shots_data_df[self._shots_data_df['symbol_name'] == symbol]
+        else:
+            shots_data_df = self._shots_data_df[(self._shots_data_df['symbol_name'] == symbol) & (self._shots_data_df['shot_type'] == "LONG")]
+
+        print("\nCalculating best PnL for {}...".format(symbol))
         total_shots_count = len(shots_data_df)
-        print("Length of {} shots dataframe: {}".format(args.symbol, total_shots_count))
+        print("Length of {} shots dataframe: {}".format(symbol, total_shots_count))
 
         if total_shots_count == 0:
             print("No input shots data to process. Exiting.")
             return
 
-        if total_shots_count <= MIN_TOTAL_SHOTS_COUNT:
-            print("Number of shots is too low: {}. Exiting.".format(total_shots_count))
-            return
-
         groups_df = shots_data_df.groupby(["shot_depth"]).size().reset_index(name='counts')
-        groups_df = groups_df[groups_df['counts'] >= SS_FILTER_MIN_SHOTS_COUNT]
-        if len(groups_df) == 0:
-            print("After filtering there is no shots data to process. Exiting.")
-            return
 
         shots_data_dict = {}
         for idx, row in groups_df.iterrows():
@@ -392,9 +384,9 @@ class ShotsPnlCalculator(object):
 
         if len(shots_data_df) > 0:
             if CREATE_PNL_FILE_FLAG:
-                self.write_pnl_data_to_file(args, shots_data_df, shot_type)
+                self.write_pnl_data_to_file(args, shots_data_df)
             shots_data_df = self.get_best_pnl_rows(shots_data_df)
-            self.write_best_pnl_rows_to_file(args, total_shots_count, shots_data_df, shot_type)
+            self.write_best_pnl_rows_to_file(args, total_shots_count, shots_data_df)
 
     def run(self):
         args = self.parse_args()
@@ -405,11 +397,7 @@ class ShotsPnlCalculator(object):
             print("*** No shots data found! Exiting.")
             exit(-1)
 
-        if args.future:
-            self.process_data(args, "LONG")
-            self.process_data(args, "SHORT")
-        else:
-            self.process_data(args, "LONG")
+        self.process_data(args)
 
 
 def main():

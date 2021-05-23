@@ -7,8 +7,8 @@ from datetime import datetime
 
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
-SPOT_MAX_STRATEGIES_NUM = 10
-FUTURE_MAX_STRATEGIES_NUM = 8
+SPOT_MAX_COINS_STRATEGIES_NUM = 10
+FUTURE_MAX_COINS_STRATEGIES_NUM = 3
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -123,9 +123,6 @@ class ShotStrategyGenerator(object):
         return df
 
     def filter_shots_pnl_rows(self, args, df):
-        if not args.future:
-            df = df[df['shot_type'] == 'LONG']
-
         df = df.sort_values(by=['total_shots_count'], ascending=False)
 
         df = df[df['total_shots_count'] >= MIN_TOTAL_SHOTS_COUNT]
@@ -133,18 +130,17 @@ class ShotStrategyGenerator(object):
         df = df.head(filter_val)
 
         if not args.future:
-            df = df.head(SPOT_MAX_STRATEGIES_NUM)
+            df = df.head(SPOT_MAX_COINS_STRATEGIES_NUM)
         else:
-            df = df.head(FUTURE_MAX_STRATEGIES_NUM)
+            df = df.head(FUTURE_MAX_COINS_STRATEGIES_NUM)
 
-        df = df.sort_values(by=['symbol_name', 'shot_type'], ascending=True)
+        df = df.sort_values(by=['symbol_name'], ascending=True)
 
         return df
 
-    def get_tokens_map(self, args, index, pnl_row):
+    def get_tokens_map(self, args, index, pnl_row, shot_type):
         symbol_name = pnl_row['symbol_name']
         symbol_type_str = self.get_symbol_type_str(args).upper()
-        shot_type = pnl_row['shot_type']
         tp = pnl_row['TP']
         sl = pnl_row['SL']
         if args.moonbot:
@@ -164,7 +160,7 @@ class ShotStrategyGenerator(object):
             buffer = pnl_row['Buffer']
             side = 1 if shot_type == "LONG" else -1 if shot_type == "SHORT" else ""
             market_type = 1 if not args.future else 3
-            trade_latency = 15 if not args.future else 1
+            trade_latency = 15 if not args.future else 3
             id = int(datetime.now().timestamp() * 1000) + index
             return {
                 TOKEN001_STR: "{}".format(id),
@@ -201,6 +197,13 @@ class ShotStrategyGenerator(object):
             strategy_str = strategy_str + divider
         return strategy_str
 
+    def add_strategy(self, args, strategy_list, strategy_template, idx, pnl_row, shot_type, is_last):
+        tokens_map = self.get_tokens_map(args, idx, pnl_row, shot_type)
+        strategy_str = self.apply_template_tokens(strategy_template, tokens_map)
+        strategy_str = self.append_divider(args, strategy_str, is_last)
+        strategy_list.append(strategy_str)
+        return strategy_list
+
     def run(self):
         args = self.parse_args()
 
@@ -218,10 +221,9 @@ class ShotStrategyGenerator(object):
         strategy_template = self.read_file(self.get_strategy_template_filename(args))
         strategy_list = []
         for idx, pnl_row in shots_pnl_data_df.iterrows():
-            tokens_map = self.get_tokens_map(args, idx, pnl_row)
-            strategy_str = self.apply_template_tokens(strategy_template, tokens_map)
-            strategy_str = self.append_divider(args, strategy_str, idx == shots_pnl_data_df.index[-1])
-            strategy_list.append(strategy_str)
+            strategy_list = self.add_strategy(args, strategy_list, strategy_template, idx, pnl_row, "LONG", False)
+            if args.future:
+                strategy_list = self.add_strategy(args, strategy_list, strategy_template, idx, pnl_row, "SHORT", idx == shots_pnl_data_df.index[-1])
         strategy_list_str = ''.join(strategy_list)
 
         template = self.read_file(self.get_template_filename(args))
