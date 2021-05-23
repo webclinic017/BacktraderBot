@@ -291,7 +291,7 @@
           },
           "whiteList": {
             "name": "whiteList",
-            "value": "BTSUSDT",
+            "value": "<COIN_NAME>",
             "argumentType": 15
           },
           "blackList": {

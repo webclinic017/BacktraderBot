@@ -4,6 +4,7 @@ import os
 import io
 from pathlib import Path
 from datetime import datetime
+import uuid
 
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
@@ -138,7 +139,7 @@ class ShotStrategyGenerator(object):
 
         return df
 
-    def get_tokens_map(self, args, index, pnl_row, shot_type):
+    def get_tokens_map(self, args, pnl_row, shot_type):
         symbol_name = pnl_row['symbol_name']
         symbol_type_str = self.get_symbol_type_str(args).upper()
         tp = pnl_row['TP']
@@ -161,9 +162,9 @@ class ShotStrategyGenerator(object):
             side = 1 if shot_type == "LONG" else -1 if shot_type == "SHORT" else ""
             market_type = 1 if not args.future else 3
             trade_latency = 15 if not args.future else 3
-            id = int(datetime.now().timestamp() * 1000) + index
+            strategy_id = int(datetime.now().timestamp() * 1000) + (uuid.uuid1().int % 10000)
             return {
-                TOKEN001_STR: "{}".format(id),
+                TOKEN001_STR: "{}".format(strategy_id),
                 TOKEN002_STR: "Shot [{}] {} {} {}-{}-{}".format(symbol_type_str, symbol_name, shot_type, distance, tp, sl),
                 TOKEN003_STR: symbol_name,
                 TOKEN004_STR: "{}".format(distance),
@@ -197,8 +198,8 @@ class ShotStrategyGenerator(object):
             strategy_str = strategy_str + divider
         return strategy_str
 
-    def add_strategy(self, args, strategy_list, strategy_template, idx, pnl_row, shot_type, is_last):
-        tokens_map = self.get_tokens_map(args, idx, pnl_row, shot_type)
+    def add_strategy(self, args, strategy_list, strategy_template, pnl_row, shot_type, is_last):
+        tokens_map = self.get_tokens_map(args, pnl_row, shot_type)
         strategy_str = self.apply_template_tokens(strategy_template, tokens_map)
         strategy_str = self.append_divider(args, strategy_str, is_last)
         strategy_list.append(strategy_str)
@@ -221,9 +222,9 @@ class ShotStrategyGenerator(object):
         strategy_template = self.read_file(self.get_strategy_template_filename(args))
         strategy_list = []
         for idx, pnl_row in shots_pnl_data_df.iterrows():
-            strategy_list = self.add_strategy(args, strategy_list, strategy_template, idx, pnl_row, "LONG", False)
+            strategy_list = self.add_strategy(args, strategy_list, strategy_template, pnl_row, "LONG", False)
             if args.future:
-                strategy_list = self.add_strategy(args, strategy_list, strategy_template, idx, pnl_row, "SHORT", idx == shots_pnl_data_df.index[-1])
+                strategy_list = self.add_strategy(args, strategy_list, strategy_template, pnl_row, "SHORT", idx == shots_pnl_data_df.index[-1])
         strategy_list_str = ''.join(strategy_list)
 
         template = self.read_file(self.get_template_filename(args))
