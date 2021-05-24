@@ -107,7 +107,7 @@
     {
       "id": 1621691327069,
       "name": "Shots Group",
-      "info": "Shot HIGH RISK COIN_USDT [LONG] 0.35-0.2-0.1-0.15",
+      "info": "Shot HIGH RISK COIN_USDT [LONG] 0.25-0.1-0.15",
       "autoStart": false,
       "args": {
         "Arguments": {
@@ -143,7 +143,7 @@
           },
           "distance": {
             "name": "distance",
-            "value": 0.35,
+            "value": 0.25,
             "argumentType": 4
           },
           "buffer": {
@@ -253,7 +253,7 @@
           },
           "stopIfTradeLatencyGreaterThan": {
             "name": "stopIfTradeLatencyGreaterThan",
-            "value": 1,
+            "value": 3,
             "argumentType": 4
           }
         }
@@ -265,7 +265,7 @@
     {
       "id": 1621691327070,
       "name": "Shots Group",
-      "info": "Shot HIGH RISK COIN_USDT [SHORT] 0.35-0.2-0.1-0.15",
+      "info": "Shot HIGH RISK COIN_USDT [SHORT] 0.25-0.1-0.15",
       "autoStart": false,
       "args": {
         "Arguments": {
@@ -301,7 +301,7 @@
           },
           "distance": {
             "name": "distance",
-            "value": 0.35,
+            "value": 0.25,
             "argumentType": 4
           },
           "buffer": {
@@ -411,7 +411,7 @@
           },
           "stopIfTradeLatencyGreaterThan": {
             "name": "stopIfTradeLatencyGreaterThan",
-            "value": 1,
+            "value": 3,
             "argumentType": 4
           }
         }

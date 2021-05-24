@@ -11,12 +11,13 @@ string_types = str
 COMMISSIONS_PCT = 0.02 + 0.04
 SLIPPAGE_PCT = 0.02
 
-MIN_DISTANCE_PCT = 0.25
+MIN_DISTANCE_PCT = 0.45
 MIN_TP_PCT_SPOT = 0.26
 MIN_TP_PCT_FUTURE = 0.12
 DEFAULT_MIN_STEP = 0.02
 TRIAL_STEP_PCT = 0.02
 
+MIN_SL_PCT = 0.35
 MAX_SL_PCT = 0.41
 
 FUTURE_MIN_RR_RATIO = 2
@@ -164,14 +165,14 @@ class ShotsPnlCalculator(object):
                 "MShotPriceMin": np.arange(MIN_DISTANCE_PCT, max_distance - 0.1, DEFAULT_MIN_STEP),
                 "MShotPrice": np.arange(MIN_DISTANCE_PCT, max_distance, DEFAULT_MIN_STEP),
                 "tp": np.arange(min_tp_pct, (max_s + 0.2 / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
+                "sl": np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
         else:
             return {
                 "distance": np.arange(MIN_DISTANCE_PCT, max_distance, DEFAULT_MIN_STEP),
                 "buffer": 0.2,
                 "tp": np.arange(min_tp_pct, (max_s + 0.2 / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
+                "sl": np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
 
     @staticmethod
