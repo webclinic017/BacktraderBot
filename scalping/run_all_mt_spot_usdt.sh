@@ -2,7 +2,7 @@
 
 declare -a symbol_list=("1INCHUSDT" "AAVEUSDT" "ACMUSDT" "ADAUSDT" "AIONUSDT" "AKROUSDT" "ALGOUSDT" "ALICEUSDT" "ALPHAUSDT" "ANKRUSDT" "ARUSDT" "ASRUSDT" "ATMUSDT" "ATOMUSDT" "AUDIOUSDT" "AVAXUSDT" "AXSUSDT" "BAKEUSDT" "BALUSDT" "BANDUSDT" "BARUSDT" "BATUSDT" "BCHUSDT" "BEAMUSDT" "BELUSDT" "BLZUSDT" "BTTUSDT" "BURGERUSDT" "BZRXUSDT" "CAKEUSDT" "CELOUSDT" "CELRUSDT" "CHZUSDT" "CKBUSDT" "COMPUSDT" "COTIUSDT" "CRVUSDT" "CTKUSDT" "CTSIUSDT" "CVCUSDT" "DASHUSDT" "DEGOUSDT" "DENTUSDT" "DGBUSDT" "DIAUSDT" "DODOUSDT" "DOGEUSDT" "DOTUSDT" "EGLDUSDT" "ENJUSDT" "EOSUSDT" "EPSUSDT" "ETCUSDT" "FETUSDT" "FILUSDT" "FLMUSDT" "FTMUSDT" "FTTUSDT" "GRTUSDT" "GXSUSDT" "HARDUSDT" "HBARUSDT" "HOTUSDT" "ICPUSDT" "ICXUSDT" "INJUSDT" "IOSTUSDT" "IOTAUSDT" "IOTXUSDT" "IRISUSDT" "JUVUSDT" "KAVAUSDT" "KNCUSDT" "KSMUSDT" "LINAUSDT" "LINKUSDT" "LITUSDT" "LRCUSDT" "LSKUSDT" "LUNAUSDT" "MANAUSDT" "MATICUSDT" "MDXUSDT" "MFTUSDT" "MITHUSDT" "MKRUSDT" "NANOUSDT" "NEARUSDT" "NEOUSDT" "NKNUSDT" "OCEANUSDT" "OGNUSDT" "OGUSDT" "OMGUSDT" "OMUSDT" "ONEUSDT" "ONTUSDT" "OXTUSDT" "PERPUSDT" "PONDUSDT" "PSGUSDT" "PUNDIXUSDT" "QTUMUSDT" "REEFUSDT" "RENUSDT" "RLCUSDT" "RSRUSDT" "RUNEUSDT" "RVNUSDT" "SANDUSDT" "SCUSDT" "SFPUSDT" "SHIBUSDT" "SKLUSDT" "SLPUSDT" "SNXUSDT" "SOLUSDT" "SRMUSDT" "STMXUSDT" "STORJUSDT" "STRAXUSDT" "SUSHIUSDT" "SXPUSDT" "TFUELUSDT" "THETAUSDT" "TKOUSDT" "TLMUSDT" "TOMOUSDT" "TRBUSDT" "TRXUSDT" "TWTUSDT" "UNFIUSDT" "UNIUSDT" "UTKUSDT" "VETUSDT" "VITEUSDT" "VTHOUSDT" "WAVESUSDT" "WINUSDT" "WRXUSDT" "WTCUSDT" "XEMUSDT" "XLMUSDT" "XMRUSDT" "XRPUSDT" "XTZUSDT" "XVSUSDT" "YFIIUSDT" "YFIUSDT" "ZECUSDT" "ZENUSDT" "ZILUSDT" "ZRXUSDT")
 
-declare -a start_minutes_ago=10
+declare -a start_minutes_ago=30
 
 declare -a future_flag=""
 
@@ -20,7 +20,8 @@ end_timestamp=$((start_timestamp + 60 * start_minutes_ago))
 end_date="$(date -j -f "%s" "${end_timestamp}" "+%Y-%m-%dT%H:%M:%S")"
 
 output_folder_prefix="$(date -j -f "%s" "${end_timestamp}" "+%Y%m%d_%H%M")"
-output_folder="/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${output_folder_prefix}_Spot_${start_minutes_ago}m"
+BASE_OUT_FOLDER=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies
+output_folder="${BASE_OUT_FOLDER}/${output_folder_prefix}_Spot_${start_minutes_ago}m"
 
 if [ -d "/opt/anaconda3" ]; then
     source /opt/anaconda3/etc/profile.d/conda.sh
@@ -59,20 +60,7 @@ mkdir $output_folder
 cp ./../marketdata/shots/binance/spot/* $output_folder/
 cp ./../marketdata/shots/binance/spot/algorithms.config_spot $output_folder/../
 
-BASE_OUT_FOLDER=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies
-FILE1=$BASE_OUT_FOLDER/algorithms.config_future
-FILE2=$BASE_OUT_FOLDER/algorithms.config_spot
-OUTFILE=$BASE_OUT_FOLDER/algorithms.config_future_spot
+# Merge Spot and Future MT strategy files if they exist
+./merge_mt_strategies.sh
 
-if [[ -f "$FILE1" && -f "$FILE2" ]]; then
-    echo "Merging $FILE2 into the $FILE1 file..."
-else
-    echo "Files ${FILE1}/${FILE2} missing. Quitting."
-    exit 0
-fi
-
-sed '$d' $FILE1 | sed '$d' | sed '$d' > $OUTFILE
-echo "    }," >> $OUTFILE
-sed "1,2d; $d" $FILE2 >> $OUTFILE
-
-echo "Merging done! File $OUTFILE has been created."
+cp ${BASE_OUT_FOLDER}/algorithms.config_future_spot $output_folder/
