@@ -8,8 +8,13 @@ import uuid
 
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
-SPOT_MAX_COINS_STRATEGIES_NUM = 10
+
 FUTURE_MAX_COINS_STRATEGIES_NUM = 10
+SPOT_MAX_COINS_STRATEGIES_NUM = 10
+
+MT_SPOT_ORDER_SIZE = 40
+MT_FUTURE_ORDER_SIZE = 500
+MB_ORDER_SIZE = 0.0002
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -48,16 +53,6 @@ class ShotStrategyGenerator(object):
         parser.add_argument('-b', '--moonbot',
                             action='store_true',
                             help=('Is MoonBot working mode? Otherwise it is MT mode.'))
-
-        parser.add_argument('-t', '--mbordersize',
-                            type=float,
-                            required=True,
-                            help='Default MB Moonshot strategy order size')
-
-        parser.add_argument('-y', '--mtordersize',
-                            type=float,
-                            required=True,
-                            help='Default MT Group Shot strategy order size')
 
         parser.add_argument('--debug',
                             action='store_true',
@@ -154,7 +149,7 @@ class ShotStrategyGenerator(object):
                 TOKEN004_STR: "{:.8f}".format(sl),
                 TOKEN005_STR: "{:.4f}".format(mshot_price_min),
                 TOKEN006_STR: "{:.4f}".format(mshot_price),
-                TOKEN007_STR: "{}".format(args.mbordersize)
+                TOKEN007_STR: "{}".format(MB_ORDER_SIZE)
             }
         else:
             distance = pnl_row['Distance']
@@ -163,6 +158,7 @@ class ShotStrategyGenerator(object):
             market_type = 1 if not args.future else 3
             trade_latency = 15 if not args.future else 3
             strategy_id = int(datetime.now().timestamp() * 1000) + (uuid.uuid1().int % 10000)
+            order_size = MT_SPOT_ORDER_SIZE if not args.future else MT_FUTURE_ORDER_SIZE
             return {
                 TOKEN001_STR: "{}".format(strategy_id),
                 TOKEN002_STR: "Shot [{}] {} {} {}-{}-{}".format(symbol_type_str, symbol_name, shot_type, distance, tp, sl),
@@ -170,7 +166,7 @@ class ShotStrategyGenerator(object):
                 TOKEN004_STR: "{}".format(distance),
                 TOKEN005_STR: "{}".format(buffer),
                 TOKEN006_STR: "{}".format(side),
-                TOKEN007_STR: "{}".format(args.mtordersize),
+                TOKEN007_STR: "{}".format(order_size),
                 TOKEN008_STR: "{}".format(tp),
                 TOKEN009_STR: "{}".format(sl),
                 TOKEN010_STR: "{}".format(market_type),

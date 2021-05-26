@@ -8,9 +8,6 @@ declare -a future_flag=""
 
 declare -a moonbot_flag=""
 
-declare -a order_size_mb=0.0002
-declare -a order_size_mt=40
-
 now_timestamp="$(date +'%s')"
 now_timestamp=$((now_timestamp - now_timestamp % 60))
 
@@ -21,7 +18,7 @@ end_date="$(date -j -f "%s" "${end_timestamp}" "+%Y-%m-%dT%H:%M:%S")"
 
 output_folder_prefix="$(date -j -f "%s" "${end_timestamp}" "+%Y%m%d_%H%M")"
 BASE_OUT_FOLDER=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies
-output_folder="${BASE_OUT_FOLDER}/${output_folder_prefix}_Spot_${start_minutes_ago}m"
+output_folder="${BASE_OUT_FOLDER}/${output_folder_prefix}_Spot_${start_minutes_ago}m/"
 
 if [ -d "/opt/anaconda3" ]; then
     source /opt/anaconda3/etc/profile.d/conda.sh
@@ -54,7 +51,7 @@ do
 done
 
 # Generate strategy files for MB/MT
-python strategy_generator.py -e binance -t $order_size_mb -y $order_size_mt $future_flag $moonbot_flag
+python strategy_generator.py -e binance $future_flag $moonbot_flag
 
 mkdir $output_folder
 cp ./../marketdata/shots/binance/spot/* $output_folder/
