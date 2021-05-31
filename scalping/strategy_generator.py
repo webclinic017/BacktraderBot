@@ -13,7 +13,7 @@ FUTURE_MAX_COINS_STRATEGIES_NUM = 10
 SPOT_MAX_COINS_STRATEGIES_NUM = 10
 
 MT_SPOT_ORDER_SIZE = 40
-MT_FUTURE_ORDER_SIZE = 500
+MT_FUTURE_ORDER_SIZE = 250
 MB_ORDER_SIZE = 0.0002
 
 TOKEN001_STR = "{{TOKEN001}}"
@@ -27,6 +27,7 @@ TOKEN008_STR = "{{TOKEN008}}"
 TOKEN009_STR = "{{TOKEN009}}"
 TOKEN010_STR = "{{TOKEN010}}"
 TOKEN011_STR = "{{TOKEN011}}"
+TOKEN012_STR = "{{TOKEN012}}"
 TOKEN_STRATEGY_LIST_STR = "{{STRATEGY_LIST}}"
 TOKEN_ADD_STRATEGIES_STR = "{{ADD_STRATEGIES}}"
 
@@ -159,6 +160,7 @@ class ShotStrategyGenerator(object):
             trade_latency = 15 if not args.future else 3
             strategy_id = int(datetime.now().timestamp() * 1000) + (uuid.uuid1().int % 10000)
             order_size = MT_SPOT_ORDER_SIZE if not args.future else MT_FUTURE_ORDER_SIZE
+            follow_price_delay = 0 if args.future else 1
             return {
                 TOKEN001_STR: "{}".format(strategy_id),
                 TOKEN002_STR: "Shot [{}] {} {} {}-{}-{}".format(symbol_type_str, symbol_name, shot_type, distance, tp, sl),
@@ -170,7 +172,8 @@ class ShotStrategyGenerator(object):
                 TOKEN008_STR: "{}".format(tp),
                 TOKEN009_STR: "{}".format(sl),
                 TOKEN010_STR: "{}".format(market_type),
-                TOKEN011_STR: "{}".format(trade_latency)
+                TOKEN011_STR: "{}".format(trade_latency),
+                TOKEN012_STR: "{}".format(follow_price_delay)
             }
 
     def get_template_token_map(self, strategy_list_str, add_strat_template_str):

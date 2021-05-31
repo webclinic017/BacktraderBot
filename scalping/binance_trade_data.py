@@ -9,6 +9,8 @@ import os
 from ccxt.base.errors import NetworkError, ExchangeError
 from functools import wraps
 
+USE_DELTA_SIGN = False
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Binance Trade Data Downloader')
@@ -212,7 +214,10 @@ def calculate_delta_pct(arr, index, timestamp_start, timestamp_end):
         if c_price < min_v:
             min_v = c_price
 
-    delta_sign = 1 if c_price <= end_price else -1
+    if USE_DELTA_SIGN:
+        delta_sign = 1 if c_price <= end_price else -1
+    else:
+        delta_sign = 1
 
     return delta_sign * 100 * (max_v - min_v) / min_v
 
@@ -239,7 +244,10 @@ def calculate_btc_delta_pct(btc_df, btc_timestamp_start, btc_timestamp_end):
         if c_low < min_v:
             min_v = c_low
 
-    delta_sign = -1 if c_low < first_low and c_high < first_high else 1
+    if USE_DELTA_SIGN:
+        delta_sign = -1 if c_low < first_low and c_high < first_high else 1
+    else:
+        delta_sign = 1
 
     return delta_sign * 100 * (max_v - min_v) / min_v
 

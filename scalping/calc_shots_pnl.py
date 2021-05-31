@@ -8,10 +8,13 @@ import csv
 
 string_types = str
 
+ULTRA_SHORT_MODE = True
+
 COMMISSIONS_PCT = 0.02 + 0.04
 SLIPPAGE_PCT = 0.02
 
-MIN_DISTANCE_PCT = 0.45
+US_MODE_MIN_DISTANCE_PCT = 0.2
+MIN_DISTANCE_PCT = 0.5
 MIN_TP_PCT_SPOT = 0.26
 MIN_TP_PCT_FUTURE = 0.12
 DEFAULT_MIN_STEP = 0.02
@@ -30,7 +33,7 @@ CREATE_PNL_FILE_FLAG = True
 RATING_VALUE_DENOMINATOR = 100
 DEFAULT_BIN_ROUND_BASE = 5
 
-MIN_TP_COUNT_GROUPS_THRESHOLD = 1
+MIN_TP_COUNT_GROUPS_THRESHOLD = 0
 
 
 class ShotTrialAnalyzer(object):
@@ -158,18 +161,19 @@ class ShotsPnlCalculator(object):
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
         min_tp_pct = MIN_TP_PCT_FUTURE if is_future else MIN_TP_PCT_SPOT
-        max_distance = MIN_DISTANCE_PCT if MIN_DISTANCE_PCT > (max_s + DEFAULT_MIN_STEP) else (max_s + DEFAULT_MIN_STEP)
+        min_distance = US_MODE_MIN_DISTANCE_PCT if ULTRA_SHORT_MODE else MIN_DISTANCE_PCT
+        max_distance = min_distance if min_distance > (max_s + DEFAULT_MIN_STEP) else (max_s + DEFAULT_MIN_STEP)
 
         if is_moonbot:
             return {
-                "MShotPriceMin": np.arange(MIN_DISTANCE_PCT, max_distance - 0.1, DEFAULT_MIN_STEP),
-                "MShotPrice": np.arange(MIN_DISTANCE_PCT, max_distance, DEFAULT_MIN_STEP),
+                "MShotPriceMin": np.arange(min_distance, max_distance - 0.1, DEFAULT_MIN_STEP),
+                "MShotPrice": np.arange(min_distance, max_distance, DEFAULT_MIN_STEP),
                 "tp": np.arange(min_tp_pct, (max_s + 0.2 / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
                 "sl": np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
         else:
             return {
-                "distance": np.arange(MIN_DISTANCE_PCT, max_distance, DEFAULT_MIN_STEP),
+                "distance": np.arange(min_distance, max_distance, DEFAULT_MIN_STEP),
                 "buffer": 0.2,
                 "tp": np.arange(min_tp_pct, (max_s + 0.2 / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
                 "sl": np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
@@ -348,9 +352,12 @@ class ShotsPnlCalculator(object):
             min_tp_count_val = unique_tp_count_arr_sorted[0]
         else:
             min_tp_count_val = unique_tp_count_arr_sorted[0]
-        df = df[(df['Profit Rating'] > 0) & (df['shot_triggered_tp_count, %'] >= min_tp_count_val)]
-        df = df.sort_values(by=['Distance'], ascending=False)
-        return df.head(1)
+        f_df = df[(df['Profit Rating'] > 0) & (df['shot_triggered_tp_count, %'] >= min_tp_count_val)]
+        if len(f_df) > 0:
+            f_df = f_df.sort_values(by=['Distance'], ascending=False)
+        else:
+            f_df = df.sort_values(by=['Profit Rating', 'Distance'], ascending=False)
+        return f_df.head(1)
 
     def process_data(self, args):
         symbol = args.symbol

@@ -52,12 +52,12 @@
           },
           "minDeltaH": {
             "name": "minDeltaH",
-            "value": 0.0,
+            "value": 2.0,
             "argumentType": 4
           },
           "maxDeltaH": {
             "name": "maxDeltaH",
-            "value": 999.0,
+            "value": 15.0,
             "argumentType": 4
           },
           "shotRestartDelay": {
@@ -67,7 +67,7 @@
           },
           "followPriceDelay": {
             "name": "followPriceDelay",
-            "value": 0,
+            "value": {{TOKEN012}},
             "argumentType": 2
           },
           "clientOrderType": {

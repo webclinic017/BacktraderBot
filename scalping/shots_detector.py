@@ -9,7 +9,8 @@ FIND_BOUNCE_SMA_FIELD_NAME = "SMA40"
 
 PRESHOT_TRADES_MIN_NUMBER_THRESHOLD = 3
 PRESHOT_DEPTH_MIN_THRESHOLD_PCT = 0.1
-SHOT_DEPTH_MIN_THRESHOLD_PCT = 0.2
+US_MODE_SHOT_DEPTH_MIN_THRESHOLD_PCT = 0.2
+SHOT_DEPTH_MIN_THRESHOLD_PCT = 0.4
 SHOT_ROUNDING_PRECISION = 0.01
 
 LAST_FOUND_SHOT_ALLOWANCE_MSEC = 50
@@ -18,6 +19,8 @@ SHOT_BOUNCE_LOOKUP_WINDOW = 200
 SHOT_BOUNCE_LOOKUP_LIMIT = 5000
 SHOT_BOUNCE_LOOKUP_WINDOW_MIN_TRADES = 3
 SHOT_BOUNCE_SMA_DIFF_THRESHOLD = 0.03
+
+ULTRA_SHORT_MODE = True
 
 
 class Shot(object):
@@ -235,7 +238,8 @@ class ShotsDetector(object):
                             max_price_val = c_price
                         if shot_type == "LONG" and p_price < p_sma and c_price > c_sma or shot_type == "SHORT" and p_price > p_sma and c_price < c_sma:
                             shot_depth_pct = self.calculate_depth_pct(first_price, max_price_val)
-                            if shot_depth_pct >= SHOT_DEPTH_MIN_THRESHOLD_PCT:
+                            shot_depth_min_threshold = US_MODE_SHOT_DEPTH_MIN_THRESHOLD_PCT if ULTRA_SHORT_MODE else SHOT_DEPTH_MIN_THRESHOLD_PCT
+                            if shot_depth_pct >= shot_depth_min_threshold:
                                 shot_bounce_info = self.find_shot_bounce(df, group_timestamp, c_timestamp, c_price, shot_type, max_price_val)
                                 shot = Shot(symbol_name,
                                             group_timestamp,
