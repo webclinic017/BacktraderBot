@@ -5,15 +5,16 @@ import io
 from pathlib import Path
 from datetime import datetime
 import uuid
+import random
 
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
 
-FUTURE_MAX_COINS_STRATEGIES_NUM = 10
+FUTURE_MAX_COINS_STRATEGIES_NUM = 15
 SPOT_MAX_COINS_STRATEGIES_NUM = 10
 
-MT_SPOT_ORDER_SIZE = 40
-MT_FUTURE_ORDER_SIZE = 250
+MT_SPOT_ORDER_SIZE = 85
+MT_FUTURE_ORDER_SIZE = 500
 MB_ORDER_SIZE = 0.0002
 
 TOKEN001_STR = "{{TOKEN001}}"
@@ -136,6 +137,7 @@ class ShotStrategyGenerator(object):
         return df
 
     def get_tokens_map(self, args, pnl_row, shot_type):
+        random.seed()
         symbol_name = pnl_row['symbol_name']
         symbol_type_str = self.get_symbol_type_str(args).upper()
         tp = pnl_row['TP']
@@ -158,7 +160,7 @@ class ShotStrategyGenerator(object):
             side = 1 if shot_type == "LONG" else -1 if shot_type == "SHORT" else ""
             market_type = 1 if not args.future else 3
             trade_latency = 15 if not args.future else 3
-            strategy_id = int(datetime.now().timestamp() * 1000) + (uuid.uuid1().int % 10000)
+            strategy_id = int(datetime.now().timestamp() * 1000) + random.randrange(1000000) - random.randrange(100000) + (uuid.uuid1().int % 100000)
             order_size = MT_SPOT_ORDER_SIZE if not args.future else MT_FUTURE_ORDER_SIZE
             follow_price_delay = 0 if args.future else 1
             return {

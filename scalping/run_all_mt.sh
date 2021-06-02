@@ -1,5 +1,7 @@
 #! /bin/bash
 
-./run_all_mt_future_usdt.sh
+echo Running detecting shots in NORMAL mode
 
-./run_all_mt_spot_usdt.sh
+./run_mt_future_usdt.sh
+
+./run_mt_spot_usdt.sh

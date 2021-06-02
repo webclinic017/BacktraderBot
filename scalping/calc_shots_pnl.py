@@ -8,13 +8,12 @@ import csv
 
 string_types = str
 
-ULTRA_SHORT_MODE = True
-
 COMMISSIONS_PCT = 0.02 + 0.04
 SLIPPAGE_PCT = 0.02
 
-US_MODE_MIN_DISTANCE_PCT = 0.2
+MIN_DISTANCE_PCT_US_MODE = 0.5
 MIN_DISTANCE_PCT = 0.5
+
 MIN_TP_PCT_SPOT = 0.26
 MIN_TP_PCT_FUTURE = 0.12
 DEFAULT_MIN_STEP = 0.02
@@ -33,7 +32,7 @@ CREATE_PNL_FILE_FLAG = True
 RATING_VALUE_DENOMINATOR = 100
 DEFAULT_BIN_ROUND_BASE = 5
 
-MIN_TP_COUNT_GROUPS_THRESHOLD = 0
+MIN_TP_COUNT_GROUPS_THRESHOLD = 1
 
 
 class ShotTrialAnalyzer(object):
@@ -52,6 +51,10 @@ class ShotsPnlCalculator(object):
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Shots PnL Calculator')
+
+        parser.add_argument('-u', '--ultrashortmode',
+                            action='store_true',
+                            help=('Ultra-short mode flag'))
 
         parser.add_argument('-e', '--exchange',
                             type=str,
@@ -157,11 +160,11 @@ class ShotsPnlCalculator(object):
         ofile.flush()
         ofile.close()
 
-    def get_simulation_params(self, is_moonbot, is_future, shot_depth_list, shot_count_list):
+    def get_simulation_params(self, is_ultrashort, is_moonbot, is_future, shot_depth_list, shot_count_list):
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
         min_tp_pct = MIN_TP_PCT_FUTURE if is_future else MIN_TP_PCT_SPOT
-        min_distance = US_MODE_MIN_DISTANCE_PCT if ULTRA_SHORT_MODE else MIN_DISTANCE_PCT
+        min_distance = MIN_DISTANCE_PCT_US_MODE if is_ultrashort else MIN_DISTANCE_PCT
         max_distance = min_distance if min_distance > (max_s + DEFAULT_MIN_STEP) else (max_s + DEFAULT_MIN_STEP)
 
         if is_moonbot:
@@ -192,8 +195,8 @@ class ShotsPnlCalculator(object):
 
         return niterable
 
-    def get_sim_combinations(self, is_moonbot, is_future, shot_depth_list, shot_count_list):
-        simulation_params = self.get_simulation_params(is_moonbot, is_future, shot_depth_list, shot_count_list)
+    def get_sim_combinations(self, is_ultrashort, is_moonbot, is_future, shot_depth_list, shot_count_list):
+        simulation_params = self.get_simulation_params(is_ultrashort, is_moonbot, is_future, shot_depth_list, shot_count_list)
         kwargz = simulation_params
         optkeys = list(simulation_params)
         vals = self.iterize(kwargz.values())
@@ -257,13 +260,13 @@ class ShotsPnlCalculator(object):
     def pct_val(self, val, total, base):
         return self.round_base(100 * val / total, base, 0)
 
-    def simulate_shots(self, is_moonbot, is_future, groups_df, shots_data_dict):
+    def simulate_shots(self, is_ultrashort, is_moonbot, is_future, groups_df, shots_data_dict):
         arr_out = []
 
         shot_depth_list = list(groups_df["shot_depth"].values)
         shot_count_list = list(groups_df["counts"].values)
 
-        combinations = self.get_sim_combinations(is_moonbot, is_future, shot_depth_list, shot_count_list)
+        combinations = self.get_sim_combinations(is_ultrashort, is_moonbot, is_future, shot_depth_list, shot_count_list)
         for c_idx, c_dict in enumerate(combinations):
             if c_idx % 100 == 0:
                 print("{}/{}".format(c_idx, len(combinations)))
@@ -361,6 +364,7 @@ class ShotsPnlCalculator(object):
 
     def process_data(self, args):
         symbol = args.symbol
+        is_ultrashort = True if args.ultrashortmode else False
         is_moonbot = True if args.moonbot else False
         is_future = True if args.future else False
         if args.future:
@@ -388,7 +392,7 @@ class ShotsPnlCalculator(object):
                                          'shot_depth': group_row['shot_depth'],
                                          'shot_bounce': group_row['shot_bounce']})
             shots_data_dict[shot_depth] = group_shots_list
-        shots_data_df = self.simulate_shots(is_moonbot, is_future, groups_df, shots_data_dict)
+        shots_data_df = self.simulate_shots(is_ultrashort, is_moonbot, is_future, groups_df, shots_data_dict)
 
         if len(shots_data_df) > 0:
             if CREATE_PNL_FILE_FLAG:

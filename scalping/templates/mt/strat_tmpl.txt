@@ -52,7 +52,7 @@
           },
           "minDeltaH": {
             "name": "minDeltaH",
-            "value": 2.0,
+            "value": 0.0,
             "argumentType": 4
           },
           "maxDeltaH": {

@@ -9,8 +9,10 @@ FIND_BOUNCE_SMA_FIELD_NAME = "SMA40"
 
 PRESHOT_TRADES_MIN_NUMBER_THRESHOLD = 3
 PRESHOT_DEPTH_MIN_THRESHOLD_PCT = 0.1
-US_MODE_SHOT_DEPTH_MIN_THRESHOLD_PCT = 0.2
+
+SHOT_DEPTH_MIN_THRESHOLD_PCT_US_MODE = 0.2
 SHOT_DEPTH_MIN_THRESHOLD_PCT = 0.4
+
 SHOT_ROUNDING_PRECISION = 0.01
 
 LAST_FOUND_SHOT_ALLOWANCE_MSEC = 50
@@ -19,8 +21,6 @@ SHOT_BOUNCE_LOOKUP_WINDOW = 200
 SHOT_BOUNCE_LOOKUP_LIMIT = 5000
 SHOT_BOUNCE_LOOKUP_WINDOW_MIN_TRADES = 3
 SHOT_BOUNCE_SMA_DIFF_THRESHOLD = 0.03
-
-ULTRA_SHORT_MODE = True
 
 
 class Shot(object):
@@ -64,6 +64,10 @@ class ShotsDetector(object):
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Shots Detector')
+
+        parser.add_argument('-u', '--ultrashortmode',
+                            action='store_true',
+                            help=('Ultra-short mode flag'))
 
         parser.add_argument('-e', '--exchange',
                             type=str,
@@ -238,7 +242,7 @@ class ShotsDetector(object):
                             max_price_val = c_price
                         if shot_type == "LONG" and p_price < p_sma and c_price > c_sma or shot_type == "SHORT" and p_price > p_sma and c_price < c_sma:
                             shot_depth_pct = self.calculate_depth_pct(first_price, max_price_val)
-                            shot_depth_min_threshold = US_MODE_SHOT_DEPTH_MIN_THRESHOLD_PCT if ULTRA_SHORT_MODE else SHOT_DEPTH_MIN_THRESHOLD_PCT
+                            shot_depth_min_threshold = SHOT_DEPTH_MIN_THRESHOLD_PCT_US_MODE if args.ultrashortmode else SHOT_DEPTH_MIN_THRESHOLD_PCT
                             if shot_depth_pct >= shot_depth_min_threshold:
                                 shot_bounce_info = self.find_shot_bounce(df, group_timestamp, c_timestamp, c_price, shot_type, max_price_val)
                                 shot = Shot(symbol_name,
@@ -281,9 +285,9 @@ class ShotsDetector(object):
         output_path = '{}/../marketdata/shots/{}/{}'.format(dirname, args.exchange, symbol_type_str)
         os.makedirs(output_path, exist_ok=True)
 
-        header = ['symbol_name','start_timestamp','end_timestamp','start_datetime','end_datetime','shot_trades_num',
-                  'shot_type','start_price','end_price','shot_duration','shot_depth','diff_with_preshot',
-                  'shot_bounce','shot_bounce_ratio','shot_bounce_datetime','d5m','d15m','d1H','dBTC5m','dBTC15m','dBTC1H']
+        header = ['symbol_name', 'start_timestamp', 'end_timestamp', 'start_datetime', 'end_datetime', 'shot_trades_num',
+                  'shot_type', 'start_price', 'end_price', 'shot_duration', 'shot_depth', 'diff_with_preshot',
+                  'shot_bounce', 'shot_bounce_ratio', 'shot_bounce_datetime', 'd5m', 'd15m', 'd1H', 'dBTC5m', 'dBTC15m', 'dBTC1H']
         csv_rows = []
         for shot in shots_list:
             csv_rows.append([
