@@ -423,7 +423,7 @@
     {
       "id": 1621691327069,
       "name": "Shots Group",
-      "info": "Shot HIGH RISK COIN_USDT [LONG] 0.25-0.1-0.15",
+      "info": "Shot **HIGH RISK** COIN_USDT [LONG] 0.25-0.1-0.15",
       "autoStart": false,
       "args": {
         "Arguments": {
@@ -474,7 +474,7 @@
           },
           "minDeltaH": {
             "name": "minDeltaH",
-            "value": 2.0,
+            "value": 0.0,
             "argumentType": 4
           },
           "maxDeltaH": {
@@ -581,7 +581,7 @@
     {
       "id": 1621691327070,
       "name": "Shots Group",
-      "info": "Shot HIGH RISK COIN_USDT [SHORT] 0.25-0.1-0.15",
+      "info": "Shot **HIGH RISK** COIN_USDT [SHORT] 0.25-0.1-0.15",
       "autoStart": false,
       "args": {
         "Arguments": {
@@ -632,7 +632,7 @@
           },
           "minDeltaH": {
             "name": "minDeltaH",
-            "value": 2.0,
+            "value": 0.0,
             "argumentType": 4
           },
           "maxDeltaH": {
