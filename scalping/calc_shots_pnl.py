@@ -166,7 +166,7 @@ class ShotsPnlCalculator(object):
         max_s = shot_depth_list[non_zero_idx]
         min_tp_pct = MIN_TP_PCT_FUTURE if is_future else MIN_TP_PCT_SPOT
         min_distance = MIN_DISTANCE_PCT_US_MODE if is_ultrashort else MIN_DISTANCE_PCT
-        max_distance = min_distance if min_distance > (max_s + DEFAULT_MIN_STEP) else (max_s + DEFAULT_MIN_STEP)
+        max_distance = (min_distance + DEFAULT_MIN_STEP) if min_distance > (max_s + DEFAULT_MIN_STEP) else (max_s + DEFAULT_MIN_STEP)
 
         if is_moonbot:
             return {
@@ -396,6 +396,8 @@ class ShotsPnlCalculator(object):
                 self.write_pnl_data_to_file(args, shots_data_df, shot_type)
             shots_data_df = self.get_best_pnl_rows(shots_data_df)
             self.write_best_pnl_rows_to_file(args, total_shots_count, shots_data_df, shot_type)
+        else:
+            print("There were no best PnL entries calculated, probably minimum distance is too high.")
 
     def run(self):
         args = self.parse_args()
