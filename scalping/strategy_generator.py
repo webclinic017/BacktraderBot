@@ -10,12 +10,18 @@ import random
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
 
-FUTURE_MAX_COINS_STRATEGIES_NUM = 15
-SPOT_MAX_COINS_STRATEGIES_NUM = 10
+FUTURE_MAX_STRATEGIES_NUM = 15
+SPOT_MAX_STRATEGIES_NUM = 10
 
 MT_SPOT_ORDER_SIZE = 85
-MT_FUTURE_ORDER_SIZE = 500
+MT_FUTURE_ORDER_SIZE = 400
 MB_ORDER_SIZE = 0.0002
+
+IS_GENERATE_SAFETY_STRATEGY = True
+SAFETY_STRATEGY_DISTANCE_DIFF_PCT = 1
+FUTURE_TRADE_FEES = 0.0002 + 0.0004
+SPOT_TRADE_FEES = 0.00075 + 0.00075
+TP_DISTANCE_RATIO = 0.25
 
 TOKEN001_STR = "{{TOKEN001}}"
 TOKEN002_STR = "{{TOKEN002}}"
@@ -131,45 +137,63 @@ class ShotStrategyGenerator(object):
         df = df.head(filter_val)
 
         if not args.future:
-            df = df.head(SPOT_MAX_COINS_STRATEGIES_NUM)
+            df = df.head(SPOT_MAX_STRATEGIES_NUM)
         else:
-            df = df.head(FUTURE_MAX_COINS_STRATEGIES_NUM)
+            df = df.head(FUTURE_MAX_STRATEGIES_NUM)
 
         df = df.sort_values(by=['symbol_name', 'shot_type'], ascending=True)
 
         return df
 
-    def get_tokens_map(self, args, pnl_row):
+    def get_order_size(self, is_moonbot, is_future, is_safety_strategy, tp_pct, sl_pct):
+        if is_moonbot:
+            order_size1 = MB_ORDER_SIZE
+        else:
+            order_size1 = MT_SPOT_ORDER_SIZE if not is_future else MT_FUTURE_ORDER_SIZE
+
+        if not is_safety_strategy:
+            return order_size1
+        else:
+            trade_fees = FUTURE_TRADE_FEES if is_future else SPOT_TRADE_FEES
+            order_size2 = round(order_size1 * (sl_pct / 100 + trade_fees) / (tp_pct / 100 - trade_fees))
+            return order_size2
+
+    def get_tokens_map(self, args, pnl_row, is_safety_strategy):
         random.seed()
         symbol_name = pnl_row['symbol_name']
         symbol_type_str = self.get_symbol_type_str(args).upper()
         shot_type = pnl_row['shot_type']
-        tp = pnl_row['TP']
-        sl = pnl_row['SL']
+        safety_prefix = " **SAFETY** " if is_safety_strategy else " "
         if args.moonbot:
-            mshot_price_min = pnl_row['MShotPriceMin']
-            mshot_price = pnl_row['MShotPrice']
+            mshot_price_min = round(pnl_row['MShotPriceMin'] if not is_safety_strategy else pnl_row['MShotPriceMin'] + SAFETY_STRATEGY_DISTANCE_DIFF_PCT, 2)
+            mshot_price = round(pnl_row['MShotPrice'] if not is_safety_strategy else pnl_row['MShotPrice'] + SAFETY_STRATEGY_DISTANCE_DIFF_PCT, 2)
+            tp = pnl_row['TP'] if not is_safety_strategy else round(mshot_price * TP_DISTANCE_RATIO, 2)
+            sl = pnl_row['SL']
+            order_size = self.get_order_size(args.moonbot, args.future, is_safety_strategy, tp, sl)
             return {
-                TOKEN001_STR: "Moonshot [{}] {} {} {}-{}-{}".format(symbol_type_str, symbol_name, shot_type, mshot_price, tp, sl),
+                TOKEN001_STR: "Moonshot [{}] {} {}{}{}-{}-{}".format(symbol_type_str, symbol_name, shot_type, safety_prefix, mshot_price, tp, sl),
                 TOKEN002_STR: symbol_name,
                 TOKEN003_STR: "{:.4f}".format(tp),
                 TOKEN004_STR: "{:.8f}".format(sl),
                 TOKEN005_STR: "{:.4f}".format(mshot_price_min),
                 TOKEN006_STR: "{:.4f}".format(mshot_price),
-                TOKEN007_STR: "{}".format(MB_ORDER_SIZE)
+                TOKEN007_STR: "{}".format(order_size)
             }
         else:
-            distance = pnl_row['Distance']
+            strategy_id = int(datetime.now().timestamp() * 1000) + random.randrange(1000000) - random.randrange(100000) + (uuid.uuid1().int % 100000)
+            distance = round(pnl_row['Distance'] if not is_safety_strategy else pnl_row['Distance'] + SAFETY_STRATEGY_DISTANCE_DIFF_PCT, 2)
+            tp = pnl_row['TP'] if not is_safety_strategy else round(distance * TP_DISTANCE_RATIO, 2)
+            sl = pnl_row['SL']
+            strategy_name = "Shot [{}] {} {}{}{}-{}-{}".format(symbol_type_str, symbol_name, shot_type, safety_prefix, distance, tp, sl)
             buffer = pnl_row['Buffer']
             side = 1 if shot_type == "LONG" else -1 if shot_type == "SHORT" else ""
             market_type = 1 if not args.future else 3
             trade_latency = 15 if not args.future else 3
-            strategy_id = int(datetime.now().timestamp() * 1000) + random.randrange(1000000) - random.randrange(100000) + (uuid.uuid1().int % 100000)
-            order_size = MT_SPOT_ORDER_SIZE if not args.future else MT_FUTURE_ORDER_SIZE
+            order_size = self.get_order_size(args.moonbot, args.future, is_safety_strategy, tp, sl)
             follow_price_delay = 0 if args.future else 1
             return {
                 TOKEN001_STR: "{}".format(strategy_id),
-                TOKEN002_STR: "Shot [{}] {} {} {}-{}-{}".format(symbol_type_str, symbol_name, shot_type, distance, tp, sl),
+                TOKEN002_STR: strategy_name,
                 TOKEN003_STR: symbol_name,
                 TOKEN004_STR: "{}".format(distance),
                 TOKEN005_STR: "{}".format(buffer),
@@ -204,10 +228,18 @@ class ShotStrategyGenerator(object):
         return strategy_str
 
     def add_strategy(self, args, strategy_list, strategy_template, pnl_row, is_last):
-        tokens_map = self.get_tokens_map(args, pnl_row)
+        tokens_map = self.get_tokens_map(args, pnl_row, False)
         strategy_str = self.apply_template_tokens(strategy_template, tokens_map)
         strategy_str = self.append_divider(args, strategy_str, is_last)
         strategy_list.append(strategy_str)
+        return strategy_list
+
+    def add_safety_strategy(self, args, strategy_list, strategy_template, pnl_row, is_last):
+        if args.future and IS_GENERATE_SAFETY_STRATEGY:
+            tokens_map = self.get_tokens_map(args, pnl_row, True)
+            strategy_str = self.apply_template_tokens(strategy_template, tokens_map)
+            strategy_str = self.append_divider(args, strategy_str, is_last)
+            strategy_list.append(strategy_str)
         return strategy_list
 
     def run(self):
@@ -227,7 +259,8 @@ class ShotStrategyGenerator(object):
         strategy_template = self.read_file(self.get_strategy_template_filename(args))
         strategy_list = []
         for idx, pnl_row in shots_pnl_data_df.iterrows():
-            strategy_list = self.add_strategy(args, strategy_list, strategy_template, pnl_row, idx == shots_pnl_data_df.index[-1])
+            strategy_list = self.add_strategy(args, strategy_list, strategy_template, pnl_row, False)
+            strategy_list = self.add_safety_strategy(args, strategy_list, strategy_template, pnl_row, idx == shots_pnl_data_df.index[-1])
         strategy_list_str = ''.join(strategy_list)
 
         template = self.read_file(self.get_template_filename(args))

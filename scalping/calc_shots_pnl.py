@@ -11,8 +11,12 @@ string_types = str
 COMMISSIONS_PCT = 0.02 + 0.04
 SLIPPAGE_PCT = 0.02
 
-MIN_DISTANCE_PCT_US_MODE = 0.5
+MIN_DISTANCE_PCT_ULTRASHORT_MODE = 0.2
 MIN_DISTANCE_PCT = 0.5
+
+IS_ADJUST_DISTANCE = True
+MIN_PRACTICAL_DISTANCE = 0.5
+MAX_PRACTICAL_DISTANCE = 3.0
 
 MIN_TP_PCT_SPOT = 0.26
 MIN_TP_PCT_FUTURE = 0.12
@@ -165,7 +169,7 @@ class ShotsPnlCalculator(object):
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
         min_tp_pct = MIN_TP_PCT_FUTURE if is_future else MIN_TP_PCT_SPOT
-        min_distance = MIN_DISTANCE_PCT_US_MODE if is_ultrashort else MIN_DISTANCE_PCT
+        min_distance = MIN_DISTANCE_PCT_ULTRASHORT_MODE if is_ultrashort else MIN_DISTANCE_PCT
         max_distance = (min_distance + DEFAULT_MIN_STEP) if min_distance > (max_s + DEFAULT_MIN_STEP) else (max_s + DEFAULT_MIN_STEP)
 
         if is_moonbot:
@@ -322,8 +326,8 @@ class ShotsPnlCalculator(object):
 
             if len(shot_pnl_arr) > 0:
                 total_pnl = sum(shot_pnl_arr)
-                distance = (param_arr[1] + param_arr[1] - param_arr[0]) if is_moonbot else (param_arr[0] + param_arr[1])
-                distance_rating = self.round_base(round(distance * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
+                distance_r = (param_arr[1] + param_arr[1] - param_arr[0]) if is_moonbot else (param_arr[0] + param_arr[1])
+                distance_rating = self.round_base(round(distance_r * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
                 profit_rating = self.round_base(round(total_pnl * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
                 trials_count = trial_analyzer.shot_trials_count
                 arr = [round(param_arr[0], 2),
@@ -363,6 +367,24 @@ class ShotsPnlCalculator(object):
             f_df = df.sort_values(by=['Profit Rating', 'Distance'], ascending=False)
         return f_df.head(1)
 
+    def adjust_distance(self, is_ultrashort, is_moonbot, df):
+        if is_ultrashort and IS_ADJUST_DISTANCE:
+            df_copy = df.copy()
+            for idx, row in df_copy.iterrows():
+                if is_moonbot:
+                    if row['MShotPrice'] < MIN_PRACTICAL_DISTANCE:
+                        df.loc[idx, 'MShotPrice'] = MIN_PRACTICAL_DISTANCE
+                        df.loc[idx, 'MShotPriceMin'] = MIN_PRACTICAL_DISTANCE - 0.1
+                    elif row['MShotPrice'] > MAX_PRACTICAL_DISTANCE:
+                        df.loc[idx, 'MShotPrice'] = MAX_PRACTICAL_DISTANCE
+                        df.loc[idx, 'MShotPriceMin'] = MAX_PRACTICAL_DISTANCE - 0.1
+                else:
+                    if row['Distance'] < MIN_PRACTICAL_DISTANCE:
+                        df.loc[idx, 'Distance'] = MIN_PRACTICAL_DISTANCE
+                    elif row['Distance'] > MAX_PRACTICAL_DISTANCE:
+                        df.loc[idx, 'Distance'] = MAX_PRACTICAL_DISTANCE
+        return df
+
     def process_data(self, args, shot_type):
         symbol = args.symbol
         is_ultrashort = True if args.ultrashortmode else False
@@ -395,6 +417,7 @@ class ShotsPnlCalculator(object):
             if CREATE_PNL_FILE_FLAG:
                 self.write_pnl_data_to_file(args, shots_data_df, shot_type)
             shots_data_df = self.get_best_pnl_rows(shots_data_df)
+            shots_data_df = self.adjust_distance(is_ultrashort, is_moonbot, shots_data_df)
             self.write_best_pnl_rows_to_file(args, total_shots_count, shots_data_df, shot_type)
         else:
             print("There were no best PnL entries calculated, probably minimum distance is too high.")

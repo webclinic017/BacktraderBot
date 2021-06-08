@@ -52,12 +52,12 @@
           },
           "minDeltaH": {
             "name": "minDeltaH",
-            "value": 0.0,
+            "value": 2.0,
             "argumentType": 4
           },
           "maxDeltaH": {
             "name": "maxDeltaH",
-            "value": 15.0,
+            "value": 7.0,
             "argumentType": 4
           },
           "shotRestartDelay": {
