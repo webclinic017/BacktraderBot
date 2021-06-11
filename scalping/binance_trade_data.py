@@ -65,6 +65,8 @@ def resolve_instrument(symbol):
         quote_curr = "USDT"
     elif symbol.endswith("BTC"):
         quote_curr = "BTC"
+    elif symbol.endswith("BNB"):
+        quote_curr = "BNB"
     elif symbol.endswith("BUSD"):
         quote_curr = "BUSD"
     elif symbol.endswith("TUSD"):

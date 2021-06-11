@@ -14,7 +14,7 @@ SLIPPAGE_PCT = 0.02
 MIN_DISTANCE_PCT_ULTRASHORT_MODE = 0.2
 MIN_DISTANCE_PCT = 0.5
 
-IS_ADJUST_DISTANCE = True
+IS_ADJUST_DISTANCE_IN_ULTRASHORT_MODE = False
 MIN_PRACTICAL_DISTANCE = 0.5
 MAX_PRACTICAL_DISTANCE = 3.0
 
@@ -368,7 +368,7 @@ class ShotsPnlCalculator(object):
         return f_df.head(1)
 
     def adjust_distance(self, is_ultrashort, is_moonbot, df):
-        if is_ultrashort and IS_ADJUST_DISTANCE:
+        if is_ultrashort and IS_ADJUST_DISTANCE_IN_ULTRASHORT_MODE:
             df_copy = df.copy()
             for idx, row in df_copy.iterrows():
                 if is_moonbot:
