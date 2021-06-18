@@ -10,16 +10,16 @@ import random
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
 
-FUTURE_MAX_STRATEGIES_NUM = 20
+FUTURE_MAX_STRATEGIES_NUM = 8
 SPOT_MAX_STRATEGIES_NUM = 10
 
 IS_GRID_MODE_ENABLED_FLAG = True
 GRID_MODE_ORDER_NUM = 3
-GRID_MODE_DISTANCE_STEP_PCT = 0.04
+GRID_MODE_DISTANCE_STEP_PCT = 0.03
 IS_ADD_SMALL_RANDOM_VALUES_MODE = True
-SMALL_RANDOM_VALUE_PCT = 20
+SMALL_RANDOM_VALUE_PCT = 15
 
-MT_FUTURE_ORDER_SIZE = 500
+MT_FUTURE_ORDER_SIZE = 300
 MT_SPOT_ORDER_SIZE = 85
 MB_ORDER_SIZE = 0.0002
 
@@ -165,11 +165,11 @@ class ShotStrategyGenerator(object):
         else:
             order_size = MT_SPOT_ORDER_SIZE if not is_future else MT_FUTURE_ORDER_SIZE
 
-        small_random_value_sign = random.choice([-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1])
         if is_future and IS_GRID_MODE_ENABLED_FLAG:
             order_size = order_size / GRID_MODE_ORDER_NUM
-        if IS_ADD_SMALL_RANDOM_VALUES_MODE:
-            order_size = order_size * (1 + small_random_value_sign * SMALL_RANDOM_VALUE_PCT / 100)
+            if IS_ADD_SMALL_RANDOM_VALUES_MODE:
+                small_random_value = random.uniform(-SMALL_RANDOM_VALUE_PCT, SMALL_RANDOM_VALUE_PCT)
+                order_size = order_size * (1 + small_random_value / 100)
 
         return round(order_size)
 

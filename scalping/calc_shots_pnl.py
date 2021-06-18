@@ -165,6 +165,21 @@ class ShotsPnlCalculator(object):
         ofile.flush()
         ofile.close()
 
+    def sort_best_pnl_file_rows(self, args):
+        dirname = self.whereAmI()
+        symbol_type_str = self.get_symbol_type_str(args)
+        output_path = '{}/../marketdata/shots/{}/{}'.format(dirname, args.exchange, symbol_type_str)
+        suffix = "mb" if args.moonbot else "mt"
+        filename = '{}/shots-best-pnl-{}-{}-{}.csv'.format(output_path, args.exchange, symbol_type_str, suffix)
+
+        best_pnl_df = self.read_csv_data(filename)
+        if best_pnl_df is None or best_pnl_df.empty:
+            return
+
+        best_pnl_df = best_pnl_df.set_index('symbol_name')
+        best_pnl_df = best_pnl_df.sort_values(by=['total_shots_count'], ascending=False)
+        best_pnl_df.to_csv(filename)
+
     def get_simulation_params(self, is_ultrashort, is_moonbot, is_future, shot_depth_list, shot_count_list):
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
@@ -436,6 +451,8 @@ class ShotsPnlCalculator(object):
             self.process_data(args, "SHORT")
         else:
             self.process_data(args, "LONG")
+
+        self.sort_best_pnl_file_rows(args)
 
 
 def main():

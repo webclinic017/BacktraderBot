@@ -22,12 +22,18 @@ SHOT_BOUNCE_LOOKUP_LIMIT = 5000
 SHOT_BOUNCE_LOOKUP_WINDOW_MIN_TRADES = 3
 SHOT_BOUNCE_SMA_DIFF_THRESHOLD = 0.03
 
+MULTISHOT_MODE_FLAG = True
+MULTIPLE_SHOTS_INITIAL_COUNT = 2
+MULTIPLE_SHOTS_INITIAL_INTERVAL_MSEC = 1500
+MULTIPLE_SHOTS_COMBINE_INTERVAL_MSEC = 7500
+
 
 class Shot(object):
-    def __init__(self, symbol_name, start_timestamp, end_timestamp, start_datetime, end_datetime, shot_trades_num, shot_type,
+    def __init__(self, symbol_name, is_multishot, start_timestamp, end_timestamp, start_datetime, end_datetime, shot_trades_num, shot_type,
                        start_price, end_price, shot_duration, shot_depth, diff_with_preshot, shot_bounce, shot_bounce_ratio, shot_bounce_datetime,
                        d5m, d15m, d1H, dBTC5m, dBTC15m, dBTC1H):
         self.symbol_name = symbol_name
+        self.is_multishot = is_multishot
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
         self.start_datetime = start_datetime
@@ -122,7 +128,7 @@ class ShotsDetector(object):
 
     def fmt_float(self, val):
         if val < 0.1:
-            return "{:.8f}".format(val)
+            return round(val, 8)
         else:
             return val
 
@@ -246,6 +252,7 @@ class ShotsDetector(object):
                             if shot_depth_pct >= shot_depth_min_threshold:
                                 shot_bounce_info = self.find_shot_bounce(df, group_timestamp, c_timestamp, c_price, shot_type, max_price_val)
                                 shot = Shot(symbol_name,
+                                            False,
                                             group_timestamp,
                                             c_timestamp,
                                             group_datetime,
@@ -279,19 +286,92 @@ class ShotsDetector(object):
 
         return shots_list
 
+    def find_shots_min_price(self, shots_list):
+        price_list = [shot.start_price for shot in shots_list]
+        end_price_list = [shot.end_price for shot in shots_list]
+        price_list.extend(end_price_list)
+        return min(price_list)
+
+    def find_shots_max_price(self, shots_list):
+        price_list = [shot.start_price for shot in shots_list]
+        end_price_list = [shot.end_price for shot in shots_list]
+        price_list.extend(end_price_list)
+        return max(price_list)
+
+    def combine_multiple_shots(self, shots_list):
+        shots_list_result = []
+        if not MULTISHOT_MODE_FLAG:
+            return shots_list
+
+        print("Combining multiple shots into multishots...")
+
+        ci = 0
+        while ci < len(shots_list) - MULTIPLE_SHOTS_INITIAL_COUNT + 1:
+            c_shot = shots_list[ci]
+            c_shot_timestamp = c_shot.start_timestamp
+            fw_shot = shots_list[ci + MULTIPLE_SHOTS_INITIAL_COUNT - 1]
+            fw_shot_timestamp = fw_shot.start_timestamp
+            if fw_shot_timestamp - c_shot_timestamp <= MULTIPLE_SHOTS_INITIAL_INTERVAL_MSEC:
+                cj = ci + MULTIPLE_SHOTS_INITIAL_COUNT - 1
+                is_last = cj == len(shots_list) - 1
+                while is_last or cj < len(shots_list) - 1:
+                    cj_shot = shots_list[cj]
+                    cjn_shot = shots_list[cj + 1] if not is_last else shots_list[cj]
+                    cjn_shot_timestamp = cjn_shot.start_timestamp
+                    if is_last or cjn_shot_timestamp - c_shot_timestamp > MULTIPLE_SHOTS_COMBINE_INTERVAL_MSEC:
+                        min_shot_price = self.find_shots_min_price(shots_list[ci:cj+1])
+                        max_shot_price = self.find_shots_max_price(shots_list[ci:cj+1])
+                        max_price_val = max_shot_price if c_shot.shot_type == "SHORT" else min_shot_price
+                        shot_depth_pct = self.calculate_depth_pct(c_shot.start_price, max_price_val)
+                        multi_shot_type = "LONG" if cj_shot.end_price < c_shot.start_price else "SHORT"
+                        # merge c_shot and cj_shot objects to create a new multishot
+                        new_multishot = Shot(symbol_name=c_shot.symbol_name,
+                                             is_multishot=True,
+                                             start_timestamp=c_shot.start_timestamp,
+                                             end_timestamp=cj_shot.end_timestamp,
+                                             start_datetime=c_shot.start_datetime,
+                                             end_datetime=cj_shot.end_datetime,
+                                             shot_trades_num=0,
+                                             shot_type=multi_shot_type,
+                                             start_price=c_shot.start_price,
+                                             end_price=cj_shot.end_price,
+                                             shot_duration=cj_shot.start_timestamp - c_shot.start_timestamp + 1,
+                                             shot_depth=self.round_precision(shot_depth_pct, SHOT_ROUNDING_PRECISION),
+                                             diff_with_preshot=0,
+                                             shot_bounce=0,
+                                             shot_bounce_ratio=0,
+                                             shot_bounce_datetime=0,
+                                             d5m=c_shot.d5m,
+                                             d15m=c_shot.d15m,
+                                             d1H=c_shot.d1H,
+                                             dBTC5m=c_shot.dBTC5m,
+                                             dBTC15m=c_shot.dBTC15m,
+                                             dBTC1H=c_shot.dBTC1H
+                                            )
+                        shots_list_result.append(new_multishot)
+                        ci = cj + 1
+                        break
+                    else:
+                        cj = cj + 1
+            else:
+                shots_list_result.append(c_shot)
+                ci = ci + 1
+        return shots_list_result
+
     def write_to_file(self, args, shots_list):
         dirname = self.whereAmI()
         symbol_type_str = self.get_symbol_type_str(args)
         output_path = '{}/../marketdata/shots/{}/{}'.format(dirname, args.exchange, symbol_type_str)
         os.makedirs(output_path, exist_ok=True)
 
-        header = ['symbol_name', 'start_timestamp', 'end_timestamp', 'start_datetime', 'end_datetime', 'shot_trades_num',
+        header = ['symbol_name', 'is_multishot', 'start_timestamp', 'end_timestamp', 'start_datetime', 'end_datetime', 'shot_trades_num',
                   'shot_type', 'start_price', 'end_price', 'shot_duration', 'shot_depth', 'diff_with_preshot',
                   'shot_bounce', 'shot_bounce_ratio', 'shot_bounce_datetime', 'd5m', 'd15m', 'd1H', 'dBTC5m', 'dBTC15m', 'dBTC1H']
         csv_rows = []
         for shot in shots_list:
             csv_rows.append([
                                 shot.symbol_name,
+                                shot.is_multishot,
                                 shot.start_timestamp,
                                 shot.end_timestamp,
                                 shot.start_datetime,
@@ -361,6 +441,8 @@ class ShotsDetector(object):
         print("Number of pre-shots: {}\nFiltering pre-shots...".format(len(groups_df)))
 
         shots_list = self.find_shots(args, self._trade_data_df, groups_df)
+
+        shots_list = self.combine_multiple_shots(shots_list)
 
         print("Total number of shots: {}".format(len(shots_list)))
 
