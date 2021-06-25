@@ -11,8 +11,7 @@ string_types = str
 COMMISSIONS_PCT = 0.02 + 0.04
 SLIPPAGE_PCT = 0.02
 
-MIN_DISTANCE_PCT_ULTRASHORT_MODE = 0.2
-MIN_DISTANCE_PCT = 0.5
+TOP_DISTANCE_VALUE_PERCENTILE = 0.2
 
 IS_ADJUST_DISTANCE_IN_ULTRASHORT_MODE = False
 MIN_PRACTICAL_DISTANCE = 0.5
@@ -184,8 +183,8 @@ class ShotsPnlCalculator(object):
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
         min_tp_pct = MIN_TP_PCT_FUTURE if is_future else MIN_TP_PCT_SPOT
-        min_distance = MIN_DISTANCE_PCT_ULTRASHORT_MODE if is_ultrashort else MIN_DISTANCE_PCT
-        max_distance = (min_distance + DEFAULT_MIN_STEP) if min_distance > (max_s + DEFAULT_MIN_STEP) else (max_s + DEFAULT_MIN_STEP)
+        min_distance = max_s * (1 - TOP_DISTANCE_VALUE_PERCENTILE)
+        max_distance = max_s + DEFAULT_MIN_STEP
 
         if is_moonbot:
             return {

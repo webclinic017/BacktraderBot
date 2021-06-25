@@ -353,6 +353,7 @@ class ShotsDetector(object):
                         break
                     else:
                         cj = cj + 1
+                        is_last = cj == len(shots_list) - 1
             else:
                 shots_list_result.append(c_shot)
                 ci = ci + 1

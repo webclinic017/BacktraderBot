@@ -3,17 +3,16 @@ import pandas as pd
 import os
 import io
 from pathlib import Path
-from datetime import datetime
-import uuid
+from scalping.strategy_generator_common import ShotStrategyGenerator, TemplateTokensVO
 import random
 
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
 
-FUTURE_MAX_STRATEGIES_NUM = 8
+FUTURE_MAX_STRATEGIES_NUM = 30
 SPOT_MAX_STRATEGIES_NUM = 10
 
-IS_GRID_MODE_ENABLED_FLAG = True
+IS_GRID_MODE_ENABLED_FLAG = False
 GRID_MODE_ORDER_NUM = 3
 GRID_MODE_DISTANCE_STEP_PCT = 0.03
 IS_ADD_SMALL_RANDOM_VALUES_MODE = True
@@ -23,42 +22,13 @@ MT_FUTURE_ORDER_SIZE = 300
 MT_SPOT_ORDER_SIZE = 85
 MB_ORDER_SIZE = 0.0002
 
-TOKEN001_STR = "{{TOKEN001}}"
-TOKEN002_STR = "{{TOKEN002}}"
-TOKEN003_STR = "{{TOKEN003}}"
-TOKEN004_STR = "{{TOKEN004}}"
-TOKEN005_STR = "{{TOKEN005}}"
-TOKEN006_STR = "{{TOKEN006}}"
-TOKEN007_STR = "{{TOKEN007}}"
-TOKEN008_STR = "{{TOKEN008}}"
-TOKEN009_STR = "{{TOKEN009}}"
-TOKEN010_STR = "{{TOKEN010}}"
-TOKEN011_STR = "{{TOKEN011}}"
-TOKEN012_STR = "{{TOKEN012}}"
-TOKEN_STRATEGY_LIST_STR = "{{STRATEGY_LIST}}"
-TOKEN_ADD_STRATEGIES_STR = "{{ADD_STRATEGIES}}"
-
 DEFAULT_OUTPUT_MB_FILENAME = "Binance-BTC-strat.txt"
 DEFAULT_OUTPUT_MT_FILENAME = "algorithms.config"
 
 
-class TemplateTokensVO(object):
-    def __init__(self, is_moonbot, pnl_row):
-        self.symbol_name = pnl_row['symbol_name']
-        self.shot_type = pnl_row['shot_type']
-        self.tp = pnl_row['TP']
-        self.sl = pnl_row['SL']
-        if is_moonbot:
-            self.mshot_price_min = pnl_row['MShotPriceMin']
-            self.mshot_price = pnl_row['MShotPrice']
-        else:
-            self.distance = pnl_row['Distance']
-            self.buffer = pnl_row['Buffer']
-
-
-class ShotStrategyGenerator(object):
+class StrategyGeneratorHandler(object):
     def __init__(self):
-        pass
+        self._strategy_generator = ShotStrategyGenerator()
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='MB/MT shot strategies generator')
@@ -102,21 +72,6 @@ class ShotStrategyGenerator(object):
         symbol_type_str = self.get_symbol_type_str(args.future)
         app_suffix_str = self.get_app_suffix_str(args)
         return '{}/../marketdata/shots/{}/{}/shots-best-pnl-{}-{}-{}.csv'.format(dirname, args.exchange, symbol_type_str, args.exchange, symbol_type_str, app_suffix_str)
-
-    def get_template_filename(self, args):
-        dirname = self.whereAmI()
-        app_suffix_str = self.get_app_suffix_str(args)
-        return '{}/templates/{}/tmpl.txt'.format(dirname, app_suffix_str)
-
-    def get_strategy_template_filename(self, args):
-        dirname = self.whereAmI()
-        app_suffix_str = self.get_app_suffix_str(args)
-        return '{}/templates/{}/strat_tmpl.txt'.format(dirname, app_suffix_str)
-
-    def get_add_strategies_template_filename(self, args):
-        dirname = self.whereAmI()
-        app_suffix_str = self.get_app_suffix_str(args)
-        return '{}/templates/{}/add_strat_tmpl.txt'.format(dirname, app_suffix_str)
 
     def get_output_strategy_filename(self, args):
         dirname = self.whereAmI()
@@ -173,83 +128,6 @@ class ShotStrategyGenerator(object):
 
         return round(order_size)
 
-    def get_tokens_map(self, is_moonbot, is_future, tokens_vo, order_size):
-        symbol_name = tokens_vo.symbol_name
-        symbol_type_str = self.get_symbol_type_str(is_future).upper()
-        shot_type = tokens_vo.shot_type
-        tp = tokens_vo.tp
-        sl = tokens_vo.sl
-        if is_moonbot:
-            mshot_price_min = tokens_vo.mshot_price_min
-            mshot_price = tokens_vo.mshot_price
-            return {
-                TOKEN001_STR: "Moonshot [{}] {} {} {}-{}-{}".format(symbol_type_str, symbol_name, shot_type, mshot_price, tp, sl),
-                TOKEN002_STR: symbol_name,
-                TOKEN003_STR: "{:.4f}".format(tp),
-                TOKEN004_STR: "{:.8f}".format(sl),
-                TOKEN005_STR: "{:.4f}".format(mshot_price_min),
-                TOKEN006_STR: "{:.4f}".format(mshot_price),
-                TOKEN007_STR: "{}".format(order_size)
-            }
-        else:
-            distance = tokens_vo.distance
-            buffer = tokens_vo.buffer
-            side = 1 if shot_type == "LONG" else -1 if shot_type == "SHORT" else ""
-            market_type = 1 if not is_future else 3
-            trade_latency = 15 if not is_future else 3
-            strategy_id = int(datetime.now().timestamp() * 1000) + random.randrange(1000000) - random.randrange(100000) + (uuid.uuid1().int % 100000)
-            follow_price_delay = 0 if is_future else 1
-            return {
-                TOKEN001_STR: "{}".format(strategy_id),
-                TOKEN002_STR: "Shot [{}] {} {} {}-{}-{}".format(symbol_type_str, symbol_name, shot_type, distance, tp, sl),
-                TOKEN003_STR: symbol_name,
-                TOKEN004_STR: "{}".format(distance),
-                TOKEN005_STR: "{}".format(buffer),
-                TOKEN006_STR: "{}".format(side),
-                TOKEN007_STR: "{}".format(order_size),
-                TOKEN008_STR: "{}".format(tp),
-                TOKEN009_STR: "{}".format(sl),
-                TOKEN010_STR: "{}".format(market_type),
-                TOKEN011_STR: "{}".format(trade_latency),
-                TOKEN012_STR: "{}".format(follow_price_delay)
-            }
-
-    def get_template_token_map(self, strategy_list_str, add_strat_template_str):
-        return {
-            TOKEN_STRATEGY_LIST_STR: strategy_list_str,
-            TOKEN_ADD_STRATEGIES_STR: add_strat_template_str
-        }
-
-    def apply_template_tokens(self, strategy_template, tokens_map):
-        s = strategy_template
-        for token, value in tokens_map.items():
-            s = s.replace(token, value)
-        return s
-
-    def append_divider(self, is_moonbot, strategy_str, is_last):
-        if not is_moonbot:
-            if not is_last:
-                divider = ",\n"
-            else:
-                divider = ""
-            strategy_str = strategy_str + divider
-        return strategy_str
-
-    def adjust_tokens_grid(self, is_moonbot, tokens_vo, grid_order_idx):
-        adjust_distance_val = grid_order_idx * GRID_MODE_DISTANCE_STEP_PCT
-        if is_moonbot:
-            tokens_vo.mshot_price_min = round(tokens_vo.mshot_price_min + adjust_distance_val, 2)
-            tokens_vo.mshot_price = round(tokens_vo.mshot_price + adjust_distance_val, 2)
-        else:
-            tokens_vo.distance = round(tokens_vo.distance + adjust_distance_val, 2)
-        return tokens_vo
-
-    def generate_strategy(self, is_moonbot, is_future, strategy_template, tokens_vo, is_last):
-        order_size = self.get_order_size(is_moonbot, is_future)
-        tokens_map = self.get_tokens_map(is_moonbot, is_future, tokens_vo, order_size)
-        strategy_str = self.apply_template_tokens(strategy_template, tokens_map)
-        return self.append_divider(is_moonbot, strategy_str, is_last)
-
     def run(self):
         random.seed()
         args = self.parse_args()
@@ -267,35 +145,32 @@ class ShotStrategyGenerator(object):
             print("*** No shots PnL data after applying filter! Exiting.")
             exit(-1)
 
-        strategy_template = self.read_file(self.get_strategy_template_filename(args))
+        strategy_template = self._strategy_generator.read_strategy_template(args.moonbot)
         strategy_list = []
         for idx, pnl_row in shots_pnl_data_df.iterrows():
             if is_future and IS_GRID_MODE_ENABLED_FLAG:
                 for grid_order_idx in range(GRID_MODE_ORDER_NUM):
-                    tokens_vo = TemplateTokensVO(is_moonbot, pnl_row)
-                    tokens_vo = self.adjust_tokens_grid(is_moonbot, tokens_vo, grid_order_idx)
+                    tokens_vo = TemplateTokensVO.from_pnl_row(is_moonbot, pnl_row)
+                    tokens_vo = self._strategy_generator.adjust_tokens_grid(is_moonbot, tokens_vo, grid_order_idx, GRID_MODE_DISTANCE_STEP_PCT)
                     is_last = idx == shots_pnl_data_df.index[-1] and grid_order_idx == GRID_MODE_ORDER_NUM - 1
-                    strategy_list.append(self.generate_strategy(is_moonbot, is_future, strategy_template, tokens_vo, is_last))
+                    order_size = self.get_order_size(is_moonbot, is_future)
+                    strategy_list.append(self._strategy_generator.generate_strategy(is_moonbot, is_future, strategy_template, tokens_vo, order_size, is_last))
             else:
-                tokens_vo = TemplateTokensVO(is_moonbot, pnl_row)
+                tokens_vo = TemplateTokensVO.from_pnl_row(is_moonbot, pnl_row)
                 is_last = idx == shots_pnl_data_df.index[-1]
-                strategy_list.append(self.generate_strategy(is_moonbot, is_future, strategy_template, tokens_vo, is_last))
+                order_size = self.get_order_size(is_moonbot, is_future)
+                strategy_list.append(self._strategy_generator.generate_strategy(is_moonbot, is_future, strategy_template, tokens_vo, order_size, is_last))
         strategy_list_str = ''.join(strategy_list)
 
-        template = self.read_file(self.get_template_filename(args))
-        if not is_moonbot and not is_future:
-            add_strat_template_str = self.read_file(self.get_add_strategies_template_filename(args))
-            all_strategies_str = self.apply_template_tokens(template, self.get_template_token_map(strategy_list_str, add_strat_template_str))
-        else:
-            all_strategies_str = self.apply_template_tokens(template, self.get_template_token_map(strategy_list_str, ""))
-
+        final_content = self._strategy_generator.generate_final_content(strategy_list_str, is_moonbot, is_future)
         out_filename = self.get_output_strategy_filename(args)
-        self.write_file(out_filename, all_strategies_str)
+        self.write_file(out_filename, final_content)
+
         print("\nStrategy file {} has been generated!".format(out_filename))
 
 
 def main():
-    step = ShotStrategyGenerator()
+    step = StrategyGeneratorHandler()
     step.run()
 
 

@@ -569,7 +569,7 @@
           },
           "stopIfTradeLatencyGreaterThan": {
             "name": "stopIfTradeLatencyGreaterThan",
-            "value": 3,
+            "value": 1,
             "argumentType": 4
           }
         }
@@ -727,7 +727,7 @@
           },
           "stopIfTradeLatencyGreaterThan": {
             "name": "stopIfTradeLatencyGreaterThan",
-            "value": 3,
+            "value": 1,
             "argumentType": 4
           }
         }
