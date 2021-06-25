@@ -78,12 +78,17 @@ class TMMExcelReportAnalyzer(object):
     def user_input_incremental_mode(self):
         input_val = input("Enter last row number in Excel for incremental mode or press ENTER to skip: ")
         try:
+            if input_val == "":
+                print("Skipping incremental mode.")
+                return
+
             row_number = int(input_val)
             if row_number > 0:
                 self._is_incremental_mode = True
                 self._incr_row_count = row_number
         except Exception as e:
-            print("Skipping incremental mode.")
+            print("Invalid value provided. Quitting.")
+            exit(-1)
 
     def parse_wl_strategy_params(self, wl_strategy_params_str):
         match_obj = re.search(WL_STRATEGY_PARAMS_REGEX, wl_strategy_params_str)
