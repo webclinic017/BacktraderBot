@@ -1,7 +1,7 @@
 #! /bin/bash
 
 if [[ $# -ne 2 ]]; then
-    echo "Please specify valid parameters to run the script: deploy_to_vps.sh <STRATEGY_FILE_TYPE:f|s|fs|fwl> <VPS_ID:1|2|3>"
+    echo "Please specify valid parameters to run the script: append_to_vps.sh <STRATEGY_FILE_TYPE:f|s|fs|fwl> <VPS_ID:1|2|3>"
     exit -1
 fi
 
@@ -33,5 +33,21 @@ else
     exit -1
 fi
 
-declare -a filepath=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${filename}
-pwsh ./powershell/deploy_to_vps.ps1 ${filepath} ${vps_ip_address}
+declare -a working_folder=/Users/alex/Downloads
+declare -a file_to_append=${working_folder}/${filename}
+declare -a remote_filename=${working_folder}/algorithms.config_REMOTE
+declare -a output_filename=${working_folder}/algorithms.config_MERGED
+
+pwsh ./powershell/get_from_vps.ps1 ${vps_ip_address} ${remote_filename}
+
+sed '$d' ${remote_filename} | sed '$d' | sed '$d' > ${output_filename}
+echo "    }," >> ${output_filename}
+sed "1,2d; $d" ${file_to_append} >> ${output_filename}
+
+pwsh ./powershell/deploy_to_vps.ps1 ${output_filename} ${vps_ip_address}
+
+rm -rf $remote_filename
+rm -rf $output_filename
+
+
+
