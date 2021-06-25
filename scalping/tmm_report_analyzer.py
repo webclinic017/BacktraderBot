@@ -4,7 +4,7 @@ import numpy as np
 import os
 import random
 import re
-from strategy_generator_common import ShotStrategyGenerator, TemplateTokensVO
+from scalping.strategy_generator_common import ShotStrategyGenerator, TemplateTokensVO
 
 DEFAULT_WORKING_PATH = "/Users/alex/Downloads"
 DEFAULT_OUTPUT_WL_STRATEGIES_FILENAME = "algorithms.config_future_wl"
@@ -308,7 +308,7 @@ class TMMExcelReportAnalyzer(object):
             tokens_vo.sl = wl_strategy_params["sl"]
 
             is_last = idx == df.index[-1]
-            strategy_list.append(self._strategy_generator.generate_strategy(False, True, strategy_template, tokens_vo, wl_order_size, is_last, "**WHITELIST**"))
+            strategy_list.append(self._strategy_generator.generate_strategy(False, True, strategy_template, tokens_vo, wl_order_size, is_last, "**WL**"))
         strategy_list_str = ''.join(strategy_list)
 
         final_content = self._strategy_generator.generate_final_content(strategy_list_str, False, True)

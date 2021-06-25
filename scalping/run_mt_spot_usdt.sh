@@ -53,7 +53,9 @@ do
 done
 
 # Generate strategy files for MB/MT
-python strategy_generator.py -e binance $future_flag $moonbot_flag
+cd ..
+python -m scalping.strategy_generator -e binance $future_flag $moonbot_flag
+cd scalping
 
 mkdir $output_folder
 cp ./../marketdata/shots/binance/spot/* $output_folder/

@@ -11,4 +11,6 @@ elif [ -d "/Users/alex/anaconda3" ]; then
 fi
 conda activate Backtrader
 
-python tmm_report_analyzer.py -s ${default_sl_pct_value}
+cd ..
+
+python -m scalping.tmm_report_analyzer -s ${default_sl_pct_value}

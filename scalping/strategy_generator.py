@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import io
 from pathlib import Path
-from strategy_generator_common import ShotStrategyGenerator, TemplateTokensVO
+from scalping.strategy_generator_common import ShotStrategyGenerator, TemplateTokensVO
 import random
 
 MIN_TOTAL_SHOTS_COUNT = 0

@@ -2,7 +2,7 @@
 
 declare -a symbol_list=("BTCUSDT" "1000SHIBUSDT" "1INCHUSDT" "AAVEUSDT" "ADAUSDT" "AKROUSDT" "ALGOUSDT" "ALICEUSDT" "ALPHAUSDT" "ANKRUSDT" "ATOMUSDT" "AVAXUSDT" "AXSUSDT" "BALUSDT" "BANDUSDT" "BATUSDT" "BCHUSDT" "BELUSDT" "BLZUSDT" "BTSUSDT" "BZRXUSDT" "CHRUSDT" "CHZUSDT" "COMPUSDT" "COTIUSDT" "CRVUSDT" "CTKUSDT" "CVCUSDT" "DASHUSDT" "DODOUSDT" "DOGEUSDT" "DOTUSDT" "EGLDUSDT" "ENJUSDT" "EOSUSDT" "ETCUSDT" "FILUSDT" "FLMUSDT" "FTMUSDT" "GRTUSDT" "HBARUSDT" "HNTUSDT" "ICXUSDT" "IOSTUSDT" "IOTAUSDT" "KAVAUSDT" "KNCUSDT" "KSMUSDT" "LINKUSDT" "LITUSDT" "LRCUSDT" "LUNAUSDT" "MANAUSDT" "MATICUSDT" "MKRUSDT" "NEARUSDT" "NEOUSDT" "OCEANUSDT" "OMGUSDT" "ONEUSDT" "ONTUSDT" "QTUMUSDT" "REEFUSDT" "RENUSDT" "RLCUSDT" "RSRUSDT" "RUNEUSDT" "RVNUSDT" "SANDUSDT" "SFPUSDT" "SKLUSDT" "SNXUSDT" "SOLUSDT" "SRMUSDT" "STMXUSDT" "STORJUSDT" "SUSHIUSDT" "SXPUSDT" "THETAUSDT" "TOMOUSDT" "TRBUSDT" "TRXUSDT" "UNFIUSDT" "UNIUSDT" "VETUSDT" "WAVESUSDT" "XEMUSDT" "XLMUSDT" "XMRUSDT" "XRPUSDT" "XTZUSDT" "YFIIUSDT" "YFIUSDT" "ZECUSDT" "ZENUSDT" "ZILUSDT" "ZRXUSDT")
 
-declare -a start_minutes_ago=$((24*60))
+declare -a start_minutes_ago=$((12*60))
 
 declare -a ultrashortmode=${1}
 
@@ -52,8 +52,11 @@ do
     python calc_shots_pnl.py ${ultrashortmode} -e binance -s $symbol $future_flag $moonbot_flag
 done
 
+
 # Generate strategy files for MB/MT
-python strategy_generator.py -e binance $future_flag $moonbot_flag
+cd ..
+python -m scalping.strategy_generator -e binance $future_flag $moonbot_flag
+cd scalping
 
 mkdir $output_folder
 cp ./../marketdata/shots/binance/future/* $output_folder

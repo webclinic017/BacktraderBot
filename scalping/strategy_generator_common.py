@@ -104,7 +104,7 @@ class ShotStrategyGenerator(object):
             follow_price_delay = 0 if is_future else 0
             return {
                 TOKEN001_STR: "{}".format(strategy_id),
-                TOKEN002_STR: "Shot [{}]{}{} {} {}-{}-{}-{}".format(symbol_type_str, extra_suffix, symbol_name, shot_type, distance, buffer, tp, sl),
+                TOKEN002_STR: "[{}]{}{} {} {}-{}-{}-{}".format(symbol_type_str, extra_suffix, symbol_name, shot_type, distance, buffer, tp, sl),
                 TOKEN003_STR: symbol_name,
                 TOKEN004_STR: "{}".format(distance),
                 TOKEN005_STR: "{}".format(buffer),
