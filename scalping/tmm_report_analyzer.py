@@ -4,7 +4,7 @@ import numpy as np
 import os
 import random
 import re
-from scalping.strategy_generator_common import ShotStrategyGenerator, TemplateTokensVO
+from strategy_generator_common import ShotStrategyGenerator, TemplateTokensVO
 
 DEFAULT_WORKING_PATH = "/Users/alex/Downloads"
 DEFAULT_OUTPUT_WL_STRATEGIES_FILENAME = "algorithms.config_future_wl"
