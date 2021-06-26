@@ -15,7 +15,7 @@ DEEP_LOSS_COUNT_THRESHOLD = 2
 BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD = 4
 BL_FLAG_LOSS_TRADES_PCT_THRESHOLD = 15
 
-WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD = 4
+WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD = 15
 WL_FLAG_LOSS_TRADES_PCT_THRESHOLD = 15
 
 WL_STRATEGY_PARAMS_DEFAULT_ENTRY = "0.55-0.4-0.17-0.48"
@@ -335,14 +335,13 @@ class TMMExcelReportAnalyzer(object):
         stats_report_rows = self.compile_stats_report(self._total_stats_dict, False)
         self.print_stats_report(stats_report_rows)
         self.write_analysis_report(stats_report_rows, False)
+        self.generate_whitelist_strategies(self._total_stats_dict, self._wl_strategy_params, self._wl_strategy_order_size)
 
         if self._is_incremental_mode:
             print("Processing incremental mode ...")
             self.create_model(args, report_data_df.head(self._incr_row_count), True)
             stats_report_rows = self.compile_stats_report(self._total_stats_dict, True)
             self.write_analysis_report(stats_report_rows, True)
-
-        self.generate_whitelist_strategies(self._total_stats_dict, self._wl_strategy_params, self._wl_strategy_order_size)
 
 
 def main():

@@ -1,6 +1,11 @@
 #! /bin/bash
 
-declare -a default_sl_pct_value=0.48
+if [[ $# -ne 1 ]]; then
+    echo "Please specify valid parameters to run the script: analyze_report.sh <DEFAULT_SL_PCT>"
+    exit -1
+fi
+
+declare -a default_sl_pct_value=$1
 
 if [ -d "/opt/anaconda3" ]; then
     source /opt/anaconda3/etc/profile.d/conda.sh
