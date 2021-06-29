@@ -20,7 +20,7 @@ WL_FLAG_LOSS_TRADES_PCT_THRESHOLD = 15
 
 WL_STRATEGY_PARAMS_DEFAULT_ENTRY = "0.55-0.4-0.17-0.48"
 WL_STRATEGY_PARAMS_REGEX = "(\d*\.?\d*)-(\d*\.?\d*)-(\d*\.?\d*)-(\d*\.?\d*)"
-WL_STRATEGY_DEFAULT_ORDER_SIZE = 100
+WL_STRATEGY_DEFAULT_ORDER_SIZE = 300
 
 
 class TMMExcelReportAnalyzer(object):
@@ -142,7 +142,9 @@ class TMMExcelReportAnalyzer(object):
         symbol_df = data_df[data_df['symbol'] == symbol]
 
         symbol_loss_trades_pnl_pct_df = symbol_df[symbol_df['pnl_pct'] < 0]
+        symbol_loss_trades_net_pnl_usdt_df = symbol_df[symbol_df['net_pnl_usdt'] < 0]
         symbol_win_trades_pnl_pct_df = symbol_df[symbol_df['pnl_pct'] > 0]
+        symbol_win_trades_net_pnl_usdt_df = symbol_df[symbol_df['net_pnl_usdt'] > 0]
 
         symbol_trade_count = len(symbol_df)
         symbol_pnl_usdt = round(symbol_df['net_pnl_usdt'].sum(), 2)
@@ -150,9 +152,13 @@ class TMMExcelReportAnalyzer(object):
         loss_trades_pct = round(100 * (loss_trades_count / symbol_trade_count), 2) if symbol_trade_count != 0 else 0
         loss_trades_pnl_pct_max = round(symbol_loss_trades_pnl_pct_df['pnl_pct'].min(), 2) if len(symbol_loss_trades_pnl_pct_df) > 0 else 0
         loss_trades_pnl_pct_avg = round(symbol_loss_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(symbol_loss_trades_pnl_pct_df) > 0 else 0
+        loss_trades_net_pnl_usdt_avg = abs(symbol_loss_trades_net_pnl_usdt_df['net_pnl_usdt'].mean()) if len(symbol_loss_trades_net_pnl_usdt_df) > 0 else 0
         win_trades_count = len(symbol_df[symbol_df['net_pnl_usdt'] > 0])
         win_trades_pnl_pct_max = round(symbol_win_trades_pnl_pct_df['pnl_pct'].max(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
         win_trades_pnl_pct_avg = round(symbol_win_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
+        win_trades_net_pnl_usdt_avg = abs(symbol_win_trades_net_pnl_usdt_df['net_pnl_usdt'].mean()) if len(symbol_win_trades_net_pnl_usdt_df) > 0 else 0
+        expectancy_usdt = round((win_trades_count / symbol_trade_count) * win_trades_net_pnl_usdt_avg - (loss_trades_count / symbol_trade_count) * loss_trades_net_pnl_usdt_avg, 8) if symbol_trade_count != 0 else 0
+        actual_rr = round(win_trades_net_pnl_usdt_avg / loss_trades_net_pnl_usdt_avg, 2) if loss_trades_net_pnl_usdt_avg != 0 else 0
         deep_loss_trades_count = len(symbol_df[symbol_df['pnl_pct'] < -(args.def_sl_pct + MAX_SLIPPAGE_PCT)])
         is_hollow_order_book_flag = True if deep_loss_trades_count >= DEEP_LOSS_COUNT_THRESHOLD else False
         is_blacklist_flag = True if symbol_pnl_usdt < 0 and loss_trades_count >= BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD and loss_trades_pct >= BL_FLAG_LOSS_TRADES_PCT_THRESHOLD else False
@@ -161,6 +167,8 @@ class TMMExcelReportAnalyzer(object):
 
         result_dict[self.get_stats_key(side, 'symbol_trade_count')] = symbol_trade_count
         result_dict[self.get_stats_key(side, 'symbol_pnl_usdt')] = symbol_pnl_usdt
+        result_dict[self.get_stats_key(side, 'expectancy_usdt')] = expectancy_usdt
+        result_dict[self.get_stats_key(side, 'actual_rr')] = actual_rr
         result_dict[self.get_stats_key(side, 'loss_trades_count')] = loss_trades_count
         result_dict[self.get_stats_key(side, 'loss_trades_pct')] = loss_trades_pct
         result_dict[self.get_stats_key(side, 'loss_trades_pnl_pct_max')] = loss_trades_pnl_pct_max
@@ -184,8 +192,14 @@ class TMMExcelReportAnalyzer(object):
         long_trades_pnl_usdt = round(df[df['side'] == "LONG"]['net_pnl_usdt'].sum(), 2)
         short_trades_lost_count = len(df[(df['side'] == "SHORT") & (df['net_pnl_usdt'] < 0)])
         short_trades_pnl_usdt = round(df[df['side'] == "SHORT"]['net_pnl_usdt'].sum(), 2)
+        loss_rate = (long_trades_lost_count + short_trades_lost_count) / total_trade_count
+        win_rate = 1 - (long_trades_lost_count + short_trades_lost_count) / total_trade_count
+        loss_trades_net_pnl_usdt_avg = abs(df[df['net_pnl_usdt'] < 0]['net_pnl_usdt'].mean())
+        win_trades_net_pnl_usdt_avg = abs(df[df['net_pnl_usdt'] > 0]['net_pnl_usdt'].mean())
         total_pnl_usdt = round(df['net_pnl_usdt'].sum(), 2)
-        win_rate_pct = round(100 * (1 - (long_trades_lost_count + short_trades_lost_count) / total_trade_count), 2)
+        expectancy_usdt = round(win_rate * win_trades_net_pnl_usdt_avg - loss_rate * loss_trades_net_pnl_usdt_avg, 8)
+        actual_rr = round(win_trades_net_pnl_usdt_avg / loss_trades_net_pnl_usdt_avg, 2) if loss_trades_net_pnl_usdt_avg != 0 else 0
+        win_rate_pct = round(100 * win_rate, 2)
 
         result_dict['total_trade_count'] = total_trade_count
         result_dict['long_trades_lost_count'] = long_trades_lost_count
@@ -193,6 +207,8 @@ class TMMExcelReportAnalyzer(object):
         result_dict['short_trades_lost_count'] = short_trades_lost_count
         result_dict['short_trades_pnl_usdt'] = short_trades_pnl_usdt
         result_dict['total_pnl_usdt'] = total_pnl_usdt
+        result_dict['expectancy_usdt'] = expectancy_usdt
+        result_dict['actual_rr'] = actual_rr
         result_dict['win_rate_pct'] = win_rate_pct
 
         if not incremental_mode_flag:
@@ -242,6 +258,8 @@ class TMMExcelReportAnalyzer(object):
         report_rows.append(["SHORT Trades Lost:", total_stats_dict['short_trades_lost_count']])
         report_rows.append(["SHORT Trades PnL, USDT:", total_stats_dict['short_trades_pnl_usdt']])
         report_rows.append(["Total PnL, USDT:", total_stats_dict['total_pnl_usdt']])
+        report_rows.append(["Expectancy, USDT:", total_stats_dict['expectancy_usdt']])
+        report_rows.append(["Actual RR, USDT:", total_stats_dict['actual_rr']])
         report_rows.append(["Win Rate, %:", total_stats_dict['win_rate_pct']])
         if not incremental_mode_flag:
             report_rows.append([""])
@@ -285,6 +303,9 @@ class TMMExcelReportAnalyzer(object):
     def generate_whitelist_strategies(self, total_stats_dict, wl_strategy_params, wl_order_size):
         long_whitelist = total_stats_dict['long_whitelist_arr']
         short_whitelist = total_stats_dict['short_whitelist_arr']
+
+        if not long_whitelist and not short_whitelist:
+            return
 
         combined_list = []
         for symbol in long_whitelist:
