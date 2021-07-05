@@ -152,10 +152,10 @@ class ShotStrategyGenerator(object):
         app_suffix_str = self.get_app_suffix_str(is_moonbot)
         return '{}/templates/{}/tmpl.txt'.format(dirname, app_suffix_str)
 
-    def get_strategy_template_filename(self, is_moonbot):
+    def get_strategy_template_filename(self, is_moonbot, strat_template_id):
         dirname = self.whereAmI()
         app_suffix_str = self.get_app_suffix_str(is_moonbot)
-        return '{}/templates/{}/strat_tmpl.txt'.format(dirname, app_suffix_str)
+        return '{}/templates/{}/strat_tmpl_ST{:04d}.txt'.format(dirname, app_suffix_str, strat_template_id)
 
     def get_add_strategies_template_filename(self, is_moonbot):
         dirname = self.whereAmI()
@@ -165,8 +165,8 @@ class ShotStrategyGenerator(object):
     def read_template(self, is_moonbot):
         return self.read_file(self.get_template_filename(is_moonbot))
 
-    def read_strategy_template(self, is_moonbot):
-        return self.read_file(self.get_strategy_template_filename(is_moonbot))
+    def read_strategy_template(self, is_moonbot, strat_template_id):
+        return self.read_file(self.get_strategy_template_filename(is_moonbot, strat_template_id))
 
     def read_add_strategies_template(self, is_moonbot):
         return self.read_file(self.get_add_strategies_template_filename(is_moonbot))

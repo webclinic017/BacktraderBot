@@ -1,8 +1,8 @@
 #! /bin/bash
 
-declare -a symbol_list=("BTCBUSD")
+declare -a symbol_list=("BTCUSDT" "1000SHIBUSDT" "1INCHUSDT" "AAVEUSDT" "ADAUSDT" "AKROUSDT" "ALGOUSDT" "ALICEUSDT" "ALPHAUSDT" "ANKRUSDT" "ATOMUSDT" "AVAXUSDT" "AXSUSDT" "BALUSDT" "BANDUSDT" "BATUSDT" "BCHUSDT" "BELUSDT" "BLZUSDT" "BTSUSDT" "BZRXUSDT" "CHRUSDT" "CHZUSDT" "COMPUSDT" "COTIUSDT" "CRVUSDT" "CTKUSDT" "CVCUSDT" "DASHUSDT" "DODOUSDT" "DOGEUSDT" "DOTUSDT" "EGLDUSDT" "ENJUSDT" "EOSUSDT" "ETCUSDT" "FILUSDT" "FLMUSDT" "FTMUSDT" "GRTUSDT" "HBARUSDT" "HNTUSDT" "ICXUSDT" "IOSTUSDT" "IOTAUSDT" "KAVAUSDT" "KNCUSDT" "KSMUSDT" "LINKUSDT" "LITUSDT" "LRCUSDT" "LUNAUSDT" "MANAUSDT" "MATICUSDT" "MKRUSDT" "NEARUSDT" "NEOUSDT" "OCEANUSDT" "OMGUSDT" "ONEUSDT" "ONTUSDT" "QTUMUSDT" "REEFUSDT" "RENUSDT" "RLCUSDT" "RSRUSDT" "RUNEUSDT" "RVNUSDT" "SANDUSDT" "SFPUSDT" "SKLUSDT" "SNXUSDT" "SOLUSDT" "SRMUSDT" "STMXUSDT" "STORJUSDT" "SUSHIUSDT" "SXPUSDT" "THETAUSDT" "TOMOUSDT" "TRBUSDT" "TRXUSDT" "UNFIUSDT" "UNIUSDT" "VETUSDT" "WAVESUSDT" "XEMUSDT" "XLMUSDT" "XMRUSDT" "XRPUSDT" "XTZUSDT" "YFIIUSDT" "YFIUSDT" "ZECUSDT" "ZENUSDT" "ZILUSDT" "ZRXUSDT")
 
-declare -a start_minutes_ago=720
+declare -a start_minutes_ago=$((6*60))
 
 declare -a ultrashortmode=${1}
 
@@ -31,26 +31,9 @@ elif [ -d "/Users/alex/anaconda3" ]; then
 fi
 conda activate Backtrader
 
-echo Deleting old data files...
-rm -rf ./../marketdata/shots/binance/future/*
-rm -rf ./../marketdata/tradedata/binance/future/*
-echo Done!
-
-echo Detecting shots for the last $start_minutes_ago minutes:
-echo $start_date
-echo $end_date
 
 for symbol in "${symbol_list[@]}"
 do
-    # Download tick trade data for all symbols
-    python binance_trade_data.py -s $symbol -t $start_date -e $end_date $future_flag
-
-    # Detect shots information for all symbols
-    python shots_detector.py ${ultrashortmode} -e binance -s $symbol $future_flag $moonbot_flag
-
     # Calculate best PnL for all the shots
     python calc_shots_pnl.py ${ultrashortmode} -e binance -s $symbol $future_flag $moonbot_flag
 done
-
-# Generate strategy files for MB/MT
-python strategy_generator.py -e binance $future_flag $moonbot_flag

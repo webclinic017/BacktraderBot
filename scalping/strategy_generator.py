@@ -6,19 +6,21 @@ from pathlib import Path
 from scalping.strategy_generator_common import ShotStrategyGenerator, TemplateTokensVO
 import random
 
+DEFAULT_STRATEGY_TEMPLATE_ID = 1
+
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
 
-FUTURE_MAX_STRATEGIES_NUM = 3
+FUTURE_MAX_STRATEGIES_NUM = 30
 SPOT_MAX_STRATEGIES_NUM = 10
 
 IS_GRID_MODE_ENABLED_FLAG = False
-GRID_MODE_ORDER_NUM = 3
-GRID_MODE_DISTANCE_STEP_PCT = 0.03
+GRID_MODE_ORDER_NUM = 4
+GRID_MODE_DISTANCE_STEP_PCT = 0.01
 IS_ADD_SMALL_RANDOM_VALUES_MODE = True
 SMALL_RANDOM_VALUE_PCT = 15
 
-MT_FUTURE_ORDER_SIZE = 1200
+MT_FUTURE_ORDER_SIZE = 15
 MT_SPOT_ORDER_SIZE = 200
 MB_ORDER_SIZE = 0.0002
 
@@ -145,7 +147,7 @@ class StrategyGeneratorHandler(object):
             print("*** No shots PnL data after applying filter! Exiting.")
             exit(-1)
 
-        strategy_template = self._strategy_generator.read_strategy_template(args.moonbot)
+        strategy_template = self._strategy_generator.read_strategy_template(args.moonbot, DEFAULT_STRATEGY_TEMPLATE_ID)
         strategy_list = []
         for idx, pnl_row in shots_pnl_data_df.iterrows():
             if is_future and IS_GRID_MODE_ENABLED_FLAG:

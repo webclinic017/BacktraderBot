@@ -1,0 +1,158 @@
+    {
+      "id": {{TOKEN001}},
+      "name": "Shots Group",
+      "info": "{{TOKEN002}}",
+      "autoStart": false,
+      "args": {
+        "Arguments": {
+          "autoRestart": {
+            "name": "autoRestart",
+            "value": true,
+            "argumentType": 11
+          },
+          "exchangeType": {
+            "name": "exchangeType",
+            "value": 1,
+            "argumentType": 7
+          },
+          "marketType": {
+            "name": "marketType",
+            "value": {{TOKEN010}},
+            "argumentType": 8
+          },
+          "quoteAssets": {
+            "name": "quoteAssets",
+            "value": "",
+            "argumentType": 15
+          },
+          "whiteList": {
+            "name": "whiteList",
+            "value": "{{TOKEN003}}",
+            "argumentType": 15
+          },
+          "blackList": {
+            "name": "blackList",
+            "value": "",
+            "argumentType": 15
+          },
+          "distance": {
+            "name": "distance",
+            "value": {{TOKEN004}},
+            "argumentType": 4
+          },
+          "buffer": {
+            "name": "buffer",
+            "value": {{TOKEN005}},
+            "argumentType": 4
+          },
+          "side": {
+            "name": "side",
+            "value": {{TOKEN006}},
+            "argumentType": 10
+          },
+          "minDeltaH": {
+            "name": "minDeltaH",
+            "value": 2.5,
+            "argumentType": 4
+          },
+          "maxDeltaH": {
+            "name": "maxDeltaH",
+            "value": 6.0,
+            "argumentType": 4
+          },
+          "shotRestartDelay": {
+            "name": "shotRestartDelay",
+            "value": 40,
+            "argumentType": 2
+          },
+          "followPriceDelay": {
+            "name": "followPriceDelay",
+            "value": 4,
+            "argumentType": 2
+          },
+          "clientOrderType": {
+            "name": "clientOrderType",
+            "value": 1,
+            "argumentType": 14
+          },
+          "stopPricePercentage": {
+            "name": "stopPricePercentage",
+            "value": 0.05,
+            "argumentType": 4
+          },
+          "orderSizeUSDT": {
+            "name": "orderSizeUSDT",
+            "value": {{TOKEN007}},
+            "argumentType": 5
+          },
+          "takeProfitIsOn": {
+            "name": "takeProfitIsOn",
+            "value": true,
+            "argumentType": 11
+          },
+          "takeProfitPercentage": {
+            "name": "takeProfitPercentage",
+            "value": {{TOKEN008}},
+            "argumentType": 4
+          },
+          "takeProfitOrderType": {
+            "name": "takeProfitOrderType",
+            "value": 1,
+            "argumentType": 12
+          },
+          "takeProfitStatus": {
+            "name": "takeProfitStatus",
+            "value": 2,
+            "argumentType": 13
+          },
+          "stopLossIsOn": {
+            "name": "stopLossIsOn",
+            "value": true,
+            "argumentType": 11
+          },
+          "stopLossPercentage": {
+            "name": "stopLossPercentage",
+            "value": {{TOKEN009}},
+            "argumentType": 4
+          },
+          "stopLossSpread": {
+            "name": "stopLossSpread",
+            "value": 0.05,
+            "argumentType": 4
+          },
+          "stopLossOrderType": {
+            "name": "stopLossOrderType",
+            "value": 2,
+            "argumentType": 12
+          },
+          "stopLossStatus": {
+            "name": "stopLossStatus",
+            "value": 1,
+            "argumentType": 13
+          },
+          "stopLossTrailingIsOn": {
+            "name": "stopLossTrailingIsOn",
+            "value": false,
+            "argumentType": 11
+          },
+          "stopLossTrailingSpread": {
+            "name": "stopLossTrailingSpread",
+            "value": 0.0,
+            "argumentType": 4
+          },
+          "stopLossTrailingTrigger": {
+            "name": "stopLossTrailingTrigger",
+            "value": 0.0,
+            "argumentType": 4
+          },
+          "stopIfTradeLatencyGreaterThan": {
+            "name": "stopIfTradeLatencyGreaterThan",
+            "value": {{TOKEN011}},
+            "argumentType": 4
+          }
+        }
+      },
+      "argsJson": null,
+      "isRunning": false,
+      "isProcessing": false
+    }

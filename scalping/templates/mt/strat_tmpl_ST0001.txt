@@ -62,7 +62,7 @@
           },
           "shotRestartDelay": {
             "name": "shotRestartDelay",
-            "value": 5,
+            "value": 30,
             "argumentType": 2
           },
           "followPriceDelay": {

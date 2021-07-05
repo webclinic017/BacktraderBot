@@ -38,6 +38,10 @@ declare -a file_to_append=${working_folder}/${filename}
 declare -a remote_filename=${working_folder}/algorithms.config_REMOTE
 declare -a output_filename=${working_folder}/algorithms.config_MERGED
 
+if [[ ! -f ${file_to_append} ]]; then
+    echo "File ${file_to_append} not found!"
+fi
+
 pwsh ./powershell/get_from_vps.ps1 ${vps_ip_address} ${remote_filename}
 
 sed '$d' ${remote_filename} | sed '$d' | sed '$d' > ${output_filename}

@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import pandas as pd
 
 # Load data
-df=pd.read_csv("./marketdata/tradedata/binance/future/1000SHIBUSDT/binance-1000SHIBUSDT.csv")
+df=pd.read_csv("./marketdata/tradedata/binance/future/AXSUSDT/binance-AXSUSDT.csv")
 
 # Create figure
 fig = go.Figure()
