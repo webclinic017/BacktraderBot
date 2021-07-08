@@ -409,17 +409,18 @@ class TMMExcelReportAnalyzer(object):
             self.user_input_wl_strategy_params()
             self.user_input_wl_order_size()
 
-        self.create_model(args, report_data_df, False, False)
+        base_data_df = report_data_df[report_data_df['volume_usdt'] < self._wl_mode_order_size_filter]
+        self.create_model(args, base_data_df, False, False)
         stats_report_rows = self.compile_stats_report(self._total_stats_dict, False, False)
         self.print_stats_report(stats_report_rows)
         self.write_analysis_report(stats_report_rows, False, False)
         if self._is_wl_mode:
             self.generate_whitelist_strategies(self._wl_strategy_template_id, self._total_stats_dict, self._wl_strategy_params, self._wl_strategy_order_size)
 
-            wl_data_df = report_data_df[report_data_df['volume_usdt'] > self._wl_mode_order_size_filter]
-            if len(wl_data_df) > 0:
+            base_wl_data_df = report_data_df[report_data_df['volume_usdt'] > self._wl_mode_order_size_filter]
+            if len(base_wl_data_df) > 0:
                 print("Processing base WL mode ...")
-                self.create_model(args, wl_data_df, False, True)
+                self.create_model(args, base_wl_data_df, False, True)
                 stats_report_rows = self.compile_stats_report(self._total_stats_dict, False, True)
                 self.write_analysis_report(stats_report_rows, False, True)
             else:
@@ -427,6 +428,7 @@ class TMMExcelReportAnalyzer(object):
 
         if self._is_incremental_mode:
             incr_data_df = report_data_df.head(self._incr_mode_row_count)
+            incr_data_df = incr_data_df[incr_data_df['volume_usdt'] < self._wl_mode_order_size_filter]
             if len(incr_data_df) > 0:
                 print("Processing incremental mode ...")
                 self.create_model(args, incr_data_df, True, False)
