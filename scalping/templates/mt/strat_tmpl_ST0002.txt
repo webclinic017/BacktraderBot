@@ -77,7 +77,7 @@
           },
           "stopPricePercentage": {
             "name": "stopPricePercentage",
-            "value": 0.05,
+            "value": 1,
             "argumentType": 4
           },
           "orderSizeUSDT": {
@@ -117,7 +117,7 @@
           },
           "stopLossSpread": {
             "name": "stopLossSpread",
-            "value": 0.05,
+            "value": 2,
             "argumentType": 4
           },
           "stopLossOrderType": {

@@ -58,10 +58,12 @@ class TMMExcelReportAnalyzer(object):
         return '{}/report.xlsx'.format(DEFAULT_WORKING_PATH)
 
     def get_output_analysis_filename(self, incremental_mode_flag, wl_mode_flag):
-        if incremental_mode_flag:
+        if incremental_mode_flag and wl_mode_flag:
+            return '{}/report_analysis_incremental_wl.csv'.format(DEFAULT_WORKING_PATH)
+        elif incremental_mode_flag:
             return '{}/report_analysis_incremental.csv'.format(DEFAULT_WORKING_PATH)
         elif wl_mode_flag:
-            return '{}/report_analysis_wl.csv'.format(DEFAULT_WORKING_PATH)
+            return '{}/report_analysis_base_wl.csv'.format(DEFAULT_WORKING_PATH)
         else:
             return '{}/report_analysis_base.csv'.format(DEFAULT_WORKING_PATH)
 
@@ -189,6 +191,7 @@ class TMMExcelReportAnalyzer(object):
         loss_trades_pnl_pct_avg = round(symbol_loss_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(symbol_loss_trades_pnl_pct_df) > 0 else 0
         loss_trades_net_pnl_usdt_avg = abs(symbol_loss_trades_net_pnl_usdt_df['net_pnl_usdt'].mean()) if len(symbol_loss_trades_net_pnl_usdt_df) > 0 else 0
         win_trades_count = len(symbol_df[symbol_df['net_pnl_usdt'] > 0])
+        win_trades_pct = round(100 * (win_trades_count / symbol_trade_count), 2) if symbol_trade_count != 0 else 0
         win_trades_pnl_pct_max = round(symbol_win_trades_pnl_pct_df['pnl_pct'].max(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
         win_trades_pnl_pct_avg = round(symbol_win_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
         win_trades_net_pnl_usdt_avg = abs(symbol_win_trades_net_pnl_usdt_df['net_pnl_usdt'].mean()) if len(symbol_win_trades_net_pnl_usdt_df) > 0 else 0
@@ -198,7 +201,7 @@ class TMMExcelReportAnalyzer(object):
         is_hollow_order_book_flag = True if deep_loss_trades_count >= DEEP_LOSS_COUNT_THRESHOLD else False
         is_blacklist_flag = True if symbol_pnl_usdt < 0 and loss_trades_count >= BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD and loss_trades_pct >= BL_FLAG_LOSS_TRADES_PCT_THRESHOLD else False
         is_final_blacklist_flag = True if is_hollow_order_book_flag or is_blacklist_flag else False
-        is_whitelist_flag = True if symbol_pnl_usdt > 0 and symbol_trade_count >= WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD and loss_trades_pct <= WL_FLAG_LOSS_TRADES_PCT_THRESHOLD else False
+        is_whitelist_flag = True if not is_final_blacklist_flag and symbol_pnl_usdt > 0 and symbol_trade_count >= WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD and loss_trades_pct <= WL_FLAG_LOSS_TRADES_PCT_THRESHOLD else False
 
         result_dict[self.get_stats_key(side, 'symbol_trade_count')] = symbol_trade_count
         result_dict[self.get_stats_key(side, 'symbol_pnl_usdt')] = symbol_pnl_usdt
@@ -209,6 +212,7 @@ class TMMExcelReportAnalyzer(object):
         result_dict[self.get_stats_key(side, 'loss_trades_pnl_pct_max')] = loss_trades_pnl_pct_max
         result_dict[self.get_stats_key(side, 'loss_trades_pnl_pct_avg')] = loss_trades_pnl_pct_avg
         result_dict[self.get_stats_key(side, 'win_trades_count')] = win_trades_count
+        result_dict[self.get_stats_key(side, 'win_trades_pct')] = win_trades_pct
         result_dict[self.get_stats_key(side, 'win_trades_pnl_pct_max')] = win_trades_pnl_pct_max
         result_dict[self.get_stats_key(side, 'win_trades_pnl_pct_avg')] = win_trades_pnl_pct_avg
         result_dict[self.get_stats_key(side, 'deep_loss_trades_count')] = deep_loss_trades_count
@@ -290,10 +294,12 @@ class TMMExcelReportAnalyzer(object):
 
     def compile_stats_report(self, total_stats_dict, incremental_mode_flag, wl_mode_flag):
         stats_title = "Base Statistics:"
-        if incremental_mode_flag:
+        if incremental_mode_flag and wl_mode_flag:
+            stats_title = "Incremental WL Statistics:"
+        elif incremental_mode_flag:
             stats_title = "Incremental Statistics:"
-        if wl_mode_flag:
-            stats_title = "WL Statistics:"
+        elif wl_mode_flag:
+            stats_title = "Base WL Statistics:"
         report_rows = list()
         report_rows.append([""])
         report_rows.append(["-" * 20])
@@ -307,7 +313,7 @@ class TMMExcelReportAnalyzer(object):
         report_rows.append(["SHORT Trades Win Rate, %:", total_stats_dict['short_trades_win_rate']])
         report_rows.append(["Total PnL, USDT:", total_stats_dict['total_pnl_usdt']])
         report_rows.append(["Trading Expectancy, USDT:", total_stats_dict['expectancy_usdt']])
-        report_rows.append(["Real RR:", "{}".format(total_stats_dict['actual_rr'])])
+        report_rows.append(["Real RR (1/R:R):", "{}".format(total_stats_dict['actual_rr'])])
         report_rows.append(["Total Win Rate, %:", total_stats_dict['win_rate_pct']])
         if not incremental_mode_flag and not wl_mode_flag:
             report_rows.append([""])
@@ -410,10 +416,17 @@ class TMMExcelReportAnalyzer(object):
         if self._is_wl_mode:
             self.generate_whitelist_strategies(self._wl_strategy_template_id, self._total_stats_dict, self._wl_strategy_params, self._wl_strategy_order_size)
 
+            wl_data_df = report_data_df[report_data_df['volume_usdt'] > self._wl_mode_order_size_filter]
+            if len(wl_data_df) > 0:
+                print("Processing base WL mode ...")
+                self.create_model(args, wl_data_df, False, True)
+                stats_report_rows = self.compile_stats_report(self._total_stats_dict, False, True)
+                self.write_analysis_report(stats_report_rows, False, True)
+            else:
+                print("There is no data to process base WL mode!")
+
         if self._is_incremental_mode:
             incr_data_df = report_data_df.head(self._incr_mode_row_count)
-            if self._is_wl_mode:
-                incr_data_df = incr_data_df[incr_data_df['volume_usdt'] < self._wl_mode_order_size_filter]
             if len(incr_data_df) > 0:
                 print("Processing incremental mode ...")
                 self.create_model(args, incr_data_df, True, False)
@@ -422,15 +435,16 @@ class TMMExcelReportAnalyzer(object):
             else:
                 print("There is no data to process incremental mode!")
 
-        if self._is_wl_mode:
-            wl_data_df = report_data_df[report_data_df['volume_usdt'] > self._wl_mode_order_size_filter]
-            if len(wl_data_df) > 0:
-                print("Processing WL mode ...")
-                self.create_model(args, wl_data_df, False, True)
-                stats_report_rows = self.compile_stats_report(self._total_stats_dict, False, True)
-                self.write_analysis_report(stats_report_rows, False, True)
+        if self._is_wl_mode and self._is_incremental_mode:
+            incr_wl_data_df = report_data_df.head(self._incr_mode_row_count)
+            incr_wl_data_df = incr_wl_data_df[incr_wl_data_df['volume_usdt'] > self._wl_mode_order_size_filter]
+            if len(incr_wl_data_df) > 0:
+                print("Processing incremental WL mode ...")
+                self.create_model(args, incr_wl_data_df, True, True)
+                stats_report_rows = self.compile_stats_report(self._total_stats_dict, True, True)
+                self.write_analysis_report(stats_report_rows, True, True)
             else:
-                print("There is no data to process WL mode!")
+                print("There is no data to process incremental WL mode!")
 
 
 def main():
