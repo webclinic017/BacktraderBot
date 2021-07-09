@@ -23,6 +23,12 @@ WL_STRATEGY_PARAMS_DEFAULT_ENTRY = "0.55-0.4-0.17-0.48"
 WL_STRATEGY_PARAMS_REGEX = "(\d*\.?\d*)-(\d*\.?\d*)-(\d*\.?\d*)-(\d*\.?\d*)"
 WL_STRATEGY_DEFAULT_ORDER_SIZE = 300
 
+REPORT_GEN_MODE_BASE_ALL = (0, "Base All")
+REPORT_GEN_MODE_BASE_NO_WL = (1, "Base NO WL")
+REPORT_GEN_MODE_BASE_WL_ONLY = (2, "Base WL Only")
+REPORT_GEN_MODE_INCREMENTAL_NO_WL = (3, "Incremental NO WL")
+REPORT_GEN_MODE_INCREMENTAL_WL_ONLY = (4, "Incremental WL Only")
+
 
 class TMMExcelReportAnalyzer(object):
     def __init__(self):
@@ -57,15 +63,19 @@ class TMMExcelReportAnalyzer(object):
     def get_input_report_filename(self):
         return '{}/report.xlsx'.format(DEFAULT_WORKING_PATH)
 
-    def get_output_analysis_filename(self, incremental_mode_flag, wl_mode_flag):
-        if incremental_mode_flag and wl_mode_flag:
-            return '{}/report_analysis_incremental_wl.csv'.format(DEFAULT_WORKING_PATH)
-        elif incremental_mode_flag:
-            return '{}/report_analysis_incremental.csv'.format(DEFAULT_WORKING_PATH)
-        elif wl_mode_flag:
-            return '{}/report_analysis_base_wl.csv'.format(DEFAULT_WORKING_PATH)
+    def get_output_analysis_filename(self, report_gen_mode):
+        if report_gen_mode == REPORT_GEN_MODE_BASE_ALL:
+            return '{}/report_analysis_base_all.csv'.format(DEFAULT_WORKING_PATH)
+        elif report_gen_mode == REPORT_GEN_MODE_BASE_NO_WL:
+            return '{}/report_analysis_base_no_wl.csv'.format(DEFAULT_WORKING_PATH)
+        elif report_gen_mode == REPORT_GEN_MODE_BASE_WL_ONLY:
+            return '{}/report_analysis_base_wl_only.csv'.format(DEFAULT_WORKING_PATH)
+        elif report_gen_mode == REPORT_GEN_MODE_INCREMENTAL_NO_WL:
+            return '{}/report_analysis_incremental_no_wl.csv'.format(DEFAULT_WORKING_PATH)
+        elif report_gen_mode == REPORT_GEN_MODE_INCREMENTAL_WL_ONLY:
+            return '{}/report_analysis_incremental_wl_only.csv'.format(DEFAULT_WORKING_PATH)
         else:
-            return '{}/report_analysis_base.csv'.format(DEFAULT_WORKING_PATH)
+            raise Exception("Wrong report_gen_mode value provided: {}".format(report_gen_mode))
 
     def get_output_strategy_filename(self):
             return '{}/{}'.format(DEFAULT_WORKING_PATH, DEFAULT_OUTPUT_WL_STRATEGIES_FILENAME)
@@ -223,7 +233,7 @@ class TMMExcelReportAnalyzer(object):
 
         return result_dict
 
-    def calculate_total_stats(self, df, model_dict, incremental_mode_flag, wl_mode_flag):
+    def calculate_total_stats(self, df, model_dict, report_gen_mode):
         result_dict = {}
 
         long_trades_count = len(df[df['side'] == "LONG"])
@@ -256,19 +266,18 @@ class TMMExcelReportAnalyzer(object):
         result_dict['actual_rr'] = actual_rr
         result_dict['win_rate_pct'] = win_rate_pct
 
-        if not incremental_mode_flag and not wl_mode_flag:
-            long_blacklist_arr  = [x for x in model_dict.keys() if model_dict[x]["LONG is_final_blacklist_flag"] is True]
-            short_blacklist_arr = [x for x in model_dict.keys() if model_dict[x]["SHORT is_final_blacklist_flag"] is True]
-            long_whitelist_arr  = [x for x in model_dict.keys() if model_dict[x]["LONG is_whitelist_flag"] is True]
-            short_whitelist_arr = [x for x in model_dict.keys() if model_dict[x]["SHORT is_whitelist_flag"] is True]
-            result_dict['long_blacklist_arr']  = long_blacklist_arr
-            result_dict['short_blacklist_arr'] = short_blacklist_arr
-            result_dict['long_whitelist_arr']  = long_whitelist_arr
-            result_dict['short_whitelist_arr'] = short_whitelist_arr
+        long_blacklist_arr  = [x for x in model_dict.keys() if model_dict[x]["LONG is_final_blacklist_flag"] is True]
+        short_blacklist_arr = [x for x in model_dict.keys() if model_dict[x]["SHORT is_final_blacklist_flag"] is True]
+        long_whitelist_arr  = [x for x in model_dict.keys() if model_dict[x]["LONG is_whitelist_flag"] is True]
+        short_whitelist_arr = [x for x in model_dict.keys() if model_dict[x]["SHORT is_whitelist_flag"] is True]
+        result_dict['long_blacklist_arr']  = long_blacklist_arr
+        result_dict['short_blacklist_arr'] = short_blacklist_arr
+        result_dict['long_whitelist_arr']  = long_whitelist_arr
+        result_dict['short_whitelist_arr'] = short_whitelist_arr
 
         return result_dict
 
-    def create_model(self, args, report_data_df, incremental_mode_flag, wl_mode_flag):
+    def create_model(self, args, report_data_df, report_gen_mode):
         self._model_dict = {}
         self._total_stats_dict = {}
 
@@ -287,19 +296,24 @@ class TMMExcelReportAnalyzer(object):
             row_dict.update(shorts_trades_stats_dict)
             self._model_dict[symbol] = row_dict
 
-        self._total_stats_dict = self.calculate_total_stats(report_data_df, self._model_dict, incremental_mode_flag, wl_mode_flag)
+        self._total_stats_dict = self.calculate_total_stats(report_data_df, self._model_dict, report_gen_mode)
 
     def format_list(self, arr):
         return ",".join(arr)
 
-    def compile_stats_report(self, total_stats_dict, incremental_mode_flag, wl_mode_flag):
-        stats_title = "Base Statistics:"
-        if incremental_mode_flag and wl_mode_flag:
-            stats_title = "Incremental WL Statistics:"
-        elif incremental_mode_flag:
-            stats_title = "Incremental Statistics:"
-        elif wl_mode_flag:
-            stats_title = "Base WL Statistics:"
+    def compile_stats_report(self, total_stats_dict, report_gen_mode):
+        if report_gen_mode == REPORT_GEN_MODE_BASE_ALL:
+            stats_title = "Base ALL Statistics:"
+        elif report_gen_mode == REPORT_GEN_MODE_BASE_NO_WL:
+            stats_title = "Base NO WL Statistics:"
+        elif report_gen_mode == REPORT_GEN_MODE_BASE_WL_ONLY:
+            stats_title = "Base WL Only Statistics:"
+        elif report_gen_mode == REPORT_GEN_MODE_INCREMENTAL_NO_WL:
+            stats_title = "Incremental NO WL Statistics:"
+        elif report_gen_mode == REPORT_GEN_MODE_INCREMENTAL_WL_ONLY:
+            stats_title = "Incremental WL Only Statistics:"
+        else:
+            raise Exception("Wrong report_gen_mode value provided: {}".format(report_gen_mode))
         report_rows = list()
         report_rows.append([""])
         report_rows.append(["-" * 20])
@@ -315,23 +329,16 @@ class TMMExcelReportAnalyzer(object):
         report_rows.append(["Trading Expectancy, USDT:", total_stats_dict['expectancy_usdt']])
         report_rows.append(["Real RR (1/R:R):", "{}".format(total_stats_dict['actual_rr'])])
         report_rows.append(["Total Win Rate, %:", total_stats_dict['win_rate_pct']])
-        if not incremental_mode_flag and not wl_mode_flag:
+        if report_gen_mode == REPORT_GEN_MODE_BASE_ALL:
             report_rows.append([""])
-            report_rows.append(["LONG Blacklist:",  self.format_list(total_stats_dict['long_blacklist_arr'])])
-            report_rows.append(["SHORT Blacklist:", self.format_list(total_stats_dict['short_blacklist_arr'])])
-            report_rows.append(["LONG Whitelist:",  self.format_list(total_stats_dict['long_whitelist_arr'])])
-            report_rows.append(["SHORT Whitelist:", self.format_list(total_stats_dict['short_whitelist_arr'])])
+            report_rows.append(["LONG Blacklist:",  self.format_list(total_stats_dict['long_blacklist_arr']) if total_stats_dict['long_blacklist_arr'] else ""])
+            report_rows.append(["SHORT Blacklist:", self.format_list(total_stats_dict['short_blacklist_arr'])if total_stats_dict['short_blacklist_arr'] else ""])
+            report_rows.append(["LONG Whitelist:",  self.format_list(total_stats_dict['long_whitelist_arr']) if total_stats_dict['long_whitelist_arr'] else ""])
+            report_rows.append(["SHORT Whitelist:", self.format_list(total_stats_dict['short_whitelist_arr'])if total_stats_dict['short_whitelist_arr'] else ""])
 
         return report_rows
 
-    def print_stats_report(self, stats_report_rows):
-        for row_arr in stats_report_rows:
-            if len(row_arr) == 1:
-                print(row_arr[0])
-            if len(row_arr) == 2:
-                print("{} {}".format(row_arr[0], row_arr[1]))
-
-    def write_analysis_report(self, stats_report_rows, incremental_mode_flag, wl_mode_flag):
+    def write_analysis_report(self, stats_report_rows, report_gen_mode):
         if len(self._model_dict) == 0:
             return
 
@@ -348,7 +355,7 @@ class TMMExcelReportAnalyzer(object):
         header = ['symbol']
         header.extend(report_header_row)
 
-        report_filename = self.get_output_analysis_filename(incremental_mode_flag, wl_mode_flag)
+        report_filename = self.get_output_analysis_filename(report_gen_mode)
         df = pd.DataFrame(report_rows, columns=header).set_index('symbol')
         df.to_csv(report_filename)
 
@@ -392,6 +399,29 @@ class TMMExcelReportAnalyzer(object):
 
         print("\nStrategy file {} has been generated!".format(out_filename))
 
+    def generate_report(self, args, df, report_gen_mode):
+        if report_gen_mode == REPORT_GEN_MODE_BASE_ALL:
+            report_df = df
+        elif report_gen_mode == REPORT_GEN_MODE_BASE_NO_WL:
+            report_df = df[df['volume_usdt'] < self._wl_mode_order_size_filter]
+        elif report_gen_mode == REPORT_GEN_MODE_BASE_WL_ONLY:
+            report_df = df[df['volume_usdt'] > self._wl_mode_order_size_filter]
+        elif report_gen_mode == REPORT_GEN_MODE_INCREMENTAL_NO_WL:
+            report_df = df.head(self._incr_mode_row_count)
+            report_df = report_df[report_df['volume_usdt'] < self._wl_mode_order_size_filter]
+        elif report_gen_mode == REPORT_GEN_MODE_INCREMENTAL_WL_ONLY:
+            report_df = df.head(self._incr_mode_row_count)
+            report_df = report_df[report_df['volume_usdt'] > self._wl_mode_order_size_filter]
+        else:
+            raise Exception("Wrong report_gen_mode value provided: {}".format(report_gen_mode))
+        if len(report_df) > 0:
+            print("Processing {} mode ...".format(report_gen_mode[1]))
+            self.create_model(args, report_df, report_gen_mode)
+            stats_report_rows = self.compile_stats_report(self._total_stats_dict, report_gen_mode)
+            self.write_analysis_report(stats_report_rows, report_gen_mode)
+        else:
+            print("There is no data to process {} mode!".format(report_gen_mode[1]))
+
     def run(self):
         random.seed()
         args = self.parse_args()
@@ -409,44 +439,20 @@ class TMMExcelReportAnalyzer(object):
             self.user_input_wl_strategy_params()
             self.user_input_wl_order_size()
 
-        base_data_df = report_data_df[report_data_df['volume_usdt'] < self._wl_mode_order_size_filter]
-        self.create_model(args, base_data_df, False, False)
-        stats_report_rows = self.compile_stats_report(self._total_stats_dict, False, False)
-        self.print_stats_report(stats_report_rows)
-        self.write_analysis_report(stats_report_rows, False, False)
+        self.generate_report(args, report_data_df, REPORT_GEN_MODE_BASE_ALL)
         if self._is_wl_mode:
             self.generate_whitelist_strategies(self._wl_strategy_template_id, self._total_stats_dict, self._wl_strategy_params, self._wl_strategy_order_size)
 
-            base_wl_data_df = report_data_df[report_data_df['volume_usdt'] > self._wl_mode_order_size_filter]
-            if len(base_wl_data_df) > 0:
-                print("Processing base WL mode ...")
-                self.create_model(args, base_wl_data_df, False, True)
-                stats_report_rows = self.compile_stats_report(self._total_stats_dict, False, True)
-                self.write_analysis_report(stats_report_rows, False, True)
-            else:
-                print("There is no data to process base WL mode!")
+        self.generate_report(args, report_data_df, REPORT_GEN_MODE_BASE_NO_WL)
+
+        if self._is_wl_mode:
+            self.generate_report(args, report_data_df, REPORT_GEN_MODE_BASE_WL_ONLY)
 
         if self._is_incremental_mode:
-            incr_data_df = report_data_df.head(self._incr_mode_row_count)
-            incr_data_df = incr_data_df[incr_data_df['volume_usdt'] < self._wl_mode_order_size_filter]
-            if len(incr_data_df) > 0:
-                print("Processing incremental mode ...")
-                self.create_model(args, incr_data_df, True, False)
-                stats_report_rows = self.compile_stats_report(self._total_stats_dict, True, False)
-                self.write_analysis_report(stats_report_rows, True, False)
-            else:
-                print("There is no data to process incremental mode!")
+            self.generate_report(args, report_data_df, REPORT_GEN_MODE_INCREMENTAL_NO_WL)
 
-        if self._is_wl_mode and self._is_incremental_mode:
-            incr_wl_data_df = report_data_df.head(self._incr_mode_row_count)
-            incr_wl_data_df = incr_wl_data_df[incr_wl_data_df['volume_usdt'] > self._wl_mode_order_size_filter]
-            if len(incr_wl_data_df) > 0:
-                print("Processing incremental WL mode ...")
-                self.create_model(args, incr_wl_data_df, True, True)
-                stats_report_rows = self.compile_stats_report(self._total_stats_dict, True, True)
-                self.write_analysis_report(stats_report_rows, True, True)
-            else:
-                print("There is no data to process incremental WL mode!")
+            if self._is_wl_mode:
+                self.generate_report(args, report_data_df, REPORT_GEN_MODE_INCREMENTAL_WL_ONLY)
 
 
 def main():
