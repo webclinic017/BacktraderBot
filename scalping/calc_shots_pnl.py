@@ -225,7 +225,7 @@ class ShotsPnlCalculator(object):
     def simulate_shots(self, is_ultrashort, is_moonbot, is_future, groups_df):
         arr_out = []
 
-        shot_depth_list = list(groups_df["shot_depth"].values)
+        shot_depth_list = list(groups_df["real_shot_depth"].values)
         shot_count_list = list(groups_df["counts"].values)
 
         combinations = self.get_sim_combinations(is_ultrashort, is_moonbot, is_future, shot_depth_list, shot_count_list)
@@ -323,7 +323,7 @@ class ShotsPnlCalculator(object):
             print("No input shots data to process. Exiting.")
             return
 
-        groups_df = shots_data_df.groupby(["shot_depth"]).size().reset_index(name='counts')
+        groups_df = shots_data_df.groupby(["real_shot_depth"]).size().reset_index(name='counts')
         shots_data_df = self.simulate_shots(is_ultrashort, is_moonbot, is_future, groups_df)
 
         if len(shots_data_df) > 0:

@@ -30,7 +30,7 @@ MULTIPLE_SHOTS_COMBINE_INTERVAL_MSEC = 7500
 
 class Shot(object):
     def __init__(self, symbol_name, is_multishot, start_timestamp, end_timestamp, start_datetime, end_datetime, shot_trades_num, shot_type,
-                       start_price, end_price, shot_duration, shot_depth, diff_with_preshot, shot_bounce, shot_bounce_ratio, shot_bounce_datetime,
+                       start_price, end_price, shot_duration, shot_depth, diff_with_preshot, shot_bounce, shot_bounce_ratio, shot_bounce_datetime, real_shot_depth,
                        d5m, d15m, d1H, dBTC5m, dBTC15m, dBTC1H):
         self.symbol_name = symbol_name
         self.is_multishot = is_multishot
@@ -48,6 +48,7 @@ class Shot(object):
         self.shot_bounce = shot_bounce
         self.shot_bounce_ratio = shot_bounce_ratio
         self.shot_bounce_datetime = shot_bounce_datetime
+        self.real_shot_depth = real_shot_depth
         self.d5m = d5m
         self.d15m = d15m
         self.d1H = d1H
@@ -251,6 +252,7 @@ class ShotsDetector(object):
                             shot_depth_min_threshold = SHOT_DEPTH_MIN_THRESHOLD_PCT_US_MODE if args.ultrashortmode else SHOT_DEPTH_MIN_THRESHOLD_PCT
                             if shot_depth_pct >= shot_depth_min_threshold:
                                 shot_bounce_info = self.find_shot_bounce(df, group_timestamp, c_timestamp, c_price, shot_type, max_price_val)
+                                real_shot_depth = (shot_depth_pct + abs(shot_bounce_info.bounce_pct)) if shot_bounce_info.bounce_pct < 0 else shot_depth_pct
                                 shot = Shot(symbol_name,
                                             False,
                                             group_timestamp,
@@ -267,6 +269,7 @@ class ShotsDetector(object):
                                             self.round_precision(shot_bounce_info.bounce_pct, SHOT_ROUNDING_PRECISION),
                                             int(round(shot_bounce_info.bounce_pct * 100 / shot_depth_pct, 0)),
                                             shot_bounce_info.datetime,
+                                            self.round_precision(real_shot_depth, SHOT_ROUNDING_PRECISION),
                                             first_trade["d5m"].values[0],
                                             first_trade["d15m"].values[0],
                                             first_trade["d1H"].values[0],
@@ -322,7 +325,7 @@ class ShotsDetector(object):
                         min_shot_price = self.find_shots_min_price(shots_list[ci:cj+1])
                         max_shot_price = self.find_shots_max_price(shots_list[ci:cj+1])
                         max_price_val = max_shot_price if c_shot.shot_type == "SHORT" else min_shot_price
-                        shot_depth_pct = self.calculate_depth_pct(c_shot.start_price, max_price_val)
+                        shot_depth_pct = self.round_precision(self.calculate_depth_pct(c_shot.start_price, max_price_val), SHOT_ROUNDING_PRECISION)
                         multi_shot_type = "LONG" if cj_shot.end_price < c_shot.start_price else "SHORT"
                         # merge c_shot and cj_shot objects to create a new multishot
                         new_multishot = Shot(symbol_name=c_shot.symbol_name,
@@ -336,11 +339,12 @@ class ShotsDetector(object):
                                              start_price=c_shot.start_price,
                                              end_price=cj_shot.end_price,
                                              shot_duration=cj_shot.start_timestamp - c_shot.start_timestamp + 1,
-                                             shot_depth=self.round_precision(shot_depth_pct, SHOT_ROUNDING_PRECISION),
+                                             shot_depth=shot_depth_pct,
                                              diff_with_preshot=0,
                                              shot_bounce=0,
                                              shot_bounce_ratio=0,
                                              shot_bounce_datetime=0,
+                                             real_shot_depth=shot_depth_pct,
                                              d5m=c_shot.d5m,
                                              d15m=c_shot.d15m,
                                              d1H=c_shot.d1H,
@@ -367,7 +371,7 @@ class ShotsDetector(object):
 
         header = ['symbol_name', 'is_multishot', 'start_timestamp', 'end_timestamp', 'start_datetime', 'end_datetime', 'shot_trades_num',
                   'shot_type', 'start_price', 'end_price', 'shot_duration', 'shot_depth', 'diff_with_preshot',
-                  'shot_bounce', 'shot_bounce_ratio', 'shot_bounce_datetime', 'd5m', 'd15m', 'd1H', 'dBTC5m', 'dBTC15m', 'dBTC1H']
+                  'shot_bounce', 'shot_bounce_ratio', 'shot_bounce_datetime', 'real_shot_depth', 'd5m', 'd15m', 'd1H', 'dBTC5m', 'dBTC15m', 'dBTC1H']
         csv_rows = []
         for shot in shots_list:
             csv_rows.append([
@@ -387,6 +391,7 @@ class ShotsDetector(object):
                                 shot.shot_bounce,
                                 shot.shot_bounce_ratio,
                                 shot.shot_bounce_datetime,
+                                shot.real_shot_depth,
                                 shot.d5m,
                                 shot.d15m,
                                 shot.d1H,

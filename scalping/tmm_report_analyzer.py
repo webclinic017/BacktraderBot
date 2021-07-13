@@ -9,25 +9,26 @@ from scalping.strategy_generator_common import ShotStrategyGenerator, TemplateTo
 DEFAULT_WORKING_PATH = "/Users/alex/Downloads"
 DEFAULT_OUTPUT_WL_STRATEGIES_FILENAME = "algorithms.config_future_wl"
 
+FUTURES_MAKER_FEE_PCT = 0.02
+FUTURES_TAKER_FEE_PCT = 0.04
 MAX_SLIPPAGE_PCT = 0.1
-DEEP_LOSS_COUNT_THRESHOLD = 2
+DEEP_LOSS_COUNT_THRESHOLD = 4
 
 BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD = 4
-BL_FLAG_LOSS_TRADES_PCT_THRESHOLD = 15
+WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD = 20
 
-WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD = 15
-WL_FLAG_LOSS_TRADES_PCT_THRESHOLD = 15
+WL_WIN_RATE_ADDED_THRESHOLD_PCT = 4
 
 WL_STRATEGY_DEFAULT_TEMPLATE_ID = 2
 WL_STRATEGY_PARAMS_DEFAULT_ENTRY = "0.55-0.4-0.17-0.48"
 WL_STRATEGY_PARAMS_REGEX = "(\d*\.?\d*)-(\d*\.?\d*)-(\d*\.?\d*)-(\d*\.?\d*)"
 WL_STRATEGY_DEFAULT_ORDER_SIZE = 300
 
-REPORT_GEN_MODE_BASE_ALL = (0, "Base All")
-REPORT_GEN_MODE_BASE_NO_WL = (1, "Base NO WL")
-REPORT_GEN_MODE_BASE_WL_ONLY = (2, "Base WL Only")
-REPORT_GEN_MODE_INCREMENTAL_NO_WL = (3, "Incremental NO WL")
-REPORT_GEN_MODE_INCREMENTAL_WL_ONLY = (4, "Incremental WL Only")
+REPORT_GEN_MODE_BASE_ALL            = (0, "[Base All]")
+REPORT_GEN_MODE_BASE_NO_WL          = (1, "[Base NO WL]")
+REPORT_GEN_MODE_BASE_WL_ONLY        = (2, "[Base WL Only]")
+REPORT_GEN_MODE_INCREMENTAL_NO_WL   = (3, "[Incremental NO WL]")
+REPORT_GEN_MODE_INCREMENTAL_WL_ONLY = (4, "[Incremental WL Only]")
 
 
 class TMMExcelReportAnalyzer(object):
@@ -45,6 +46,11 @@ class TMMExcelReportAnalyzer(object):
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='TraderMake.Money Excel report analyzer')
+
+        parser.add_argument('-t', '--def_tp_pct',
+                            type=float,
+                            required=True,
+                            help=('Default TP, %'))
 
         parser.add_argument('-s', '--def_sl_pct',
                             type=float,
@@ -182,6 +188,11 @@ class TMMExcelReportAnalyzer(object):
             print("Wrong order size.")
             exit(-1)
 
+    def get_strategy_real_win_rate_pct(self, args):
+        real_tp = args.def_tp_pct - FUTURES_MAKER_FEE_PCT
+        real_sl = args.def_sl_pct + FUTURES_TAKER_FEE_PCT
+        return 100 * real_sl / (real_tp + real_sl)
+
     def calculate_trade_side_stats(self, args, df, symbol, side):
         result_dict = {}
 
@@ -209,9 +220,10 @@ class TMMExcelReportAnalyzer(object):
         actual_rr = round(1 / (win_trades_net_pnl_usdt_avg / loss_trades_net_pnl_usdt_avg), 2) if win_trades_net_pnl_usdt_avg != 0 and loss_trades_net_pnl_usdt_avg != 0 else 0
         deep_loss_trades_count = len(symbol_df[symbol_df['pnl_pct'] < -(args.def_sl_pct + MAX_SLIPPAGE_PCT)])
         is_hollow_order_book_flag = True if deep_loss_trades_count >= DEEP_LOSS_COUNT_THRESHOLD else False
-        is_blacklist_flag = True if symbol_pnl_usdt < 0 and loss_trades_count >= BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD and loss_trades_pct >= BL_FLAG_LOSS_TRADES_PCT_THRESHOLD else False
+        real_win_rate_pct = self.get_strategy_real_win_rate_pct(args)
+        is_blacklist_flag = True if symbol_pnl_usdt < 0 and loss_trades_count >= BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD and loss_trades_pct >= (100 - real_win_rate_pct) else False
         is_final_blacklist_flag = True if is_hollow_order_book_flag or is_blacklist_flag else False
-        is_whitelist_flag = True if not is_final_blacklist_flag and symbol_pnl_usdt > 0 and symbol_trade_count >= WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD and loss_trades_pct <= WL_FLAG_LOSS_TRADES_PCT_THRESHOLD else False
+        is_whitelist_flag = True if not is_final_blacklist_flag and symbol_pnl_usdt > 0 and symbol_trade_count >= WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD and win_trades_pct >= (real_win_rate_pct + WL_WIN_RATE_ADDED_THRESHOLD_PCT) else False
 
         result_dict[self.get_stats_key(side, 'symbol_trade_count')] = symbol_trade_count
         result_dict[self.get_stats_key(side, 'symbol_pnl_usdt')] = symbol_pnl_usdt
@@ -403,15 +415,15 @@ class TMMExcelReportAnalyzer(object):
         if report_gen_mode == REPORT_GEN_MODE_BASE_ALL:
             report_df = df
         elif report_gen_mode == REPORT_GEN_MODE_BASE_NO_WL:
-            report_df = df[df['volume_usdt'] < self._wl_mode_order_size_filter]
+            report_df = df[df['volume_usdt'] < self._wl_mode_order_size_filter] if self._is_wl_mode else df
         elif report_gen_mode == REPORT_GEN_MODE_BASE_WL_ONLY:
-            report_df = df[df['volume_usdt'] > self._wl_mode_order_size_filter]
+            report_df = df[df['volume_usdt'] > self._wl_mode_order_size_filter] if self._is_wl_mode else df
         elif report_gen_mode == REPORT_GEN_MODE_INCREMENTAL_NO_WL:
             report_df = df.head(self._incr_mode_row_count)
-            report_df = report_df[report_df['volume_usdt'] < self._wl_mode_order_size_filter]
+            report_df = report_df[report_df['volume_usdt'] < self._wl_mode_order_size_filter] if self._is_wl_mode else report_df
         elif report_gen_mode == REPORT_GEN_MODE_INCREMENTAL_WL_ONLY:
             report_df = df.head(self._incr_mode_row_count)
-            report_df = report_df[report_df['volume_usdt'] > self._wl_mode_order_size_filter]
+            report_df = report_df[report_df['volume_usdt'] > self._wl_mode_order_size_filter] if self._is_wl_mode else report_df
         else:
             raise Exception("Wrong report_gen_mode value provided: {}".format(report_gen_mode))
         if len(report_df) > 0:
@@ -443,9 +455,8 @@ class TMMExcelReportAnalyzer(object):
         if self._is_wl_mode:
             self.generate_whitelist_strategies(self._wl_strategy_template_id, self._total_stats_dict, self._wl_strategy_params, self._wl_strategy_order_size)
 
-        self.generate_report(args, report_data_df, REPORT_GEN_MODE_BASE_NO_WL)
-
         if self._is_wl_mode:
+            self.generate_report(args, report_data_df, REPORT_GEN_MODE_BASE_NO_WL)
             self.generate_report(args, report_data_df, REPORT_GEN_MODE_BASE_WL_ONLY)
 
         if self._is_incremental_mode:

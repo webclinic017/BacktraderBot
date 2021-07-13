@@ -34,4 +34,9 @@ else
 fi
 
 declare -a filepath=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${filename}
+
+if [[ ! -f ${filepath} ]]; then
+    echo "File ${filepath} not found!"
+fi
+
 pwsh ./powershell/deploy_to_vps.ps1 ${filepath} ${vps_ip_address}
