@@ -216,8 +216,7 @@ class TMMExcelReportAnalyzer(object):
         win_trades_pnl_pct_max = round(symbol_win_trades_pnl_pct_df['pnl_pct'].max(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
         win_trades_pnl_pct_avg = round(symbol_win_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
         win_trades_net_pnl_usdt_avg = abs(symbol_win_trades_net_pnl_usdt_df['net_pnl_usdt'].mean()) if len(symbol_win_trades_net_pnl_usdt_df) > 0 else 0
-        expectancy_usdt = round((win_trades_count / symbol_trade_count) * win_trades_net_pnl_usdt_avg - (loss_trades_count / symbol_trade_count) * loss_trades_net_pnl_usdt_avg, 8) if symbol_trade_count != 0 else 0
-        actual_rr = round(1 / (win_trades_net_pnl_usdt_avg / loss_trades_net_pnl_usdt_avg), 2) if win_trades_net_pnl_usdt_avg != 0 and loss_trades_net_pnl_usdt_avg != 0 else 0
+        expectancy_usdt = round((win_trades_count / symbol_trade_count) * win_trades_net_pnl_usdt_avg - (loss_trades_count / symbol_trade_count) * loss_trades_net_pnl_usdt_avg, 4) if symbol_trade_count != 0 else 0
         deep_loss_trades_count = len(symbol_df[symbol_df['pnl_pct'] < -(args.def_sl_pct + MAX_SLIPPAGE_PCT)])
         is_hollow_order_book_flag = True if deep_loss_trades_count >= DEEP_LOSS_COUNT_THRESHOLD else False
         real_win_rate_pct = self.get_strategy_real_win_rate_pct(args)
@@ -228,7 +227,6 @@ class TMMExcelReportAnalyzer(object):
         result_dict[self.get_stats_key(side, 'symbol_trade_count')] = symbol_trade_count
         result_dict[self.get_stats_key(side, 'symbol_pnl_usdt')] = symbol_pnl_usdt
         result_dict[self.get_stats_key(side, 'expectancy_usdt')] = expectancy_usdt
-        result_dict[self.get_stats_key(side, 'actual_rr')] = actual_rr
         result_dict[self.get_stats_key(side, 'loss_trades_count')] = loss_trades_count
         result_dict[self.get_stats_key(side, 'loss_trades_pct')] = loss_trades_pct
         result_dict[self.get_stats_key(side, 'loss_trades_pnl_pct_max')] = loss_trades_pnl_pct_max
@@ -263,7 +261,6 @@ class TMMExcelReportAnalyzer(object):
         win_trades_net_pnl_usdt_avg = abs(df[df['net_pnl_usdt'] > 0]['net_pnl_usdt'].mean())
         total_pnl_usdt = round(df['net_pnl_usdt'].sum(), 2)
         expectancy_usdt = round(win_rate * win_trades_net_pnl_usdt_avg - loss_rate * loss_trades_net_pnl_usdt_avg, 4)
-        actual_rr = round(1 / (win_trades_net_pnl_usdt_avg / loss_trades_net_pnl_usdt_avg), 2) if win_trades_net_pnl_usdt_avg != 0 and loss_trades_net_pnl_usdt_avg != 0 else 0
         win_rate_pct = round(100 * win_rate, 2)
 
         result_dict['total_trade_count'] = total_trade_count
@@ -275,7 +272,6 @@ class TMMExcelReportAnalyzer(object):
         result_dict['short_trades_win_rate'] = short_trades_win_rate
         result_dict['total_pnl_usdt'] = total_pnl_usdt
         result_dict['expectancy_usdt'] = expectancy_usdt
-        result_dict['actual_rr'] = actual_rr
         result_dict['win_rate_pct'] = win_rate_pct
 
         long_blacklist_arr  = [x for x in model_dict.keys() if model_dict[x]["LONG is_final_blacklist_flag"] is True]
@@ -339,7 +335,6 @@ class TMMExcelReportAnalyzer(object):
         report_rows.append(["SHORT Trades Win Rate, %:", total_stats_dict['short_trades_win_rate']])
         report_rows.append(["Total PnL, USDT:", total_stats_dict['total_pnl_usdt']])
         report_rows.append(["Trading Expectancy, USDT:", total_stats_dict['expectancy_usdt']])
-        report_rows.append(["Real RR (1/R:R):", "{}".format(total_stats_dict['actual_rr'])])
         report_rows.append(["Total Win Rate, %:", total_stats_dict['win_rate_pct']])
         if report_gen_mode == REPORT_GEN_MODE_BASE_ALL:
             report_rows.append([""])
