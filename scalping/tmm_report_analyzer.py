@@ -11,7 +11,7 @@ DEFAULT_OUTPUT_WL_STRATEGIES_FILENAME = "algorithms.config_future_wl"
 
 FUTURES_MAKER_FEE_PCT = 0.02
 FUTURES_TAKER_FEE_PCT = 0.04
-MAX_SLIPPAGE_PCT = 0.1
+MAX_SLIPPAGE_PCT = 0.2
 DEEP_LOSS_COUNT_THRESHOLD = 4
 
 BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD = 4
@@ -245,7 +245,7 @@ class TMMExcelReportAnalyzer(object):
 
         return result_dict
 
-    def calculate_total_stats(self, df, model_dict, report_gen_mode):
+    def calculate_total_stats(self, df, model_dict):
         result_dict = {}
 
         long_trades_count = len(df[df['side'] == "LONG"])
@@ -289,7 +289,7 @@ class TMMExcelReportAnalyzer(object):
 
         return result_dict
 
-    def create_model(self, args, report_data_df, report_gen_mode):
+    def create_model(self, args, report_data_df):
         self._model_dict = {}
         self._total_stats_dict = {}
 
@@ -308,7 +308,7 @@ class TMMExcelReportAnalyzer(object):
             row_dict.update(shorts_trades_stats_dict)
             self._model_dict[symbol] = row_dict
 
-        self._total_stats_dict = self.calculate_total_stats(report_data_df, self._model_dict, report_gen_mode)
+        self._total_stats_dict = self.calculate_total_stats(report_data_df, self._model_dict)
 
     def format_list(self, arr):
         return ",".join(arr)
@@ -428,7 +428,7 @@ class TMMExcelReportAnalyzer(object):
             raise Exception("Wrong report_gen_mode value provided: {}".format(report_gen_mode))
         if len(report_df) > 0:
             print("Processing {} mode ...".format(report_gen_mode[1]))
-            self.create_model(args, report_df, report_gen_mode)
+            self.create_model(args, report_df)
             stats_report_rows = self.compile_stats_report(self._total_stats_dict, report_gen_mode)
             self.write_analysis_report(stats_report_rows, report_gen_mode)
         else:

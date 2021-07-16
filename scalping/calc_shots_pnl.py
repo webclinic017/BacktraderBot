@@ -192,7 +192,7 @@ class ShotsPnlCalculator(object):
         else:
             return {
                 "distance": np.arange(min_distance, max_distance, DEFAULT_MIN_STEP),
-                "buffer": 0.2,
+                "buffer": np.arange(0.2, 0.51, DEFAULT_MIN_STEP),
                 "tp": 0.17,
                 "sl": 0.48
             }
