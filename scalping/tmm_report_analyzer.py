@@ -11,13 +11,13 @@ DEFAULT_OUTPUT_WL_STRATEGIES_FILENAME = "algorithms.config_future_wl"
 
 FUTURES_MAKER_FEE_PCT = 0.02
 FUTURES_TAKER_FEE_PCT = 0.04
-MAX_SLIPPAGE_PCT = 0.2
-DEEP_LOSS_COUNT_THRESHOLD = 4
+MAX_SLIPPAGE_PCT = 0.3
+DEEP_LOSS_COUNT_THRESHOLD = 3
 
 BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD = 4
-WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD = 20
+WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD = 30
 
-WL_WIN_RATE_ADDED_THRESHOLD_PCT = 4
+WL_WIN_RATE_ADDED_THRESHOLD_PCT = 7
 
 WL_STRATEGY_DEFAULT_TEMPLATE_ID = 2
 WL_STRATEGY_PARAMS_DEFAULT_ENTRY = "0.55-0.4-0.17-0.48"
@@ -188,7 +188,12 @@ class TMMExcelReportAnalyzer(object):
             print("Wrong order size.")
             exit(-1)
 
-    def get_strategy_real_win_rate_pct(self, args):
+    def get_theoretical_win_rate_pct(self, args):
+        tp = args.def_tp_pct
+        sl = args.def_sl_pct
+        return 100 * sl / (tp + sl)
+
+    def get_real_win_rate_pct(self, args):
         real_tp = args.def_tp_pct - FUTURES_MAKER_FEE_PCT
         real_sl = args.def_sl_pct + FUTURES_TAKER_FEE_PCT
         return 100 * real_sl / (real_tp + real_sl)
@@ -219,7 +224,7 @@ class TMMExcelReportAnalyzer(object):
         expectancy_usdt = round((win_trades_count / symbol_trade_count) * win_trades_net_pnl_usdt_avg - (loss_trades_count / symbol_trade_count) * loss_trades_net_pnl_usdt_avg, 4) if symbol_trade_count != 0 else 0
         deep_loss_trades_count = len(symbol_df[symbol_df['pnl_pct'] < -(args.def_sl_pct + MAX_SLIPPAGE_PCT)])
         is_hollow_order_book_flag = True if deep_loss_trades_count >= DEEP_LOSS_COUNT_THRESHOLD else False
-        real_win_rate_pct = self.get_strategy_real_win_rate_pct(args)
+        real_win_rate_pct = self.get_real_win_rate_pct(args)
         is_blacklist_flag = True if symbol_pnl_usdt < 0 and loss_trades_count >= BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD and loss_trades_pct >= (100 - real_win_rate_pct) else False
         is_final_blacklist_flag = True if is_hollow_order_book_flag or is_blacklist_flag else False
         is_whitelist_flag = True if not is_final_blacklist_flag and symbol_pnl_usdt > 0 and symbol_trade_count >= WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD and win_trades_pct >= (real_win_rate_pct + WL_WIN_RATE_ADDED_THRESHOLD_PCT) else False
@@ -243,7 +248,7 @@ class TMMExcelReportAnalyzer(object):
 
         return result_dict
 
-    def calculate_total_stats(self, df, model_dict):
+    def calculate_total_stats(self, args, df, model_dict):
         result_dict = {}
 
         long_trades_count = len(df[df['side'] == "LONG"])
@@ -261,7 +266,6 @@ class TMMExcelReportAnalyzer(object):
         win_trades_net_pnl_usdt_avg = abs(df[df['net_pnl_usdt'] > 0]['net_pnl_usdt'].mean())
         total_pnl_usdt = round(df['net_pnl_usdt'].sum(), 2)
         expectancy_usdt = round(win_rate * win_trades_net_pnl_usdt_avg - loss_rate * loss_trades_net_pnl_usdt_avg, 4)
-        win_rate_pct = round(100 * win_rate, 2)
 
         result_dict['total_trade_count'] = total_trade_count
         result_dict['long_trades_lost_count'] = long_trades_lost_count
@@ -272,7 +276,9 @@ class TMMExcelReportAnalyzer(object):
         result_dict['short_trades_win_rate'] = short_trades_win_rate
         result_dict['total_pnl_usdt'] = total_pnl_usdt
         result_dict['expectancy_usdt'] = expectancy_usdt
-        result_dict['win_rate_pct'] = win_rate_pct
+        result_dict['theoretical_win_rate_pct'] = round(self.get_theoretical_win_rate_pct(args), 2)
+        result_dict['real_win_rate_pct'] = round(self.get_real_win_rate_pct(args), 2)
+        result_dict['actual_win_rate_pct'] = round(100 * win_rate, 2)
 
         long_blacklist_arr  = [x for x in model_dict.keys() if model_dict[x]["LONG is_final_blacklist_flag"] is True]
         short_blacklist_arr = [x for x in model_dict.keys() if model_dict[x]["SHORT is_final_blacklist_flag"] is True]
@@ -304,7 +310,7 @@ class TMMExcelReportAnalyzer(object):
             row_dict.update(shorts_trades_stats_dict)
             self._model_dict[symbol] = row_dict
 
-        self._total_stats_dict = self.calculate_total_stats(report_data_df, self._model_dict)
+        self._total_stats_dict = self.calculate_total_stats(args, report_data_df, self._model_dict)
 
     def format_list(self, arr):
         return ",".join(arr)
@@ -335,7 +341,9 @@ class TMMExcelReportAnalyzer(object):
         report_rows.append(["SHORT Trades Win Rate, %:", total_stats_dict['short_trades_win_rate']])
         report_rows.append(["Total PnL, USDT:", total_stats_dict['total_pnl_usdt']])
         report_rows.append(["Trading Expectancy, USDT:", total_stats_dict['expectancy_usdt']])
-        report_rows.append(["Total Win Rate, %:", total_stats_dict['win_rate_pct']])
+        report_rows.append(["Theoretical Win Rate, %:", total_stats_dict['theoretical_win_rate_pct']])
+        report_rows.append(["Real Win Rate, %:", total_stats_dict['real_win_rate_pct']])
+        report_rows.append(["Actual Win Rate, %:", total_stats_dict['actual_win_rate_pct']])
         if report_gen_mode == REPORT_GEN_MODE_BASE_ALL:
             report_rows.append([""])
             report_rows.append(["LONG Blacklist:",  self.format_list(total_stats_dict['long_blacklist_arr']) if total_stats_dict['long_blacklist_arr'] else ""])

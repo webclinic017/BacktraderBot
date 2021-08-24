@@ -156,13 +156,13 @@ def get_btc_ohlcv_data(start_timestamp, end_timestamp):
         first_row_timestamp = df.head(1).index.values[0]
         last_row_timestamp  = df.tail(1).index.values[0]
         if start_timestamp >= first_row_timestamp and end_timestamp <= last_row_timestamp:
-            print("There is an existing Spot BTC/USDT OHLC data in the file. Data will be reused.")
+            print("There is an existing Spot OHLC BTC/USDT data in the file. Data will be reused.")
             return df
         else:
-            print("!!! There is no Spot BTC/USDT OHLC data in the file. Data will be downloaded.")
+            print("!!! There is no Spot OHLC BTC/USDT data in the file. Data will be downloaded.")
 
     except:
-        print("!!! Error during opening Spot BTC/USDT OHLC data file. Data will be downloaded.")
+        print("!!! Error during opening Spot OHLC BTC/USDT data file. Data will be downloaded.")
 
     # Get data
     timestamp = start_timestamp
