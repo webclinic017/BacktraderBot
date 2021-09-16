@@ -23,12 +23,13 @@ MIN_PRACTICAL_DISTANCE = 0.5
 MAX_PRACTICAL_DISTANCE = 3.0
 
 MIN_DISTANCE_PCT = 0.3
-MAX_BUFFER_PCT = 0.36
+MAX_BUFFER_PCT = 0.26
 
 MIN_TP_PCT = 0.12
+MAX_TP_PCT = 0.19
 
-MIN_SL_PCT = 0.35
-MAX_SL_PCT = 0.51
+MIN_SL_PCT = 0.30
+MAX_SL_PCT = 0.37
 
 MIN_RR_RATIO = 2
 MAX_TP_TO_SHOT_RATIO = 0.5
@@ -132,9 +133,9 @@ class ShotsPnlCalculator(object):
         os.makedirs(output_path, exist_ok=True)
 
         if args.moonbot:
-            header = ['symbol_name', 'shot_type', 'total_shots_count', 'MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating']
+            header = ['symbol_name', 'shot_type', 'total_shots_count', 'max_real_shot_depth', 'MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Profit Rating']
         else:
-            header = ['symbol_name', 'shot_type', 'total_shots_count', 'Distance', 'Buffer', 'TP', 'SL', 'Profit Rating']
+            header = ['symbol_name', 'shot_type', 'total_shots_count', 'max_real_shot_depth', 'Distance', 'Buffer', 'TP', 'SL', 'Profit Rating']
 
         csv_rows = []
         for index, row in df.iterrows():
@@ -142,6 +143,7 @@ class ShotsPnlCalculator(object):
                                 args.symbol,
                                 shot_type,
                                 total_shots_count,
+                                row['max_real_shot_depth'],
                                 row['MShotPriceMin'] if args.moonbot else row['Distance'],
                                 row['MShotPrice'] if args.moonbot else row['Buffer'],
                                 row['TP'],
@@ -196,15 +198,15 @@ class ShotsPnlCalculator(object):
             return {
                 "MShotPriceMin": np.arange(MIN_DISTANCE_PCT, max_s - 0.1 + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
                 "MShotPrice": np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "tp": np.arange(MIN_TP_PCT, (max_s + MAX_BUFFER_PCT / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
+                "tp": np.arange(MIN_TP_PCT, MAX_TP_PCT, DEFAULT_MIN_STEP),
+                "sl": np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
         else:
             return {
                 "distance": np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
                 "buffer": np.arange(0.2, MAX_BUFFER_PCT, DEFAULT_MIN_STEP),
-                "tp": np.arange(MIN_TP_PCT, (max_s + MAX_BUFFER_PCT / 2) * MAX_TP_TO_SHOT_RATIO + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "sl": np.arange(0.35, MAX_SL_PCT, DEFAULT_MIN_STEP)
+                "tp": np.arange(MIN_TP_PCT, MAX_TP_PCT, DEFAULT_MIN_STEP),
+                "sl": np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
 
     @staticmethod
@@ -290,6 +292,7 @@ class ShotsPnlCalculator(object):
 
         shot_depth_list = list(groups_df["real_shot_depth"].values)
         shot_count_list = list(groups_df["counts"].values)
+        max_real_shot_depth = max(shot_depth_list)
 
         combinations = self.get_sim_combinations(is_moonbot, shot_depth_list, shot_count_list)
         for c_idx, c_dict in enumerate(combinations):
@@ -346,6 +349,7 @@ class ShotsPnlCalculator(object):
                        round(comb_params_arr[1], 2),
                        round(c_tp, 2),
                        round(c_sl, 2),
+                       max_real_shot_depth,
                        distance_rating,
                        profit_rating,
                        trials_count,
@@ -359,10 +363,10 @@ class ShotsPnlCalculator(object):
                 arr_out.append(arr)
 
         if is_moonbot:
-            df = pd.DataFrame(arr_out, columns=['MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'Distance Rating', 'Profit Rating', 'shot_trials_count',
+            df = pd.DataFrame(arr_out, columns=['MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'max_real_shot_depth', 'Distance Rating', 'Profit Rating', 'shot_trials_count',
                                                'shot_missed_count, %', 'shot_triggered_tp_count, %', 'shot_triggered_sl_count, %', 'random_triggered_tp_count, %', 'random_triggered_sl_count, %', 'actual_win_rate, %'])
         else:
-            df = pd.DataFrame(arr_out, columns=['Distance', 'Buffer', 'TP', 'SL', 'Distance Rating', 'Profit Rating', 'shot_trials_count',
+            df = pd.DataFrame(arr_out, columns=['Distance', 'Buffer', 'TP', 'SL', 'max_real_shot_depth', 'Distance Rating', 'Profit Rating', 'shot_trials_count',
                                                'shot_missed_count, %', 'shot_triggered_tp_count, %', 'shot_triggered_sl_count, %', 'random_triggered_tp_count, %', 'random_triggered_sl_count, %', 'actual_win_rate, %'])
 
         df = df.sort_values(by=['Profit Rating'], ascending=False)

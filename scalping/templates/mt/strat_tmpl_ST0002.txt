@@ -50,15 +50,45 @@
             "value": {{TOKEN006}},
             "argumentType": 10
           },
-          "minDeltaH": {
-            "name": "minDeltaH",
-            "value": 2.5,
+          "btcDeltaTimeframe": {
+            "name": "btcDeltaTimeframe",
+            "value": 60,
+            "argumentType": 17
+          },
+          "btcMinDelta": {
+            "name": "btcMinDelta",
+            "value": 0,
             "argumentType": 4
           },
-          "maxDeltaH": {
-            "name": "maxDeltaH",
-            "value": 6.0,
+          "btcMaxDelta": {
+            "name": "btcMaxDelta",
+            "value": 999,
             "argumentType": 4
+          },
+          "coinDeltaTimeframe": {
+            "name": "coinDeltaTimeframe",
+            "value": 60,
+            "argumentType": 17
+          },
+          "coinMinDelta": {
+            "name": "coinMinDelta",
+            "value": 0,
+            "argumentType": 4
+          },
+          "coinMaxDelta": {
+            "name": "coinMaxDelta",
+            "value": 999,
+            "argumentType": 4
+          },
+          "quoteAsset24hMinVolume": {
+            "name": "quoteAsset24hMinVolume",
+            "value": 0,
+            "argumentType": 5
+          },
+          "quoteAsset24hMaxVolume": {
+            "name": "quoteAsset24hMaxVolume",
+            "value": 100200300400,
+            "argumentType": 5
           },
           "shotRestartDelay": {
             "name": "shotRestartDelay",
@@ -105,6 +135,21 @@
             "value": 2,
             "argumentType": 13
           },
+          "autoPriceDownTimer": {
+            "name": "autoPriceDownTimer",
+            "value": 0,
+            "argumentType": 4
+          },
+          "autoPriceDownStep": {
+            "name": "autoPriceDownStep",
+            "value": 0,
+            "argumentType": 4
+          },
+          "autoPriceDownLimit": {
+            "name": "autoPriceDownLimit",
+            "value": 0,
+            "argumentType": 4
+          },
           "stopLossIsOn": {
             "name": "stopLossIsOn",
             "value": true,
@@ -140,10 +185,15 @@
             "value": 0.0,
             "argumentType": 4
           },
-          "stopLossTrailingTrigger": {
-            "name": "stopLossTrailingTrigger",
+          "stopLossDelay": {
+            "name": "stopLossDelay",
             "value": 0.0,
             "argumentType": 4
+          },
+          "useTickerSource": {
+            "name": "useTickerSource",
+            "value": false,
+            "argumentType": 11
           },
           "stopIfTradeLatencyGreaterThan": {
             "name": "stopIfTradeLatencyGreaterThan",

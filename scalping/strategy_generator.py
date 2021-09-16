@@ -5,22 +5,34 @@ import io
 from pathlib import Path
 from scalping.strategy_generator_common import ShotStrategyGenerator, TemplateTokensVO
 import random
+import copy
+
+FUTURES_MAKER_FEE_PCT = 0.02
+FUTURES_TAKER_FEE_PCT = 0.04
+SPOT_BNB_FEE_PCT = 0.075
 
 DEFAULT_STRATEGY_TEMPLATE_ID = 1
 
 MIN_TOTAL_SHOTS_COUNT = 0
 MAX_MIN_TOTAL_SHOTS_PERCENTILE = 1
 
-FUTURE_MAX_STRATEGIES_NUM = 4
+FUTURE_MAX_STRATEGIES_NUM = 10
 SPOT_MAX_STRATEGIES_NUM = 4
 
-IS_GRID_MODE_ENABLED_FLAG = False
+GRID_MODE_NONE = 0
+GRID_MODE_1 = 1
+GRID_MODE_2 = 2
+
+CURRENT_GRID_MODE = GRID_MODE_NONE
 GRID_MODE_ORDER_NUM = 3
-GRID_MODE_DISTANCE_STEP_PCT = 0.02
+GRID_MODE_1_DISTANCE_STEP_PCT = 0.02
+GRID_MODE_2_SL_NEXT_ORDER_GAP_PCT = 0.02
+GRID_MODE_2_IDEAL_TP_DISTANCE_RATIO = 0.33
+
 IS_ADD_SMALL_RANDOM_VALUES_MODE = True
 SMALL_RANDOM_VALUE_PCT = 15
 
-MT_FUTURE_ORDER_SIZE = 300
+MT_FUTURE_ORDER_SIZE = 50
 MT_SPOT_ORDER_SIZE = 100
 MB_ORDER_SIZE = 0.0002
 
@@ -116,19 +128,66 @@ class StrategyGeneratorHandler(object):
 
         return df
 
+    def adjust_tokens_grid(self, is_moonbot, tokens_vo, grid_order_idx, grid_step_pct):
+        tokens_vo_copy = copy.deepcopy(tokens_vo)
+        adjust_distance_val = grid_order_idx * grid_step_pct
+        if is_moonbot:
+            tokens_vo_copy.mshot_price_min = round(tokens_vo_copy.mshot_price_min + adjust_distance_val, 2)
+            tokens_vo_copy.mshot_price = round(tokens_vo_copy.mshot_price + adjust_distance_val, 2)
+            if CURRENT_GRID_MODE == GRID_MODE_2 and grid_order_idx >= 1:
+                tokens_vo_copy.tp = round(tokens_vo_copy.mshot_price * GRID_MODE_2_IDEAL_TP_DISTANCE_RATIO, 2)
+        else:
+            tokens_vo_copy.distance = round(tokens_vo_copy.distance + adjust_distance_val, 2)
+            if CURRENT_GRID_MODE == GRID_MODE_2 and grid_order_idx >= 1:
+                tokens_vo_copy.tp = round(tokens_vo_copy.distance * GRID_MODE_2_IDEAL_TP_DISTANCE_RATIO, 2)
+        return tokens_vo_copy
+
+    def get_trade_fees_pct(self, is_future):
+        if is_future:
+            return FUTURES_MAKER_FEE_PCT + FUTURES_TAKER_FEE_PCT
+        else:
+            return 2 * SPOT_BNB_FEE_PCT
+
     def get_order_size(self, is_moonbot, is_future):
         if is_moonbot:
             order_size = MB_ORDER_SIZE
         else:
             order_size = MT_SPOT_ORDER_SIZE if not is_future else MT_FUTURE_ORDER_SIZE
 
-        if is_future and IS_GRID_MODE_ENABLED_FLAG:
-            order_size = order_size / GRID_MODE_ORDER_NUM
-            if IS_ADD_SMALL_RANDOM_VALUES_MODE:
-                small_random_value = random.uniform(-SMALL_RANDOM_VALUE_PCT, SMALL_RANDOM_VALUE_PCT)
-                order_size = order_size * (1 + small_random_value / 100)
+        return round(order_size)
+
+    def get_order_size_mode_1(self, is_moonbot, is_future):
+        order_size = self.get_order_size(is_moonbot, is_future)
+
+        order_size = order_size / GRID_MODE_ORDER_NUM
+        if IS_ADD_SMALL_RANDOM_VALUES_MODE:
+            small_random_value = random.uniform(-SMALL_RANDOM_VALUE_PCT, SMALL_RANDOM_VALUE_PCT)
+            order_size = order_size * (1 + small_random_value / 100)
 
         return round(order_size)
+
+    def get_order_size_mode_2(self, is_moonbot, is_future, order_idx, tokens_vo_arr):
+        order_size1 = self.get_order_size(is_moonbot, is_future)
+
+        if order_idx == 0:
+            return round(order_size1)
+
+        tp1 = tokens_vo_arr[0].tp
+        fees = self.get_trade_fees_pct(is_future)
+        curr_order_size = order_size1
+        prev_order_size = order_size1
+        cum_sum_sl = 0
+        cum_sum_loss = 0
+        for i in range(1, order_idx + 1):
+            prev_tokens_vo = tokens_vo_arr[i-1]
+            curr_tokens_vo = tokens_vo_arr[i]
+            cum_sum_sl += prev_tokens_vo.sl
+            cum_sum_loss = cum_sum_loss + prev_order_size * (cum_sum_sl + fees) / 100
+            curr_order_size = (1 + tp1 / 100) * cum_sum_loss / ((curr_tokens_vo.tp - fees) / 100)
+            prev_order_size = curr_order_size
+            cum_sum_sl += GRID_MODE_2_SL_NEXT_ORDER_GAP_PCT
+
+        return round(curr_order_size)
 
     def run(self):
         random.seed()
@@ -150,13 +209,25 @@ class StrategyGeneratorHandler(object):
         strategy_template = self._strategy_generator.read_strategy_template(args.moonbot, DEFAULT_STRATEGY_TEMPLATE_ID)
         strategy_list = []
         for idx, pnl_row in shots_pnl_data_df.iterrows():
-            if is_future and IS_GRID_MODE_ENABLED_FLAG:
+            if is_future and CURRENT_GRID_MODE == GRID_MODE_1:
                 for grid_order_idx in range(GRID_MODE_ORDER_NUM):
                     tokens_vo = TemplateTokensVO.from_pnl_row(is_moonbot, pnl_row)
-                    tokens_vo = self._strategy_generator.adjust_tokens_grid(is_moonbot, tokens_vo, grid_order_idx, GRID_MODE_DISTANCE_STEP_PCT)
+                    tokens_vo_adj = self.adjust_tokens_grid(is_moonbot, tokens_vo, grid_order_idx, GRID_MODE_1_DISTANCE_STEP_PCT)
                     is_last = idx == shots_pnl_data_df.index[-1] and grid_order_idx == GRID_MODE_ORDER_NUM - 1
-                    order_size = self.get_order_size(is_moonbot, is_future)
-                    strategy_list.append(self._strategy_generator.generate_strategy(is_moonbot, is_future, strategy_template, tokens_vo, order_size, is_last))
+                    order_size = self.get_order_size_mode_1(is_moonbot, is_future)
+                    strategy_list.append(self._strategy_generator.generate_strategy(is_moonbot, is_future, strategy_template, tokens_vo_adj, order_size, is_last))
+            if is_future and CURRENT_GRID_MODE == GRID_MODE_2:
+                tokens_vo = TemplateTokensVO.from_pnl_row(is_moonbot, pnl_row)
+                max_real_shot_depth = pnl_row['max_real_shot_depth']
+                distance_step_pct = (max_real_shot_depth - tokens_vo.distance) / (GRID_MODE_ORDER_NUM - 1)
+                distance_step_pct = max(tokens_vo.sl + GRID_MODE_2_SL_NEXT_ORDER_GAP_PCT, distance_step_pct)
+                token_vo_arr = []
+                for grid_order_idx in range(GRID_MODE_ORDER_NUM):
+                    tokens_vo_adj = self.adjust_tokens_grid(is_moonbot, tokens_vo, grid_order_idx, distance_step_pct)
+                    token_vo_arr.append(tokens_vo_adj)
+                    is_last = idx == shots_pnl_data_df.index[-1] and grid_order_idx == GRID_MODE_ORDER_NUM - 1
+                    order_size = self.get_order_size_mode_2(is_moonbot, is_future, grid_order_idx, token_vo_arr)
+                    strategy_list.append(self._strategy_generator.generate_strategy(is_moonbot, is_future, strategy_template, tokens_vo_adj, order_size, is_last))
             else:
                 tokens_vo = TemplateTokensVO.from_pnl_row(is_moonbot, pnl_row)
                 is_last = idx == shots_pnl_data_df.index[-1]

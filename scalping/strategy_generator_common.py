@@ -99,7 +99,7 @@ class ShotStrategyGenerator(object):
             buffer = tokens_vo.buffer
             side = 1 if shot_type == "LONG" else -1 if shot_type == "SHORT" else ""
             market_type = 1 if not is_future else 3
-            trade_latency = 1.5 if not is_future else 1.5
+            trade_latency = 3 if not is_future else 3
             strategy_id = int(datetime.now().timestamp() * 1000) + random.randrange(1000000) - random.randrange(100000) + (uuid.uuid1().int % 100000)
             follow_price_delay = 0 if is_future else 0
             return {
@@ -137,15 +137,6 @@ class ShotStrategyGenerator(object):
                 divider = ""
             strategy_str = strategy_str + divider
         return strategy_str
-
-    def adjust_tokens_grid(self, is_moonbot, tokens_vo, grid_order_idx, grid_step_pct):
-        adjust_distance_val = grid_order_idx * grid_step_pct
-        if is_moonbot:
-            tokens_vo.mshot_price_min = round(tokens_vo.mshot_price_min + adjust_distance_val, 2)
-            tokens_vo.mshot_price = round(tokens_vo.mshot_price + adjust_distance_val, 2)
-        else:
-            tokens_vo.distance = round(tokens_vo.distance + adjust_distance_val, 2)
-        return tokens_vo
 
     def get_template_filename(self, is_moonbot):
         dirname = self.whereAmI()
