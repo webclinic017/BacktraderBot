@@ -99,7 +99,7 @@ class ShotStrategyGenerator(object):
             buffer = tokens_vo.buffer
             side = 1 if shot_type == "LONG" else -1 if shot_type == "SHORT" else ""
             market_type = 1 if not is_future else 3
-            trade_latency = 3 if not is_future else 3
+            trade_latency = 5 if not is_future else 5
             strategy_id = int(datetime.now().timestamp() * 1000) + random.randrange(1000000) - random.randrange(100000) + (uuid.uuid1().int % 100000)
             follow_price_delay = 0 if is_future else 0
             return {

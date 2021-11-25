@@ -1,204 +1,604 @@
     {
       "id": {{TOKEN001}},
       "name": "Shots Group",
+      "description": null,
       "info": "{{TOKEN002}}",
       "autoStart": false,
       "args": {
         "Arguments": {
+          "group1": {
+            "name": "group1",
+            "value": "General",
+            "argumentType": 100,
+            "group": 1,
+            "subGroup": 0,
+            "order": 0,
+            "label": "mt-algo-general-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-sa-general-group-tt",
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
           "autoRestart": {
             "name": "autoRestart",
             "value": true,
-            "argumentType": 11
-          },
-          "exchangeType": {
-            "name": "exchangeType",
-            "value": 1,
-            "argumentType": 7
-          },
-          "marketType": {
-            "name": "marketType",
-            "value": {{TOKEN010}},
-            "argumentType": 8
-          },
-          "quoteAssets": {
-            "name": "quoteAssets",
-            "value": "",
-            "argumentType": 15
-          },
-          "whiteList": {
-            "name": "whiteList",
-            "value": "{{TOKEN003}}",
-            "argumentType": 15
-          },
-          "blackList": {
-            "name": "blackList",
-            "value": "",
-            "argumentType": 15
-          },
-          "distance": {
-            "name": "distance",
-            "value": {{TOKEN004}},
-            "argumentType": 4
-          },
-          "buffer": {
-            "name": "buffer",
-            "value": {{TOKEN005}},
-            "argumentType": 4
-          },
-          "side": {
-            "name": "side",
-            "value": {{TOKEN006}},
-            "argumentType": 10
-          },
-          "btcDeltaTimeframe": {
-            "name": "btcDeltaTimeframe",
-            "value": 60,
-            "argumentType": 17
-          },
-          "btcMinDelta": {
-            "name": "btcMinDelta",
-            "value": 0,
-            "argumentType": 4
-          },
-          "btcMaxDelta": {
-            "name": "btcMaxDelta",
-            "value": 0.6,
-            "argumentType": 4
-          },
-          "coinDeltaTimeframe": {
-            "name": "coinDeltaTimeframe",
-            "value": 60,
-            "argumentType": 17
-          },
-          "coinMinDelta": {
-            "name": "coinMinDelta",
-            "value": 0.14,
-            "argumentType": 4
-          },
-          "coinMaxDelta": {
-            "name": "coinMaxDelta",
-            "value": 999,
-            "argumentType": 4
-          },
-          "quoteAsset24hMinVolume": {
-            "name": "quoteAsset24hMinVolume",
-            "value": 0,
-            "argumentType": 5
-          },
-          "quoteAsset24hMaxVolume": {
-            "name": "quoteAsset24hMaxVolume",
-            "value": 100200300400,
-            "argumentType": 5
+            "argumentType": 11,
+            "group": 1,
+            "subGroup": 0,
+            "order": 3,
+            "label": "mt-algo-auto-restart-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
           },
           "shotRestartDelay": {
             "name": "shotRestartDelay",
             "value": 10,
-            "argumentType": 2
+            "argumentType": 2,
+            "group": 1,
+            "subGroup": 0,
+            "order": 4,
+            "label": "mt-algo-restart-delay-lbl",
+            "inputLabel": "s",
+            "tooltip": null,
+            "onOffByArgument": "autoRestart",
+            "callbackInfo": null
           },
-          "followPriceDelay": {
-            "name": "followPriceDelay",
-            "value": {{TOKEN012}},
-            "argumentType": 2
-          },
-          "clientOrderType": {
-            "name": "clientOrderType",
-            "value": 1,
-            "argumentType": 14
-          },
-          "stopPricePercentage": {
-            "name": "stopPricePercentage",
-            "value": 1,
-            "argumentType": 4
-          },
-          "orderSizeUSDT": {
-            "name": "orderSizeUSDT",
-            "value": {{TOKEN007}},
-            "argumentType": 5
-          },
-          "takeProfitIsOn": {
-            "name": "takeProfitIsOn",
-            "value": true,
-            "argumentType": 11
-          },
-          "takeProfitPercentage": {
-            "name": "takeProfitPercentage",
-            "value": {{TOKEN008}},
-            "argumentType": 4
-          },
-          "takeProfitOrderType": {
-            "name": "takeProfitOrderType",
-            "value": 1,
-            "argumentType": 12
-          },
-          "takeProfitStatus": {
-            "name": "takeProfitStatus",
-            "value": 2,
-            "argumentType": 13
-          },
-          "autoPriceDownTimer": {
-            "name": "autoPriceDownTimer",
-            "value": 0,
-            "argumentType": 4
-          },
-          "autoPriceDownStep": {
-            "name": "autoPriceDownStep",
-            "value": 0,
-            "argumentType": 4
-          },
-          "autoPriceDownLimit": {
-            "name": "autoPriceDownLimit",
-            "value": 0,
-            "argumentType": 4
-          },
-          "stopLossIsOn": {
-            "name": "stopLossIsOn",
-            "value": true,
-            "argumentType": 11
-          },
-          "stopLossPercentage": {
-            "name": "stopLossPercentage",
-            "value": {{TOKEN009}},
-            "argumentType": 4
-          },
-          "stopLossSpread": {
-            "name": "stopLossSpread",
-            "value": 5,
-            "argumentType": 4
-          },
-          "stopLossOrderType": {
-            "name": "stopLossOrderType",
-            "value": 2,
-            "argumentType": 12
-          },
-          "stopLossStatus": {
-            "name": "stopLossStatus",
-            "value": 1,
-            "argumentType": 13
-          },
-          "stopLossTrailingIsOn": {
-            "name": "stopLossTrailingIsOn",
-            "value": false,
-            "argumentType": 11
-          },
-          "stopLossTrailingSpread": {
-            "name": "stopLossTrailingSpread",
-            "value": 0.0,
-            "argumentType": 4
-          },
-          "stopLossDelay": {
-            "name": "stopLossDelay",
-            "value": 0.0,
-            "argumentType": 4
-          },
-          "useTickerSource": {
-            "name": "useTickerSource",
-            "value": false,
-            "argumentType": 11
+          "group5": {
+            "name": "group5",
+            "value": "Latency stop",
+            "argumentType": 100,
+            "group": 5,
+            "subGroup": 0,
+            "order": 0,
+            "label": "mt-algo-latency-stop-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-sa-latency-stop-group-tt",
+            "onOffByArgument": null,
+            "callbackInfo": null
           },
           "stopIfTradeLatencyGreaterThan": {
             "name": "stopIfTradeLatencyGreaterThan",
             "value": {{TOKEN011}},
-            "argumentType": 4
+            "argumentType": 4,
+            "group": 5,
+            "subGroup": 0,
+            "order": 1,
+            "label": "mt-algo-max-trade-latency-lbl",
+            "inputLabel": "s",
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "group10": {
+            "name": "group10",
+            "value": "Market filters",
+            "argumentType": 100,
+            "group": 10,
+            "subGroup": 0,
+            "order": 0,
+            "label": "mt-algo-market-filters-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-qwb-market-filters-group-tt",
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "exchangeType": {
+            "name": "exchangeType",
+            "value": 1,
+            "argumentType": 7,
+            "group": 10,
+            "subGroup": 0,
+            "order": 1,
+            "label": "mt-algo-exchange-type-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "marketType": {
+            "name": "marketType",
+            "value": {{TOKEN010}},
+            "argumentType": 8,
+            "group": 10,
+            "subGroup": 0,
+            "order": 2,
+            "label": "mt-algo-market-type-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "quoteAssets": {
+            "name": "quoteAssets",
+            "value": "",
+            "argumentType": 15,
+            "group": 10,
+            "subGroup": 0,
+            "order": 3,
+            "label": "mt-algo-quote-assets-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "whiteList": {
+            "name": "whiteList",
+            "value": "{{TOKEN003}}",
+            "argumentType": 24,
+            "group": 10,
+            "subGroup": 0,
+            "order": 4,
+            "label": "mt-algo-whitelist-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "blackList": {
+            "name": "blackList",
+            "value": "",
+            "argumentType": 15,
+            "group": 10,
+            "subGroup": 0,
+            "order": 5,
+            "label": "mt-algo-blacklist-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "useCoinDelta": {
+            "name": "useCoinDelta",
+            "value": false,
+            "argumentType": 11,
+            "group": 20,
+            "subGroup": 0,
+            "order": 0,
+            "label": "mt-algo-coin-delta-filter-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-coin-delta-group-tt",
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "coinDeltaTimeframe": {
+            "name": "coinDeltaTimeframe",
+            "value": 300,
+            "argumentType": 17,
+            "group": 20,
+            "subGroup": 0,
+            "order": 1,
+            "label": "mt-algo-timeframe-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": "useCoinDelta",
+            "callbackInfo": null
+          },
+          "coinMinMaxDelta": {
+            "name": "coinMinMaxDelta",
+            "value": {
+              "min": 0,
+              "max": 999
+            },
+            "argumentType": 18,
+            "group": 20,
+            "subGroup": 0,
+            "order": 4,
+            "label": "mt-algo-range-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": "useCoinDelta",
+            "callbackInfo": null
+          },
+          "useQAV24": {
+            "name": "useQAV24",
+            "value": true,
+            "argumentType": 11,
+            "group": 30,
+            "subGroup": 0,
+            "order": 0,
+            "label": "mt-algo-coin-qav24-filter-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-qav24-group-tt",
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "qav24MinMax": {
+            "name": "qav24MinMax",
+            "value": {
+              "min": 0.0,
+              "max": 100200300400
+            },
+            "argumentType": 19,
+            "group": 30,
+            "subGroup": 0,
+            "order": 1,
+            "label": "mt-algo-range-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": "useQAV24",
+            "callbackInfo": null
+          },
+          "useBtcDelta": {
+            "name": "useBtcDelta",
+            "value": true,
+            "argumentType": 11,
+            "group": 40,
+            "subGroup": 0,
+            "order": 0,
+            "label": "mt-algo-btc-delta-filter-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-btc-delta-group-tt",
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "btcDeltaTimeframe": {
+            "name": "btcDeltaTimeframe",
+            "value": 3600,
+            "argumentType": 17,
+            "group": 40,
+            "subGroup": 0,
+            "order": 1,
+            "label": "mt-algo-timeframe-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": "useBtcDelta",
+            "callbackInfo": null
+          },
+          "btcMinMaxDelta": {
+            "name": "btcMinMaxDelta",
+            "value": {
+              "min": 0.0,
+              "max": 3.0
+            },
+            "argumentType": 18,
+            "group": 40,
+            "subGroup": 0,
+            "order": 4,
+            "label": "mt-algo-range-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": "useBtcDelta",
+            "callbackInfo": null
+          },
+          "group50": {
+            "name": "group50",
+            "value": "Algorithm parameters",
+            "argumentType": 100,
+            "group": 50,
+            "subGroup": 0,
+            "order": 0,
+            "label": "mt-algo-algorithm-parameters-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-sa-parameters-group-tt",
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "distance": {
+            "name": "distance",
+            "value": {{TOKEN004}},
+            "argumentType": 4,
+            "group": 50,
+            "subGroup": 0,
+            "order": 1,
+            "label": "mt-algo-distance-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "buffer": {
+            "name": "buffer",
+            "value": {{TOKEN005}},
+            "argumentType": 4,
+            "group": 50,
+            "subGroup": 0,
+            "order": 2,
+            "label": "mt-algo-buffer-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "followPriceDelay": {
+            "name": "followPriceDelay",
+            "value": {{TOKEN012}},
+            "argumentType": 2,
+            "group": 50,
+            "subGroup": 0,
+            "order": 3,
+            "label": "mt-algo-follow-price-delay-lbl",
+            "inputLabel": "s",
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "useTickerSource": {
+            "name": "useTickerSource",
+            "value": false,
+            "argumentType": 20,
+            "group": 50,
+            "subGroup": 0,
+            "order": 4,
+            "label": "mt-algo-data-source-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "group60": {
+            "name": "group60",
+            "value": "Order details",
+            "argumentType": 100,
+            "group": 60,
+            "subGroup": 0,
+            "order": 0,
+            "label": "mt-algo-order-details-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-sa-order-detail-group-tt",
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "side": {
+            "name": "side",
+            "value": {{TOKEN006}},
+            "argumentType": 10,
+            "group": 60,
+            "subGroup": 0,
+            "order": 1,
+            "label": "mt-algo-side-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "clientOrderType": {
+            "name": "clientOrderType",
+            "value": 1,
+            "argumentType": 14,
+            "group": 60,
+            "subGroup": 0,
+            "order": 2,
+            "label": "mt-algo-client-order-type-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": "OnClientOrderChange, clientOrderType, stopPricePercentage"
+          },
+          "stopPricePercentage": {
+            "name": "stopPricePercentage",
+            "value": 1,
+            "argumentType": 4,
+            "group": 60,
+            "subGroup": 0,
+            "order": 3,
+            "label": "mt-algo-stop-price-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "orderSizeUSDT": {
+            "name": "orderSizeUSDT",
+            "value": {{TOKEN007}},
+            "argumentType": 5,
+            "group": 60,
+            "subGroup": 0,
+            "order": 4,
+            "label": "mt-algo-order-size-lbl",
+            "inputLabel": "USDT",
+            "tooltip": null,
+            "onOffByArgument": null,
+            "callbackInfo": null
+          },
+          "takeProfitIsOn": {
+            "name": "takeProfitIsOn",
+            "value": true,
+            "argumentType": 11,
+            "group": 70,
+            "subGroup": 0,
+            "order": 0,
+            "label": "mt-algo-take-profit-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-tp-group-tt",
+            "onOffByArgument": null,
+            "callbackInfo": "OnTPChange, takeProfitIsOn, takeProfitOrderType, takeProfitStatus, stopLossIsOn, stopLossOrderType, stopLossStatus"
+          },
+          "takeProfitPercentage": {
+            "name": "takeProfitPercentage",
+            "value": {{TOKEN008}},
+            "argumentType": 4,
+            "group": 70,
+            "subGroup": 0,
+            "order": 1,
+            "label": "mt-algo-percentage-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": "takeProfitIsOn",
+            "callbackInfo": null
+          },
+          "takeProfitOrderType": {
+            "name": "takeProfitOrderType",
+            "value": 1,
+            "argumentType": 21,
+            "group": 70,
+            "subGroup": 0,
+            "order": 2,
+            "label": "mt-algo-order-type-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": "takeProfitIsOn",
+            "callbackInfo": "OnTPChange, takeProfitIsOn, takeProfitOrderType, takeProfitStatus, stopLossIsOn, stopLossOrderType, stopLossStatus"
+          },
+          "takeProfitStatus": {
+            "name": "takeProfitStatus",
+            "value": 2,
+            "argumentType": 13,
+            "group": 70,
+            "subGroup": 0,
+            "order": 3,
+            "label": "mt-algo-status-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": "takeProfitIsOn",
+            "callbackInfo": "OnTPChange, takeProfitIsOn, takeProfitOrderType, takeProfitStatus, stopLossIsOn, stopLossOrderType, stopLossStatus"
+          },
+          "useAutoPriceDown": {
+            "name": "useAutoPriceDown",
+            "value": false,
+            "argumentType": 11,
+            "group": 70,
+            "subGroup": 10,
+            "order": 4,
+            "label": "mt-algo-auto-price-down-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-auto-price-group-tt",
+            "onOffByArgument": "takeProfitIsOn",
+            "callbackInfo": null
+          },
+          "autoPriceDownTimer": {
+            "name": "autoPriceDownTimer",
+            "value": 0.0,
+            "argumentType": 4,
+            "group": 70,
+            "subGroup": 10,
+            "order": 5,
+            "label": "mt-algo-timer-lbl",
+            "inputLabel": "s",
+            "tooltip": null,
+            "onOffByArgument": "takeProfitIsOn",
+            "callbackInfo": null
+          },
+          "autoPriceDownStep": {
+            "name": "autoPriceDownStep",
+            "value": 0.0,
+            "argumentType": 4,
+            "group": 70,
+            "subGroup": 10,
+            "order": 6,
+            "label": "mt-algo-step-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": "takeProfitIsOn",
+            "callbackInfo": null
+          },
+          "autoPriceDownLimit": {
+            "name": "autoPriceDownLimit",
+            "value": 0.0,
+            "argumentType": 4,
+            "group": 70,
+            "subGroup": 10,
+            "order": 7,
+            "label": "mt-algo-limit-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": "takeProfitIsOn",
+            "callbackInfo": null
+          },
+          "stopLossIsOn": {
+            "name": "stopLossIsOn",
+            "value": true,
+            "argumentType": 11,
+            "group": 80,
+            "subGroup": 0,
+            "order": 0,
+            "label": "mt-algo-stop-loss-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-sl-group-tt",
+            "onOffByArgument": null,
+            "callbackInfo": "OnSLChange, takeProfitIsOn, takeProfitOrderType, takeProfitStatus, stopLossIsOn, stopLossOrderType, stopLossStatus"
+          },
+          "stopLossPercentage": {
+            "name": "stopLossPercentage",
+            "value": {{TOKEN009}},
+            "argumentType": 4,
+            "group": 80,
+            "subGroup": 0,
+            "order": 1,
+            "label": "mt-algo-percentage-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": "stopLossIsOn",
+            "callbackInfo": null
+          },
+          "stopLossSpread": {
+            "name": "stopLossSpread",
+            "value": 5.0,
+            "argumentType": 4,
+            "group": 80,
+            "subGroup": 0,
+            "order": 2,
+            "label": "mt-algo-spread-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": "stopLossIsOn",
+            "callbackInfo": null
+          },
+          "stopLossDelay": {
+            "name": "stopLossDelay",
+            "value": 1.0,
+            "argumentType": 4,
+            "group": 80,
+            "subGroup": 0,
+            "order": 3,
+            "label": "mt-algo-delay-lbl",
+            "inputLabel": "s",
+            "tooltip": null,
+            "onOffByArgument": "stopLossIsOn",
+            "callbackInfo": null
+          },
+          "stopLossOrderType": {
+            "name": "stopLossOrderType",
+            "value": 2,
+            "argumentType": 22,
+            "group": 80,
+            "subGroup": 0,
+            "order": 4,
+            "label": "mt-algo-order-type-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": "stopLossIsOn",
+            "callbackInfo": "OnSLChange, takeProfitIsOn, takeProfitOrderType, takeProfitStatus, stopLossIsOn, stopLossOrderType, stopLossStatus"
+          },
+          "stopLossStatus": {
+            "name": "stopLossStatus",
+            "value": 1,
+            "argumentType": 13,
+            "group": 80,
+            "subGroup": 0,
+            "order": 5,
+            "label": "mt-algo-status-lbl",
+            "inputLabel": null,
+            "tooltip": null,
+            "onOffByArgument": "stopLossIsOn",
+            "callbackInfo": "OnSLChange, takeProfitIsOn, takeProfitOrderType, takeProfitStatus, stopLossIsOn, stopLossOrderType, stopLossStatus"
+          },
+          "stopLossTrailingIsOn": {
+            "name": "stopLossTrailingIsOn",
+            "value": false,
+            "argumentType": 11,
+            "group": 80,
+            "subGroup": 10,
+            "order": 6,
+            "label": "mt-algo-trailing-stop-lbl",
+            "inputLabel": null,
+            "tooltip": "mt-algo-trailing-group-tt",
+            "onOffByArgument": "stopLossIsOn",
+            "callbackInfo": null
+          },
+          "stopLossTrailingSpread": {
+            "name": "stopLossTrailingSpread",
+            "value": 0.0,
+            "argumentType": 4,
+            "group": 80,
+            "subGroup": 10,
+            "order": 7,
+            "label": "mt-algo-spread-lbl",
+            "inputLabel": "%",
+            "tooltip": null,
+            "onOffByArgument": "stopLossIsOn",
+            "callbackInfo": null
           }
         }
       },

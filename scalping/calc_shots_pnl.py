@@ -13,9 +13,12 @@ STARTCASH = 100
 MIN_TOTAL_SHOTS_COUNT = 3
 SS_FILTER_MIN_SHOTS_COUNT = 0
 
-MAKER_FEE_PCT = 0.02
-TAKER_FEE_PCT = 0.04
-COMMISSIONS_PCT = MAKER_FEE_PCT + TAKER_FEE_PCT
+SPOT_MAKER_FEE_PCT = 0.075
+SPOT_TAKER_FEE_PCT = 0.075
+SPOT_FEES_PCT = SPOT_MAKER_FEE_PCT + SPOT_TAKER_FEE_PCT
+FUTURE_MAKER_FEE_PCT = 0.02
+FUTURE_TAKER_FEE_PCT = 0.04
+FUTURE_FEES_PCT = FUTURE_MAKER_FEE_PCT + FUTURE_TAKER_FEE_PCT
 SLIPPAGE_PCT = 0.01
 
 IS_ADJUST_DISTANCE_IN_ULTRASHORT_MODE = False
@@ -23,13 +26,13 @@ MIN_PRACTICAL_DISTANCE = 0.5
 MAX_PRACTICAL_DISTANCE = 3.0
 
 MIN_DISTANCE_PCT = 0.3
-MAX_BUFFER_PCT = 0.26
+MAX_BUFFER_PCT = 0.3
 
 MIN_TP_PCT = 0.12
 MAX_TP_PCT = 0.19
 
 MIN_SL_PCT = 0.30
-MAX_SL_PCT = 0.37
+MAX_SL_PCT = 0.47
 
 MIN_RR_RATIO = 2
 MAX_TP_TO_SHOT_RATIO = 0.5
@@ -44,6 +47,12 @@ CREATE_PNL_FILE_FLAG = True
 
 RATING_VALUE_DENOMINATOR = 100
 DEFAULT_BIN_ROUND_BASE = 5
+
+IS_FIXED_DISTANCE_MODE = True
+FIXED_DISTANCE_VALUE_PCT = 0.9
+FIXED_BUFFER_VALUE_PCT = 0.6
+FIXED_TP_VALUE_PCT = 0.2
+FIXED_SL_VALUE_PCT = 0.2
 
 
 class ShotTrialAnalyzer(object):
@@ -193,20 +202,28 @@ class ShotsPnlCalculator(object):
     def get_simulation_params(self, is_moonbot, shot_depth_list, shot_count_list):
         non_zero_idx = [i for i, item in enumerate(shot_count_list) if item != 0][-1]
         max_s = shot_depth_list[non_zero_idx]
+        max_tp = max(MAX_TP_PCT, max_s * DEFAULT_BOUNCE_TO_SHOT_RATIO)
 
         if is_moonbot:
+            price_min_val = FIXED_DISTANCE_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_DISTANCE_PCT, max_s - 0.1 + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
+            price_val = FIXED_DISTANCE_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
+            tp_val = FIXED_TP_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_TP_PCT, max_tp, DEFAULT_MIN_STEP)
             return {
-                "MShotPriceMin": np.arange(MIN_DISTANCE_PCT, max_s - 0.1 + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "MShotPrice": np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "tp": np.arange(MIN_TP_PCT, MAX_TP_PCT, DEFAULT_MIN_STEP),
+                "MShotPriceMin": price_min_val,
+                "MShotPrice": price_val,
+                "tp": tp_val,
                 "sl": np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
         else:
+            dist_val = FIXED_DISTANCE_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
+            buffer_val = FIXED_BUFFER_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(0.2, MAX_BUFFER_PCT, DEFAULT_MIN_STEP)
+            tp_val = FIXED_TP_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_TP_PCT, max_tp, DEFAULT_MIN_STEP)
+            sl_val = FIXED_SL_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
             return {
-                "distance": np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP),
-                "buffer": np.arange(0.2, MAX_BUFFER_PCT, DEFAULT_MIN_STEP),
-                "tp": np.arange(MIN_TP_PCT, MAX_TP_PCT, DEFAULT_MIN_STEP),
-                "sl": np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
+                "distance": dist_val,
+                "buffer": buffer_val,
+                "tp": tp_val,
+                "sl": sl_val
             }
 
     @staticmethod
@@ -232,14 +249,15 @@ class ShotsPnlCalculator(object):
         optkwargs = map(dict, okwargs1)
         return list(optkwargs)
 
-    def calculate_shot_trials(self, is_moonbot, trial_analyzer, shot, param_arr):
+    def calculate_shot_trials(self, is_moonbot, is_future, trial_analyzer, shot, param_arr):
         trial_analyzer.shot_trials_pnl_arr = []
         shot_depth = shot['shot_depth']
-        shot_bounce = shot['shot_bounce']
+        shot_bounce = shot_depth * DEFAULT_BOUNCE_TO_SHOT_RATIO
         first_param = param_arr[0]
         second_param = param_arr[1]
         c_tp = param_arr[2]
         c_sl = param_arr[3]
+        fees_pct = FUTURE_FEES_PCT if is_future else SPOT_FEES_PCT
 
         if is_moonbot:
             trials_range = np.arange(0, (second_param - first_param) + 0.01, TRIAL_STEP_PCT)
@@ -259,23 +277,23 @@ class ShotsPnlCalculator(object):
             shot_bounce_end = shot_trial_end + shot_bounce
             if shot_trial_end < -c_sl or shot_bounce_end < -c_sl:
                 # Shot has triggered SL
-                trial_pnl_pct = -(c_sl + COMMISSIONS_PCT + SLIPPAGE_PCT)
+                trial_pnl_pct = -(c_sl + fees_pct + SLIPPAGE_PCT)
                 trial_analyzer.shot_triggered_sl_count += 1
             else:
                 if shot_bounce_end >= c_tp:
                     # Shot has triggered TP
-                    trial_pnl_pct = c_tp - COMMISSIONS_PCT
+                    trial_pnl_pct = c_tp - fees_pct
                     trial_analyzer.shot_triggered_tp_count += 1
                 else:
                     dist_to_tp_pct = abs(c_tp - shot_bounce_end)
                     dist_to_sl_pct = abs(-c_sl - shot_bounce_end)
                     if dist_to_tp_pct <= dist_to_sl_pct:
                         # Random price movement - count as TP
-                        trial_pnl_pct = c_tp - COMMISSIONS_PCT
+                        trial_pnl_pct = c_tp - fees_pct
                         trial_analyzer.random_triggered_tp_count += 1
                     else:
                         # Random price movement - count as SL
-                        trial_pnl_pct = -(c_sl + COMMISSIONS_PCT + SLIPPAGE_PCT)
+                        trial_pnl_pct = -(c_sl + fees_pct + SLIPPAGE_PCT)
                         trial_analyzer.random_triggered_sl_count += 1
 
             trial_analyzer.shot_trials_pnl_arr.append(trial_pnl_pct)
@@ -287,7 +305,7 @@ class ShotsPnlCalculator(object):
     def pct_val(self, val, total, base):
         return self.round_base(100 * val / total, base, 0)
 
-    def simulate_shots(self, is_moonbot, groups_df, shots_data_dict):
+    def simulate_shots(self, is_moonbot, is_future, groups_df, shots_data_dict):
         arr_out = []
 
         shot_depth_list = list(groups_df["real_shot_depth"].values)
@@ -307,8 +325,6 @@ class ShotsPnlCalculator(object):
                     continue
                 if c_tp > (c_mshot_price / MAX_TP_TO_SHOT_RATIO):
                     continue
-                if c_sl / c_tp < MIN_RR_RATIO:
-                    continue
                 comb_params_arr = [c_mshot_price_min, c_mshot_price, c_tp, c_sl]
             else:
                 c_distance = c_dict["distance"]
@@ -316,8 +332,6 @@ class ShotsPnlCalculator(object):
                 if c_distance <= c_buffer / 2:
                     continue
                 if c_tp > ((c_distance + c_buffer / 2) / MAX_TP_TO_SHOT_RATIO):
-                    continue
-                if c_sl / c_tp < MIN_RR_RATIO:
                     continue
                 comb_params_arr = [c_distance, c_buffer, c_tp, c_sl]
 
@@ -331,11 +345,14 @@ class ShotsPnlCalculator(object):
 
                 group_shots_list = shots_data_dict[shot_depth]
                 for shot in group_shots_list:
-                    trial_analyzer = self.calculate_shot_trials(is_moonbot, trial_analyzer, shot, comb_params_arr)
+                    trial_analyzer = self.calculate_shot_trials(is_moonbot, is_future, trial_analyzer, shot, comb_params_arr)
 
-                    if trial_analyzer and len(trial_analyzer.shot_trials_pnl_arr) > 0:
-                        shot_trials_pnl_avg = np.mean(trial_analyzer.shot_trials_pnl_arr)
-                        shot_pnl_arr.append(shot_trials_pnl_avg)
+                    if trial_analyzer:
+                        if len(trial_analyzer.shot_trials_pnl_arr) > 0:
+                            shot_trials_pnl_avg = np.mean(trial_analyzer.shot_trials_pnl_arr)
+                            shot_pnl_arr.append(shot_trials_pnl_avg)
+                        else:
+                            shot_pnl_arr.append(0)
 
             if len(shot_pnl_arr) > 0:
                 total_pnl = sum(shot_pnl_arr)
@@ -343,7 +360,6 @@ class ShotsPnlCalculator(object):
                 distance_rating = self.round_base(round(distance_r * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
                 profit_rating = self.round_base(round(total_pnl * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
                 trials_count = trial_analyzer.shot_trials_count
-                actual_win_rate = 100 * (trial_analyzer.shot_triggered_tp_count + trial_analyzer.random_triggered_tp_count) / (trials_count - trial_analyzer.shot_missed_count)
 
                 arr = [round(comb_params_arr[0], 2),
                        round(comb_params_arr[1], 2),
@@ -352,35 +368,19 @@ class ShotsPnlCalculator(object):
                        max_real_shot_depth,
                        distance_rating,
                        profit_rating,
-                       trials_count,
-                       self.pct_val(trial_analyzer.shot_missed_count, trials_count, DEFAULT_BIN_ROUND_BASE),
-                       self.pct_val(trial_analyzer.shot_triggered_tp_count, trials_count, DEFAULT_BIN_ROUND_BASE),
-                       self.pct_val(trial_analyzer.shot_triggered_sl_count, trials_count, DEFAULT_BIN_ROUND_BASE),
-                       self.pct_val(trial_analyzer.random_triggered_tp_count, trials_count, DEFAULT_BIN_ROUND_BASE),
-                       self.pct_val(trial_analyzer.random_triggered_sl_count, trials_count, DEFAULT_BIN_ROUND_BASE),
-                       round(actual_win_rate, 2)
+                       trials_count
                 ]
                 arr_out.append(arr)
 
         if is_moonbot:
-            df = pd.DataFrame(arr_out, columns=['MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'max_real_shot_depth', 'Distance Rating', 'Profit Rating', 'shot_trials_count',
-                                               'shot_missed_count, %', 'shot_triggered_tp_count, %', 'shot_triggered_sl_count, %', 'random_triggered_tp_count, %', 'random_triggered_sl_count, %', 'actual_win_rate, %'])
+            df = pd.DataFrame(arr_out, columns=['MShotPriceMin', 'MShotPrice', 'TP', 'SL', 'max_real_shot_depth', 'Distance Rating', 'Profit Rating', 'shot_trials_count'])
         else:
-            df = pd.DataFrame(arr_out, columns=['Distance', 'Buffer', 'TP', 'SL', 'max_real_shot_depth', 'Distance Rating', 'Profit Rating', 'shot_trials_count',
-                                               'shot_missed_count, %', 'shot_triggered_tp_count, %', 'shot_triggered_sl_count, %', 'random_triggered_tp_count, %', 'random_triggered_sl_count, %', 'actual_win_rate, %'])
+            df = pd.DataFrame(arr_out, columns=['Distance', 'Buffer', 'TP', 'SL', 'max_real_shot_depth', 'Distance Rating', 'Profit Rating', 'shot_trials_count'])
 
         df = df.sort_values(by=['Profit Rating'], ascending=False)
         return df
 
     def get_best_pnl_rows(self, df):
-        unique_tp_count_arr = df['shot_triggered_tp_count, %'].unique()
-        unique_tp_count_arr_sorted = sorted(unique_tp_count_arr, key=lambda t: t)
-        if len(unique_tp_count_arr_sorted) > 1:
-            unique_tp_count_arr_sorted = unique_tp_count_arr_sorted[MIN_TP_COUNT_GROUPS_THRESHOLD:len(unique_tp_count_arr_sorted)]
-            min_tp_count_val = unique_tp_count_arr_sorted[0]
-        else:
-            min_tp_count_val = unique_tp_count_arr_sorted[0]
-        df = df[df['shot_triggered_tp_count, %'] >= min_tp_count_val]
         df = df.sort_values(by=['Profit Rating'], ascending=False)
         return df.head(1)
 
@@ -432,7 +432,7 @@ class ShotsPnlCalculator(object):
                                          'shot_depth': group_row['real_shot_depth'],
                                          'shot_bounce': group_row['shot_bounce']})
             shots_data_dict[shot_depth] = group_shots_list
-        shots_data_df = self.simulate_shots(is_moonbot, groups_df, shots_data_dict)
+        shots_data_df = self.simulate_shots(is_moonbot, is_future, groups_df, shots_data_dict)
 
         if len(shots_data_df) > 0:
             if CREATE_PNL_FILE_FLAG:

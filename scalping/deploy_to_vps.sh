@@ -1,7 +1,7 @@
 #! /bin/bash
 
 if [[ $# -ne 2 ]]; then
-    echo "Please specify valid parameters to run the script: deploy_to_vps.sh <STRATEGY_FILE_TYPE:f|s|fs|fwl> <VPS_ID:1>"
+    echo "Please specify valid parameters to run the script: deploy_to_vps.sh <STRATEGY_FILE_TYPE:f|s|fs|fwl> <VPS_ID:1|2>"
     exit -1
 fi
 
@@ -24,6 +24,8 @@ fi
 
 if [[ "$vps_id_param" == "1" ]]; then
     declare -a vps_ip_address=45.76.214.140
+elif [[ "$vps_id_param" == "2" ]]; then
+    declare -a vps_ip_address=167.179.72.2
 else
     echo "Invalid VPS ID specified: ${vps_id_param}"
     exit -1

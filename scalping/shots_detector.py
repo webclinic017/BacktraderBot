@@ -306,7 +306,7 @@ class ShotsDetector(object):
         if not MULTISHOT_MODE_FLAG:
             return shots_list
 
-        print("Combining multiple shots into multishots...")
+        print("Combining several shots into multishots...")
 
         ci = 0
         while ci < len(shots_list) - MULTIPLE_SHOTS_INITIAL_COUNT + 1:
