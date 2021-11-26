@@ -3,7 +3,7 @@
 #declare -a symbol_list=("BTCUSDT" "1000SHIBUSDT" "1INCHUSDT" "AAVEUSDT" "AKROUSDT" "ALGOUSDT" "ALICEUSDT" "ALPHAUSDT" "ANKRUSDT" "ATAUSDT" "ATOMUSDT" "AUDIOUSDT" "AVAXUSDT" "AXSUSDT" "BAKEUSDT" "BALUSDT" "BANDUSDT" "BATUSDT" "BCHUSDT" "BELUSDT" "BLZUSDT" "BTSUSDT" "BTTUSDT" "BZRXUSDT" "C98USDT" "CELRUSDT" "CHRUSDT" "CHZUSDT" "COMPUSDT" "COTIUSDT" "CRVUSDT" "CTKUSDT" "CVCUSDT" "DEFIUSDT" "DENTUSDT" "DGBUSDT" "DODOUSDT" "DOGEUSDT" "DOTUSDT" "EGLDUSDT" "ENJUSDT" "EOSUSDT" "ETCUSDT" "FILUSDT" "FLMUSDT" "FTMUSDT" "GRTUSDT" "GTCUSDT" "HBARUSDT" "HNTUSDT" "HOTUSDT" "ICPUSDT" "ICXUSDT" "IOSTUSDT" "IOTAUSDT" "IOTXUSDT" "KAVAUSDT" "KEEPUSDT" "KNCUSDT" "KSMUSDT" "LINAUSDT" "LINKUSDT" "LITUSDT" "LRCUSDT" "LUNAUSDT" "MANAUSDT" "MASKUSDT" "MATICUSDT" "MKRUSDT" "MTLUSDT" "NEARUSDT" "NEOUSDT" "NKNUSDT" "OCEANUSDT" "OGNUSDT" "OMGUSDT" "ONEUSDT" "ONTUSDT" "QTUMUSDT" "RAYUSDT" "REEFUSDT" "RENUSDT" "RLCUSDT" "RSRUSDT" "RUNEUSDT" "RVNUSDT" "SANDUSDT" "SCUSDT" "SFPUSDT" "SKLUSDT" "SNXUSDT" "SOLUSDT" "SRMUSDT" "STMXUSDT" "STORJUSDT" "SUSHIUSDT" "SXPUSDT" "THETAUSDT" "TLMUSDT" "TOMOUSDT" "TRBUSDT" "TRXUSDT" "UNFIUSDT" "UNIUSDT" "VETUSDT" "WAVESUSDT" "XEMUSDT" "XLMUSDT" "XMRUSDT" "XTZUSDT" "YFIIUSDT" "YFIUSDT" "ZECUSDT" "ZENUSDT" "ZILUSDT" "ZRXUSDT")
 #declare -a symbol_list=("AAVEUSDT" "AKROUSDT" "ALICEUSDT" "ALPHAUSDT" "AVAXUSDT" "AXSUSDT" "BALUSDT" "BANDUSDT" "BELUSDT" "BLZUSDT" "BZRXUSDT" "CHRUSDT" "COTIUSDT" "DODOUSDT" "DOGEUSDT" "ENJUSDT" "FLMUSDT" "FTMUSDT" "GRTUSDT" "HBARUSDT" "HNTUSDT" "ICXUSDT" "IOSTUSDT" "LITUSDT" "LUNAUSDT" "MANAUSDT" "NEARUSDT" "ONEUSDT" "REEFUSDT" "RLCUSDT" "RUNEUSDT" "RVNUSDT" "SANDUSDT" "SFPUSDT" "SKLUSDT" "SNXUSDT" "STMXUSDT" "STORJUSDT" "THETAUSDT" "TOMOUSDT" "TRBUSDT" "UNFIUSDT" "ZRXUSDT")
 
-declare -a excluded_symbols=("BTCUSDT" "ETHUSDT" "XRPUSDT")
+declare -a excluded_symbols_regex="BTCUSDT BTCSTUSDT BNBUSDT ETHUSDT LTCUSDT XRPUSDT"
 
 python get_symbols.py -q USDT -f
 
@@ -12,7 +12,7 @@ while read line; do
     symbol_list+=($line)
 done < symbols_future_usdt.txt
 
-declare -a start_minutes_ago=$((4*60))
+declare -a start_minutes_ago=$((1*60))
 
 declare -a ultrashortmode=${1}
 
@@ -52,8 +52,9 @@ echo $end_date
 
 for symbol in "${symbol_list[@]}"
 do
-    if printf "${excluded_symbols[@]}" | grep -q ${symbol}; then
-        continue
+    if printf "${excluded_symbols_regex}" | grep -q ${symbol}; then
+        echo Skipping excluded symbol: ${symbol} ...
+            continue
     fi
     # Download tick trade data for all symbols
     python binance_trade_data.py -s $symbol -t $start_date -e $end_date $future_flag

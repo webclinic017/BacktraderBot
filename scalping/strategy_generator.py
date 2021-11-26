@@ -32,9 +32,17 @@ SMALL_RANDOM_VALUE_PCT = 15
 FUTURE_MAX_STRATEGIES_NUM = 50
 SPOT_MAX_STRATEGIES_NUM = 5
 
-MT_FUTURE_ORDER_SIZE = 100
+MT_FUTURE_ORDER_SIZE = 50
 MT_SPOT_ORDER_SIZE = 11
 MB_ORDER_SIZE = 0.0002
+
+IS_SKIP_SHORT_STRATEGY_MODE = False
+
+IS_FIXED_STRAT_PARAMS_MODE = True
+FIXED_DISTANCE_VALUE_PCT = 0.9
+FIXED_BUFFER_VALUE_PCT = 0.6
+FIXED_TP_VALUE_PCT = 0.2
+FIXED_SL_VALUE_PCT = 0.2
 
 DEFAULT_OUTPUT_MB_FILENAME = "Binance-BTC-strat.txt"
 DEFAULT_OUTPUT_MT_FILENAME = "algorithms.config"
@@ -189,6 +197,21 @@ class StrategyGeneratorHandler(object):
 
         return round(curr_order_size)
 
+    def get_tokens_vo(self, is_moonbot, pnl_row):
+        tokens_vo = TemplateTokensVO.from_pnl_row(is_moonbot, pnl_row)
+
+        if IS_FIXED_STRAT_PARAMS_MODE:
+            if is_moonbot:
+                tokens_vo.mshot_price_min = FIXED_DISTANCE_VALUE_PCT - 0.1
+                tokens_vo.mshot_price = FIXED_DISTANCE_VALUE_PCT
+            else:
+                tokens_vo.distance = FIXED_DISTANCE_VALUE_PCT
+                tokens_vo.buffer = FIXED_BUFFER_VALUE_PCT
+            tokens_vo.tp = FIXED_TP_VALUE_PCT
+            tokens_vo.sl = FIXED_SL_VALUE_PCT
+
+        return tokens_vo
+
     def run(self):
         random.seed()
         args = self.parse_args()
@@ -209,15 +232,17 @@ class StrategyGeneratorHandler(object):
         strategy_template = self._strategy_generator.read_strategy_template(args.moonbot, DEFAULT_STRATEGY_TEMPLATE_ID)
         strategy_list = []
         for idx, pnl_row in shots_pnl_data_df.iterrows():
+            tokens_vo = self.get_tokens_vo(is_moonbot, pnl_row)
+            if IS_SKIP_SHORT_STRATEGY_MODE and tokens_vo.shot_type == "SHORT":
+                continue
+
             if is_future and CURRENT_GRID_MODE == GRID_MODE_1:
                 for grid_order_idx in range(GRID_MODE_ORDER_NUM):
-                    tokens_vo = TemplateTokensVO.from_pnl_row(is_moonbot, pnl_row)
                     tokens_vo_adj = self.adjust_tokens_grid(is_moonbot, tokens_vo, grid_order_idx, GRID_MODE_1_DISTANCE_STEP_PCT)
                     is_last = idx == shots_pnl_data_df.index[-1] and grid_order_idx == GRID_MODE_ORDER_NUM - 1
                     order_size = self.get_order_size_mode_1(is_moonbot, is_future)
                     strategy_list.append(self._strategy_generator.generate_strategy(is_moonbot, is_future, strategy_template, tokens_vo_adj, order_size, is_last))
             if is_future and CURRENT_GRID_MODE == GRID_MODE_2:
-                tokens_vo = TemplateTokensVO.from_pnl_row(is_moonbot, pnl_row)
                 max_real_shot_depth = pnl_row['max_real_shot_depth']
                 distance_step_pct = (max_real_shot_depth - tokens_vo.distance) / (GRID_MODE_ORDER_NUM - 1)
                 distance_step_pct = max(tokens_vo.sl + GRID_MODE_2_SL_NEXT_ORDER_GAP_PCT, distance_step_pct)
@@ -229,7 +254,6 @@ class StrategyGeneratorHandler(object):
                     order_size = self.get_order_size_mode_2(is_moonbot, is_future, grid_order_idx, token_vo_arr)
                     strategy_list.append(self._strategy_generator.generate_strategy(is_moonbot, is_future, strategy_template, tokens_vo_adj, order_size, is_last))
             else:
-                tokens_vo = TemplateTokensVO.from_pnl_row(is_moonbot, pnl_row)
                 is_last = idx == shots_pnl_data_df.index[-1]
                 order_size = self.get_order_size(is_moonbot, is_future)
                 strategy_list.append(self._strategy_generator.generate_strategy(is_moonbot, is_future, strategy_template, tokens_vo, order_size, is_last))

@@ -34,7 +34,7 @@
           },
           "shotRestartDelay": {
             "name": "shotRestartDelay",
-            "value": 10,
+            "value": 1,
             "argumentType": 2,
             "group": 1,
             "subGroup": 0,
@@ -164,7 +164,7 @@
           },
           "coinDeltaTimeframe": {
             "name": "coinDeltaTimeframe",
-            "value": 300,
+            "value": 3600,
             "argumentType": 17,
             "group": 20,
             "subGroup": 0,
@@ -207,7 +207,7 @@
           "qav24MinMax": {
             "name": "qav24MinMax",
             "value": {
-              "min": 0.0,
+              "min": 10000000.0,
               "max": 100200300400
             },
             "argumentType": 19,
@@ -250,7 +250,7 @@
             "name": "btcMinMaxDelta",
             "value": {
               "min": 0.0,
-              "max": 3.0
+              "max": 7.0
             },
             "argumentType": 18,
             "group": 40,
@@ -537,7 +537,7 @@
           },
           "stopLossDelay": {
             "name": "stopLossDelay",
-            "value": 1.0,
+            "value": 0.0,
             "argumentType": 4,
             "group": 80,
             "subGroup": 0,

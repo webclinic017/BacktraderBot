@@ -26,7 +26,7 @@ MIN_PRACTICAL_DISTANCE = 0.5
 MAX_PRACTICAL_DISTANCE = 3.0
 
 MIN_DISTANCE_PCT = 0.3
-MAX_BUFFER_PCT = 0.3
+MAX_BUFFER_PCT = 0.4
 
 MIN_TP_PCT = 0.12
 MAX_TP_PCT = 0.19
@@ -47,12 +47,6 @@ CREATE_PNL_FILE_FLAG = True
 
 RATING_VALUE_DENOMINATOR = 100
 DEFAULT_BIN_ROUND_BASE = 5
-
-IS_FIXED_DISTANCE_MODE = True
-FIXED_DISTANCE_VALUE_PCT = 0.9
-FIXED_BUFFER_VALUE_PCT = 0.6
-FIXED_TP_VALUE_PCT = 0.2
-FIXED_SL_VALUE_PCT = 0.2
 
 
 class ShotTrialAnalyzer(object):
@@ -205,9 +199,9 @@ class ShotsPnlCalculator(object):
         max_tp = max(MAX_TP_PCT, max_s * DEFAULT_BOUNCE_TO_SHOT_RATIO)
 
         if is_moonbot:
-            price_min_val = FIXED_DISTANCE_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_DISTANCE_PCT, max_s - 0.1 + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
-            price_val = FIXED_DISTANCE_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
-            tp_val = FIXED_TP_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_TP_PCT, max_tp, DEFAULT_MIN_STEP)
+            price_min_val = np.arange(MIN_DISTANCE_PCT, max_s - 0.1 + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
+            price_val = np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
+            tp_val = np.arange(MIN_TP_PCT, max_tp, DEFAULT_MIN_STEP)
             return {
                 "MShotPriceMin": price_min_val,
                 "MShotPrice": price_val,
@@ -215,10 +209,10 @@ class ShotsPnlCalculator(object):
                 "sl": np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
             }
         else:
-            dist_val = FIXED_DISTANCE_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
-            buffer_val = FIXED_BUFFER_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(0.2, MAX_BUFFER_PCT, DEFAULT_MIN_STEP)
-            tp_val = FIXED_TP_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_TP_PCT, max_tp, DEFAULT_MIN_STEP)
-            sl_val = FIXED_SL_VALUE_PCT if IS_FIXED_DISTANCE_MODE else np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
+            dist_val = np.arange(MIN_DISTANCE_PCT, max_s + DEFAULT_MIN_STEP, DEFAULT_MIN_STEP)
+            buffer_val = np.arange(0.2, MAX_BUFFER_PCT, DEFAULT_MIN_STEP)
+            tp_val = np.arange(MIN_TP_PCT, max_tp, DEFAULT_MIN_STEP)
+            sl_val = np.arange(MIN_SL_PCT, MAX_SL_PCT, DEFAULT_MIN_STEP)
             return {
                 "distance": dist_val,
                 "buffer": buffer_val,
