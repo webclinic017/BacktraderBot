@@ -93,7 +93,8 @@ class MTReportAnalyzer(object):
             df = df.fillna(0)
             for i in range(len(df)):
                 strat_id = df['strategy_id'].values[i]
-                strat_id = strat_id[strat_id.index("Info:") + 6 : ]
+                if "Info:" in strat_id:
+                    strat_id = strat_id[strat_id.index("Info:") + 6 : ]
                 df['strategy_id'].values[i] = strat_id
         except Exception as e:
             raise Exception("Error during connecting to FDB database: {}".format(e))
