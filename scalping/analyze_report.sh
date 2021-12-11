@@ -16,10 +16,7 @@ else
     exit -1
 fi
 
-declare -a db_filename=mtdb022.fdb
 declare -a working_folder=/Users/alex/Downloads
-declare -a remote_db_filename=c:/MoonTrader/data/mt-core/${db_filename}
-declare -a local_db_filename=${working_folder}/${db_filename}
 
 if [ -d "/Users/alex/opt/anaconda3" ]; then
     source /Users/alex/opt/anaconda3/etc/profile.d/conda.sh
@@ -30,8 +27,12 @@ elif [ -d "/Users/alex/anaconda3" ]; then
 fi
 conda activate Backtrader
 
-##pwsh ./powershell/get_from_vps.ps1 ${vps_ip_address} ${remote_db_filename} ${local_db_filename}
+echo Running MT Report Analyzer on VPS$vps_id_param
+ssh $vps_ip_address "python c:/Python/Scalping/mt_report_analyzer.py"
 
-cd ..
+echo Copying remote report files into $working_folder
 
-python -m scalping.mt_report_analyzer
+scp 45.76.214.140:c:/Python/Scalping/\*csv $working_folder
+
+echo Deleting old analyzer files on VPS$vps_id_param
+ssh $vps_ip_address "del c:\Python\Scalping\*.csv"

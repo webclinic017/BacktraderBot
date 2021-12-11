@@ -5,7 +5,7 @@ import os
 import random
 import fdb
 
-DEFAULT_WORKING_PATH = "."
+DEFAULT_WORKING_PATH = "c:/Python/Scalping"
 FDB_REPORT_FILENAME = "c:/MoonTrader/data/mt-core/mtdb022.fdb"
 
 BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD = 4
