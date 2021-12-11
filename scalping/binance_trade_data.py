@@ -312,7 +312,7 @@ symbol_type_str = get_symbol_type_str(args)
 output_path = '{}/../marketdata/tradedata/{}/{}/{}'.format(dirname, EXCHANGE_STR, symbol_type_str, symbol_out)
 os.makedirs(output_path, exist_ok=True)
 
-gmt3_tz = pytz.timezone('Etc/GMT-3')
+gmt3_tz = pytz.timezone('Etc/GMT-2')
 start_utc_date = datetime.strptime(args.start, '%Y-%m-%dT%H:%M:%S')
 start_utc_date = gmt3_tz.localize(start_utc_date, is_dst=True)
 start = int(start_utc_date.timestamp()) * 1000
@@ -331,7 +331,7 @@ print("Downloading {}...".format(args.symbol))
 btc_1m_ohlc_df = get_btc_ohlcv_data(start, end)
 
 while timestamp <= end and timestamp != last_timestamp:
-    print("Requesting {} {}: {} GMT+03:00".format("Future" if args.future else "Spot", symbol_out, datetime.fromtimestamp(int(timestamp/1000)).strftime("%Y-%m-%dT%H:%M:%S")))
+    print("Requesting {} {}: {} GMT+02:00".format("Future" if args.future else "Spot", symbol_out, datetime.fromtimestamp(int(timestamp/1000)).strftime("%Y-%m-%dT%H:%M:%S")))
     options = {'startTime': timestamp, 'limit': API_LIMIT}
     if not args.future:
         options = {'startTime': timestamp, 'endTime': timestamp + 3600000}

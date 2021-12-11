@@ -22,8 +22,8 @@ output_folder_prefix="$(date -j -f "%s" "${end_timestamp}" "+%Y%m%d_%H%M")"
 BASE_OUT_FOLDER=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies
 output_folder="${BASE_OUT_FOLDER}/${output_folder_prefix}_Future_${start_minutes_ago}m/"
 
-if [ -d "/opt/anaconda3" ]; then
-    source /opt/anaconda3/etc/profile.d/conda.sh
+if [ -d "/Users/alex/opt/anaconda3" ]; then
+    source /Users/alex/opt/anaconda3/etc/profile.d/conda.sh
 elif [ -d "/home/alex/anaconda3" ]; then
     source /home/alex/anaconda3/etc/profile.d/conda.sh
 elif [ -d "/Users/alex/anaconda3" ]; then

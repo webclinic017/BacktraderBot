@@ -101,7 +101,7 @@ class ShotStrategyGenerator(object):
             market_type = 1 if not is_future else 3
             trade_latency = 5 if not is_future else 5
             strategy_id = int(datetime.now().timestamp() * 1000) + random.randrange(1000000) - random.randrange(100000) + (uuid.uuid1().int % 100000)
-            follow_price_delay = 0 if is_future else 0
+            follow_price_delay = 1 if is_future else 1
             return {
                 TOKEN001_STR: "{}".format(strategy_id),
                 TOKEN002_STR: "[{}]{}{} {} {}-{}-{}-{}".format(symbol_type_str, extra_suffix, symbol_name, shot_type, distance, buffer, tp, sl),
