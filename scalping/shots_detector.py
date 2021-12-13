@@ -10,7 +10,8 @@ FIND_BOUNCE_SMA_FIELD_NAME = "SMA40"
 PRESHOT_TRADES_MIN_NUMBER_THRESHOLD = 3
 PRESHOT_DEPTH_MIN_THRESHOLD_PCT = 0.1
 
-SHOT_DEPTH_MIN_THRESHOLD_PCT_US_MODE = 0.2
+SHOT_DEPTH_SPOT_MIN_THRESHOLD_PCT_US_MODE = 0.3
+SHOT_DEPTH_FUTURE_MIN_THRESHOLD_PCT_US_MODE = 0.2
 SHOT_DEPTH_MIN_THRESHOLD_PCT = 0.4
 
 SHOT_ROUNDING_PRECISION = 0.01
@@ -203,6 +204,12 @@ class ShotsDetector(object):
         return "{}.{:03d}".format(datetime.fromtimestamp(int(timestamp / 1000)).strftime("%Y-%m-%dT%H:%M:%S"),
                                   timestamp % 1000)
 
+    def get_shot_depth_min_threshold(self, args):
+        if args.future:
+            return SHOT_DEPTH_FUTURE_MIN_THRESHOLD_PCT_US_MODE if args.ultrashortmode else SHOT_DEPTH_MIN_THRESHOLD_PCT
+        else:
+            return SHOT_DEPTH_SPOT_MIN_THRESHOLD_PCT_US_MODE if args.ultrashortmode else SHOT_DEPTH_MIN_THRESHOLD_PCT
+
     def find_shots(self, args, df, groups_df):
         symbol_name = args.symbol
         shots_list = []
@@ -249,7 +256,7 @@ class ShotsDetector(object):
                             max_price_val = c_price
                         if shot_type == "LONG" and p_price < p_sma and c_price > c_sma or shot_type == "SHORT" and p_price > p_sma and c_price < c_sma:
                             shot_depth_pct = self.calculate_depth_pct(first_price, max_price_val)
-                            shot_depth_min_threshold = SHOT_DEPTH_MIN_THRESHOLD_PCT_US_MODE if args.ultrashortmode else SHOT_DEPTH_MIN_THRESHOLD_PCT
+                            shot_depth_min_threshold = self.get_shot_depth_min_threshold(args)
                             if shot_depth_pct >= shot_depth_min_threshold:
                                 shot_bounce_info = self.find_shot_bounce(df, group_timestamp, c_timestamp, c_price, shot_type, max_price_val)
                                 real_shot_depth = (shot_depth_pct + abs(shot_bounce_info.bounce_pct)) if shot_bounce_info.bounce_pct < 0 else shot_depth_pct

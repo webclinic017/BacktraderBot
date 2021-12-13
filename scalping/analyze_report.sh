@@ -27,11 +27,13 @@ elif [ -d "/Users/alex/anaconda3" ]; then
 fi
 conda activate Backtrader
 
-echo Running MT Report Analyzer on VPS$vps_id_param
+echo Deploying MT Report Analyzer on VPS$vps_id_param
+scp ./mt_report_analyzer.py $vps_ip_address:c:/Python/Scalping/mt_report_analyzer.py
+
+echo Running MT Report Analyzer
 ssh $vps_ip_address "python c:/Python/Scalping/mt_report_analyzer.py"
 
 echo Copying remote report files into $working_folder
-
 scp $vps_ip_address:c:/Python/Scalping/\*.csv $working_folder
 
 echo Deleting old analyzer files on VPS$vps_id_param

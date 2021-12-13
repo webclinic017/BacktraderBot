@@ -13,6 +13,8 @@ WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD = 30
 
 REPORT_GEN_MODE_ALL = (0, "[All]")
 
+IS_PRINT_ALL_TRADES_FLAG = True
+
 
 class MTReportAnalyzer(object):
     def __init__(self):
@@ -33,6 +35,9 @@ class MTReportAnalyzer(object):
 
     def get_report_db_filename(self):
         return FDB_REPORT_FILENAME
+
+    def get_trades_filename(self):
+        return '{}/all-trades.csv'.format(DEFAULT_WORKING_PATH)
 
     def get_output_analysis_filename(self, report_gen_mode, strategy_id):
         if report_gen_mode == REPORT_GEN_MODE_ALL:
@@ -96,6 +101,8 @@ class MTReportAnalyzer(object):
                 if "Info:" in strat_id:
                     strat_id = strat_id[strat_id.index("Info:") + 6 : ]
                 df['strategy_id'].values[i] = strat_id
+            if IS_PRINT_ALL_TRADES_FLAG:
+                df.to_csv(self.get_trades_filename())
         except Exception as e:
             raise Exception("Error during connecting to FDB database: {}".format(e))
         return df
