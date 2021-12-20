@@ -1,9 +1,15 @@
 backtrader==1.9.74.123
-ccxt==1.18.240
+ccxt==1.46.47
 matplotlib==2.2.3
 cryptocmd==0.5.2
-pandas==0.24.1
+pandas==1.2.4
 termcolor==1.1.0
 PyYAML==3.13
 requests==2.21.0
 objgraph==3.4.0
+plotly==4.14.3
+openpyxl==3.0.7
+fdb==2.0.2
+firebird-base==1.3.0
+firebird-driver==1.3.4
+firebird-lib==1.2.0
