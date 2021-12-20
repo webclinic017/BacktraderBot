@@ -10,6 +10,10 @@ string_types = str
 
 STARTCASH = 100
 
+WORKING_MODE_BEST_PNL_SIMULATION = 0
+WORKING_MODE_IQR = 1
+WORKING_MODE = WORKING_MODE_IQR
+
 MIN_TOTAL_SHOTS_COUNT = 3
 SS_FILTER_MIN_SHOTS_COUNT = 0
 
@@ -52,6 +56,11 @@ CREATE_PNL_FILE_FLAG = True
 
 RATING_VALUE_DENOMINATOR = 100
 DEFAULT_BIN_ROUND_BASE = 5
+
+IQR_MODE_DEFAULT_BUFFER = 0.2
+IQR_MODE_IDEAL_TP_DISTANCE_RATIO = 0.33
+IQR_MODE_FUTURE_MIN_TP_PCT = 0.17
+IQR_MODE_SPOT_MIN_TP_PCT = 0.3
 
 
 class ShotTrialAnalyzer(object):
@@ -309,75 +318,107 @@ class ShotsPnlCalculator(object):
     def pct_val(self, val, total, base):
         return self.round_base(100 * val / total, base, 0)
 
-    def simulate_shots(self, is_moonbot, is_future, groups_df, shots_data_dict):
+    def process_shots(self, is_moonbot, is_future, shots_list, groups_df, shots_data_dict):
         arr_out = []
 
         shot_depth_list = list(groups_df["real_shot_depth"].values)
         shot_count_list = list(groups_df["counts"].values)
         max_real_shot_depth = max(shot_depth_list)
 
-        combinations = self.get_sim_combinations(is_moonbot, is_future, shot_depth_list, shot_count_list)
-        for c_idx, c_dict in enumerate(combinations):
-            if c_idx % 100 == 0:
-                print("{}/{}".format(c_idx, len(combinations)))
-            c_tp = c_dict["tp"]
-            c_sl = c_dict["sl"]
+        if WORKING_MODE == WORKING_MODE_BEST_PNL_SIMULATION:
+            combinations = self.get_sim_combinations(is_moonbot, is_future, shot_depth_list, shot_count_list)
+            for c_idx, c_dict in enumerate(combinations):
+                if c_idx % 100 == 0:
+                    print("{}/{}".format(c_idx, len(combinations)))
+                c_tp = c_dict["tp"]
+                c_sl = c_dict["sl"]
+                if is_moonbot:
+                    c_mshot_price_min = c_dict["MShotPriceMin"]
+                    c_mshot_price = c_dict["MShotPrice"]
+                    if c_mshot_price <= c_mshot_price_min:
+                        continue
+                    if c_tp > (c_mshot_price / MAX_TP_TO_SHOT_RATIO):
+                        continue
+                    if c_sl / c_tp < MIN_RR_RATIO:
+                        continue
+                    comb_params_arr = [c_mshot_price_min, c_mshot_price, c_tp, c_sl]
+                else:
+                    c_distance = c_dict["distance"]
+                    c_buffer = c_dict["buffer"]
+                    if c_distance <= c_buffer / 2:
+                        continue
+                    if c_tp > ((c_distance + c_buffer / 2) / MAX_TP_TO_SHOT_RATIO):
+                        continue
+                    if c_sl / c_tp < MIN_RR_RATIO:
+                        continue
+                    comb_params_arr = [c_distance, c_buffer, c_tp, c_sl]
+
+                trial_analyzer = ShotTrialAnalyzer()
+                shot_pnl_arr = []
+
+                for index, shot_group in groups_df.iterrows():
+                    shot_depth = shot_group["real_shot_depth"]
+                    if shot_group["counts"] == 0:
+                        continue
+
+                    group_shots_list = shots_data_dict[shot_depth]
+                    for shot in group_shots_list:
+                        trial_analyzer = self.calculate_shot_trials(is_moonbot, is_future, trial_analyzer, shot, comb_params_arr)
+
+                        if trial_analyzer:
+                            if len(trial_analyzer.shot_trials_pnl_arr) > 0:
+                                shot_trials_pnl_avg = np.mean(trial_analyzer.shot_trials_pnl_arr)
+                                shot_pnl_arr.append(shot_trials_pnl_avg)
+                            else:
+                                shot_pnl_arr.append(0)
+
+                if len(shot_pnl_arr) > 0:
+                    total_pnl = sum(shot_pnl_arr)
+                    distance_r = (comb_params_arr[1] + comb_params_arr[1] - comb_params_arr[0]) if is_moonbot else (comb_params_arr[0] + comb_params_arr[1])
+                    distance_rating = self.round_base(round(distance_r * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
+                    profit_rating = self.round_base(round(total_pnl * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
+                    trials_count = trial_analyzer.shot_trials_count
+
+                    arr = [round(comb_params_arr[0], 2),
+                           round(comb_params_arr[1], 2),
+                           round(c_tp, 2),
+                           round(c_sl, 2),
+                           max_real_shot_depth,
+                           distance_rating,
+                           profit_rating,
+                           trials_count
+                    ]
+                    arr_out.append(arr)
+        elif WORKING_MODE == WORKING_MODE_IQR:
+            quartiles = np.quantile(shots_list, [0.25, 0.5, 0.75], interpolation='midpoint')
+            q1 = quartiles[0]
+            q2 = quartiles[1]
+            q3 = quartiles[2]
+            iqr = q3 - q1
+            max_val = q3 + 1.5 * iqr
             if is_moonbot:
-                c_mshot_price_min = c_dict["MShotPriceMin"]
-                c_mshot_price = c_dict["MShotPrice"]
-                if c_mshot_price <= c_mshot_price_min:
-                    continue
-                if c_tp > (c_mshot_price / MAX_TP_TO_SHOT_RATIO):
-                    continue
-                if c_sl / c_tp < MIN_RR_RATIO:
-                    continue
-                comb_params_arr = [c_mshot_price_min, c_mshot_price, c_tp, c_sl]
+                iqr_mshotpricemin = q2 - IQR_MODE_DEFAULT_BUFFER / 2
+                iqr_mshotprice = q2
+                iqr_tp = iqr_mshotprice * IQR_MODE_IDEAL_TP_DISTANCE_RATIO
+                iqr_tp = max(iqr_tp, IQR_MODE_FUTURE_MIN_TP_PCT if is_future else IQR_MODE_SPOT_MIN_TP_PCT)
+                iqr_sl = max_val - q2
+                arr = [round(iqr_mshotpricemin, 2),
+                       round(iqr_mshotprice, 2),
+                       round(iqr_tp, 2),
+                       round(iqr_sl, 2),
+                       max_real_shot_depth, 1, 1, 1]
+                arr_out.append(arr)
             else:
-                c_distance = c_dict["distance"]
-                c_buffer = c_dict["buffer"]
-                if c_distance <= c_buffer / 2:
-                    continue
-                if c_tp > ((c_distance + c_buffer / 2) / MAX_TP_TO_SHOT_RATIO):
-                    continue
-                if c_sl / c_tp < MIN_RR_RATIO:
-                    continue
-                comb_params_arr = [c_distance, c_buffer, c_tp, c_sl]
-
-            trial_analyzer = ShotTrialAnalyzer()
-            shot_pnl_arr = []
-
-            for index, shot_group in groups_df.iterrows():
-                shot_depth = shot_group["real_shot_depth"]
-                if shot_group["counts"] == 0:
-                    continue
-
-                group_shots_list = shots_data_dict[shot_depth]
-                for shot in group_shots_list:
-                    trial_analyzer = self.calculate_shot_trials(is_moonbot, is_future, trial_analyzer, shot, comb_params_arr)
-
-                    if trial_analyzer:
-                        if len(trial_analyzer.shot_trials_pnl_arr) > 0:
-                            shot_trials_pnl_avg = np.mean(trial_analyzer.shot_trials_pnl_arr)
-                            shot_pnl_arr.append(shot_trials_pnl_avg)
-                        else:
-                            shot_pnl_arr.append(0)
-
-            if len(shot_pnl_arr) > 0:
-                total_pnl = sum(shot_pnl_arr)
-                distance_r = (comb_params_arr[1] + comb_params_arr[1] - comb_params_arr[0]) if is_moonbot else (comb_params_arr[0] + comb_params_arr[1])
-                distance_rating = self.round_base(round(distance_r * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
-                profit_rating = self.round_base(round(total_pnl * RATING_VALUE_DENOMINATOR), DEFAULT_BIN_ROUND_BASE, 0)
-                trials_count = trial_analyzer.shot_trials_count
-
-                arr = [round(comb_params_arr[0], 2),
-                       round(comb_params_arr[1], 2),
-                       round(c_tp, 2),
-                       round(c_sl, 2),
-                       max_real_shot_depth,
-                       distance_rating,
-                       profit_rating,
-                       trials_count
-                ]
+                iqr_distance = q2
+                iqr_buffer = IQR_MODE_DEFAULT_BUFFER
+                iqr_tp = iqr_distance * IQR_MODE_IDEAL_TP_DISTANCE_RATIO
+                iqr_tp = max(iqr_tp, IQR_MODE_FUTURE_MIN_TP_PCT if is_future else IQR_MODE_SPOT_MIN_TP_PCT)
+                iqr_sl = max_val - q2
+                arr = [round(iqr_distance, 2),
+                       round(iqr_buffer, 2),
+                       round(iqr_tp, 2),
+                       round(iqr_sl, 2),
+                       max_real_shot_depth, 1, 1, 1]
                 arr_out.append(arr)
 
         if is_moonbot:
@@ -440,7 +481,8 @@ class ShotsPnlCalculator(object):
                                          'shot_depth': group_row['real_shot_depth'],
                                          'shot_bounce': group_row['shot_bounce']})
             shots_data_dict[shot_depth] = group_shots_list
-        shots_data_df = self.simulate_shots(is_moonbot, is_future, groups_df, shots_data_dict)
+        shots_list = list(shots_data_df["real_shot_depth"])
+        shots_data_df = self.process_shots(is_moonbot, is_future, shots_list, groups_df, shots_data_dict)
 
         if len(shots_data_df) > 0:
             if CREATE_PNL_FILE_FLAG:

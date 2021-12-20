@@ -14,8 +14,6 @@ elif [[ "$file_type_param" == "s" ]]; then
     declare -a filename=algorithms.config_spot
 elif [[ "$file_type_param" == "fs" ]]; then
     declare -a filename=algorithms.config_future_spot
-elif [[ "$file_type_param" == "fwl" ]]; then
-    declare -a filename=algorithms.config_future_wl
 else
     echo "Invalid file type specified: ${file_type_param}"
     exit -1
@@ -31,10 +29,27 @@ else
     exit -1
 fi
 
-declare -a filepath=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies/${filename}
+declare -a working_folder=/Users/alex/Cloud@Mail.Ru/_TEMP/scalping/out/strategies
+declare -a filepath=${working_folder}/${filename}
+declare -a remote_filename=c:/MoonTrader/data/mt-core/algorithms.config
+declare -a remote_filename_backup=c:/MoonTrader/data/mt-core/algorithms.config_BACKUP
+declare -a local_filename=${working_folder}/algorithms.config_REMOTE
 
 if [[ ! -f ${filepath} ]]; then
     echo "File ${filepath} not found!"
 fi
 
-pwsh ./powershell/deploy_to_vps.ps1 ${filepath} ${vps_ip_address}
+echo Retrieving MT strategy file from VPS${vps_id_param}
+scp $vps_ip_address:${remote_filename} ${local_filename}
+
+echo
+echo Backing up the exising MT strategy on VPS${vps_id_param}
+scp ${local_filename} $vps_ip_address:${remote_filename_backup}
+
+echo
+echo Deploying the new MT strategy file on VPS${vps_id_param}
+scp ${filepath} $vps_ip_address:${remote_filename}
+
+echo
+echo Cleaning up.
+rm -rf $local_filename
