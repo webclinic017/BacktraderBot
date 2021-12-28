@@ -1,12 +1,13 @@
 import argparse
 import pandas as pd
-import numpy as np
 import os
 import random
 import fdb
 
 DEFAULT_WORKING_PATH = "c:/Python/Scalping"
 FDB_REPORT_FILENAME = "c:/MoonTrader/data/mt-core/mtdb022.fdb"
+
+MAX_SLIPPAGE_PCT = 50
 
 BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD = 4
 WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD = 30
@@ -116,6 +117,7 @@ class MTReportAnalyzer(object):
         data_df = df[df['side'] == side]
         symbol_df = data_df[data_df['symbol'] == symbol]
 
+        all_symbols_loss_trades_pnl_pct_df = data_df[data_df['pnl_pct'] < 0]
         symbol_loss_trades_pnl_pct_df = symbol_df[symbol_df['pnl_pct'] < 0]
         symbol_loss_trades_net_pnl_usdt_df = symbol_df[symbol_df['net_pnl_usdt'] < 0]
         symbol_win_trades_pnl_pct_df = symbol_df[symbol_df['pnl_pct'] > 0]
@@ -133,13 +135,17 @@ class MTReportAnalyzer(object):
         win_trades_pnl_pct_max = round(symbol_win_trades_pnl_pct_df['pnl_pct'].max(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
         win_trades_pnl_pct_avg = round(symbol_win_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
         win_trades_net_pnl_usdt_avg = abs(symbol_win_trades_net_pnl_usdt_df['net_pnl_usdt'].mean()) if len(symbol_win_trades_net_pnl_usdt_df) > 0 else 0
+        loss_all_trades_pnl_pct_avg = round(all_symbols_loss_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(all_symbols_loss_trades_pnl_pct_df) > 0 else 0
+        deep_loss_trades_count = len(symbol_df[symbol_df['pnl_pct'] < loss_all_trades_pnl_pct_avg * (1 + MAX_SLIPPAGE_PCT / 100)])
         expectancy_usdt = round((win_trades_count / symbol_trade_count) * win_trades_net_pnl_usdt_avg - (loss_trades_count / symbol_trade_count) * loss_trades_net_pnl_usdt_avg, 4) if symbol_trade_count != 0 else 0
+        expectancy_pct = "{}%".format(round(100 * expectancy_usdt / symbol_df['volume_usdt'].mean(), 2)) if expectancy_usdt != 0 else 0
         is_blacklist_flag = True if symbol_pnl_usdt < 0 and loss_trades_count >= BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD else False
         is_whitelist_flag = True if not is_blacklist_flag and symbol_pnl_usdt > 0 and symbol_trade_count >= WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD else False
 
         result_dict[self.get_stats_key(side, 'symbol_trade_count')] = symbol_trade_count
         result_dict[self.get_stats_key(side, 'symbol_pnl_usdt')] = symbol_pnl_usdt
         result_dict[self.get_stats_key(side, 'expectancy_usdt')] = expectancy_usdt
+        result_dict[self.get_stats_key(side, 'expectancy_pct')] = expectancy_pct
         result_dict[self.get_stats_key(side, 'loss_trades_count')] = loss_trades_count
         result_dict[self.get_stats_key(side, 'loss_trades_pct')] = loss_trades_pct
         result_dict[self.get_stats_key(side, 'loss_trades_pnl_pct_max')] = loss_trades_pnl_pct_max
@@ -148,6 +154,7 @@ class MTReportAnalyzer(object):
         result_dict[self.get_stats_key(side, 'win_trades_pct')] = win_trades_pct
         result_dict[self.get_stats_key(side, 'win_trades_pnl_pct_max')] = win_trades_pnl_pct_max
         result_dict[self.get_stats_key(side, 'win_trades_pnl_pct_avg')] = win_trades_pnl_pct_avg
+        result_dict[self.get_stats_key(side, 'deep_loss_trades_count')] = deep_loss_trades_count
         result_dict[self.get_stats_key(side, 'is_blacklist_flag')] = is_blacklist_flag
         result_dict[self.get_stats_key(side, 'is_whitelist_flag')] = is_whitelist_flag
 
@@ -171,6 +178,7 @@ class MTReportAnalyzer(object):
         win_trades_net_pnl_usdt_avg = abs(df[df['net_pnl_usdt'] > 0]['net_pnl_usdt'].mean())
         total_pnl_usdt = round(df['net_pnl_usdt'].sum(), 2)
         expectancy_usdt = round(win_rate * win_trades_net_pnl_usdt_avg - loss_rate * loss_trades_net_pnl_usdt_avg, 4)
+        expectancy_pct = "{}%".format(round(100 * expectancy_usdt / df['volume_usdt'].mean(), 2)) if expectancy_usdt != 0 else 0
 
         result_dict['total_trade_count'] = total_trade_count
         result_dict['long_trades_lost_count'] = long_trades_lost_count
@@ -181,6 +189,7 @@ class MTReportAnalyzer(object):
         result_dict['short_trades_win_rate'] = short_trades_win_rate
         result_dict['total_pnl_usdt'] = total_pnl_usdt
         result_dict['expectancy_usdt'] = expectancy_usdt
+        result_dict['expectancy_pct'] = expectancy_pct
         result_dict['actual_win_rate_pct'] = round(100 * win_rate, 2)
 
         long_blacklist_arr  = [x for x in model_dict.keys() if model_dict[x]["LONG is_blacklist_flag"] is True]
@@ -236,6 +245,7 @@ class MTReportAnalyzer(object):
         report_rows.append(["SHORT Trades Win Rate, %:", total_stats_dict['short_trades_win_rate']])
         report_rows.append(["Total PnL, USDT:", total_stats_dict['total_pnl_usdt']])
         report_rows.append(["Trading Expectancy, USDT:", total_stats_dict['expectancy_usdt']])
+        report_rows.append(["Trading Expectancy, %:", total_stats_dict['expectancy_pct']])
         report_rows.append(["Actual Win Rate, %:", total_stats_dict['actual_win_rate_pct']])
         if report_gen_mode == REPORT_GEN_MODE_ALL:
             report_rows.append([""])
