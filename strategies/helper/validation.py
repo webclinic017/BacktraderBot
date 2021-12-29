@@ -11,8 +11,6 @@ class ParametersValidator(object):
             raise ValueError("The 'exitmode' parameter must be provided")
         if params.get("exitmode") and params.get("exitmode") != TradeExitMode.EXIT_MODE_DEFAULT and params.get("exitmode") != TradeExitMode.EXIT_MODE_SET_DYNAMIC_SLTP_WITH_ATR:
             raise ValueError("The 'exitmode' parameter should be set to {}, or {}".format(TradeExitMode.EXIT_MODE_DEFAULT, TradeExitMode.EXIT_MODE_SET_DYNAMIC_SLTP_WITH_ATR))
-        if not params.get("sl"):
-            raise ValueError("The STOP-LOSS ('sl') parameter must be provided")
         if params.get("tslflag") and not params.get("sl"):
             raise ValueError("The TRAILING STOP-LOSS ('tslflag') parameter should be provided with STOP-LOSS ('sl') parameter")
         if params.get("ttpdist") and not params.get("tp"):

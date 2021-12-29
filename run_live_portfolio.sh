@@ -6,7 +6,7 @@ PROCESS_DELAY_SECONDS=30
 run_bot_process() {
     _botid=${1}
     echo Launching a BacktraderBot instance: BotID=${_botid}
-    ./run_bot.sh $_botid $NUMBER_OF_BOTS > ./bot_logs/bot_process_${_botid}.log &
+    ./run_bot.sh $_botid $NUMBER_OF_BOTS
     sleep $PROCESS_DELAY_SECONDS
 }
 
@@ -21,6 +21,15 @@ delete_logs(){
     cp ./bot_logs/*.log ./bot_logs/backup/${dtime}
     rm -rf ./bot_logs/*.log
 }
+
+if [ -d "/Users/alex/opt/anaconda3" ]; then
+    source /Users/alex/opt/anaconda3/etc/profile.d/conda.sh
+elif [ -d "/home/alex/anaconda3" ]; then
+    source /home/alex/anaconda3/etc/profile.d/conda.sh
+elif [ -d "/Users/alex/anaconda3" ]; then
+    source /Users/alex/anaconda3/etc/profile.d/conda.sh
+fi
+conda activate Backtrader
 
 if [ "$#" -ne 1 ]; then
     echo "Usage: run_live_portfolio.sh <NUMBER OF BOTS>"

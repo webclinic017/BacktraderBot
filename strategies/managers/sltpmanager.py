@@ -311,16 +311,17 @@ class SLTPManager(object):
             return self.exists(obj[_key], chain) if chain else obj[_key]
 
     def log_state(self):
-        ta_analysis = self.strategy.analyzers.ta.get_analysis()
         if self.is_sl_enabled:
             self.strategy.log('SLTPManager.sl_price = {}'.format(self.sl_price))
             self.strategy.log('SLTPManager.sl_trailed_price = {}'.format(self.sl_trailed_price))
+            ta_analysis = self.strategy.analyzers.ta.get_analysis()
             tsl_moved_count = ta_analysis.tsl.moved.count if self.exists(ta_analysis, ['tsl', 'moved', 'count']) else 0
             self.strategy.log('TSL Moved Count = {}'.format(tsl_moved_count))
         if self.is_tp_enabled:
             self.strategy.log('SLTPManager.tp_price = {}'.format(self.tp_price))
             self.strategy.log('SLTPManager.tp_trailed_price = {}'.format(self.tp_trailed_price))
             self.strategy.log('SLTPManager.ttp_price = {}'.format(self.ttp_price))
+            ta_analysis = self.strategy.analyzers.ta.get_analysis()
             ttp_moved_count = ta_analysis.ttp.moved.count if self.exists(ta_analysis, ['ttp', 'moved', 'count']) else 0
             self.strategy.log('TTP Moved Count = {}'.format(ttp_moved_count))
         if self.is_sl_enabled or self.is_tp_enabled:

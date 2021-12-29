@@ -438,6 +438,9 @@ class GenericStrategy(bt.Strategy):
     def get_trade_log_profit_color(self, trade):
         return 'red' if trade.pnl < 0 else 'green'
 
+    def calculate_net_pnl_pct(self, trade_open, trade_close):
+        return round(100 * trade_close.pnlcomm / abs(trade_open.value), 2)
+
     def notify_trade(self, trade):
         self.log('!!! BEGIN notify_trade() - id(self)={}, self.curr_position={}, trade.ref={}, self.broker.getcash()={}'.format(id(self), self.curr_position, trade.ref, round(self.broker.getcash(), 8)))
 
@@ -447,15 +450,17 @@ class GenericStrategy(bt.Strategy):
 
         if trade.isclosed:
             self.tradesclosed[trade.ref] = trade
+            net_pnl_pct = self.calculate_net_pnl_pct(self.tradesopen[trade.ref], trade)
             self.log('---------------------------- TRADE CLOSED --------------------------')
             self.log("1: Data Name:                            {}".format(trade.data._name))
             self.log("2: Bar Num:                              {}".format(len(trade.data)))
             self.log("3: Current date:                         {}".format(self.data.datetime.date()))
             self.log('4: Status:                               Trade Complete')
             self.log('5: Ref:                                  {}'.format(trade.ref))
-            self.log('6: PnL GROSS:                            {}'.format(round(trade.pnl, 8)))
-            self.log('7: PnL NET:                              {}'.format(round(trade.pnlcomm, 8)))
-            self.log(colored('OPERATION PROFIT, GROSS {:.8f}, NET {:.8f}'.format(trade.pnl, trade.pnlcomm), self.get_trade_log_profit_color(trade)))
+            self.log('6: PNL GROSS:                            {}'.format(round(trade.pnl, 8)))
+            self.log('7: PNL NET:                              {}'.format(round(trade.pnlcomm, 8)))
+            self.log('8: PNL NET, %:                           {}%'.format(net_pnl_pct))
+            self.log('TRADE CLOSED: PNL GROSS={:.8f}, NET={:.8f}, NET%={}%'.format(trade.pnl, trade.pnlcomm, net_pnl_pct), True)
             self.log('--------------------------------------------------------------------')
 
     def stop(self):

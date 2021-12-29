@@ -4,6 +4,7 @@ from bot.config.bot_config import BotConfig
 from bot.utils import send_telegram_message
 from bot.config.bot_strategy_config import BotStrategyConfig
 from strategies.processors.strategyprocessor import BaseStrategyProcessor
+from common.constants import *
 
 
 class LiveTradingStrategyProcessor(BaseStrategyProcessor):
@@ -86,11 +87,20 @@ class LiveTradingStrategyProcessor(BaseStrategyProcessor):
     def get_order_size(self, data=None, is_long=None):
         return BotStrategyConfig.get_instance().order_size
 
+    def get_exchange_size(self, ticker, size_quote_curr):
+        #self.broker.store.exchange.verbose = True
+        if self.broker.store.exchange.id == BINANCE_EXCHANGE:
+            last_price = ticker["last"]
+            return round(size_quote_curr / last_price)
+        else:
+            return size_quote_curr
+
     def open_long_position(self, size=None):
         size = self.get_order_size() if not size else size
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
-        order = self.strategy.generic_buy(tradeid=self.strategy.curtradeid, size=size, exectype=bt.Order.Market, params={"type": "market"})
+        exch_size = self.get_exchange_size(ticker, size)
+        order = self.strategy.generic_buy(tradeid=self.strategy.curtradeid, size=exch_size, exectype=bt.Order.Market, params={})
         self.log("BUY MARKET base order submitted: Symbol={}, Size={}, curtradeid={}, order.ref={}".format(self.data.symbol, size, self.strategy.curtradeid, order.ref), True)
         return order
 
@@ -98,11 +108,12 @@ class LiveTradingStrategyProcessor(BaseStrategyProcessor):
         size = self.get_order_size() if not size else size
         ticker = self.get_ticker(self.data.symbol)
         self.log("Last ticker data: {}".format(ticker))
-        order = self.strategy.generic_sell(tradeid=self.strategy.curtradeid, size=size, exectype=bt.Order.Market, params={"type": "market"})
+        exch_size = self.get_exchange_size(ticker, size)
+        order = self.strategy.generic_sell(tradeid=self.strategy.curtradeid, size=exch_size, exectype=bt.Order.Market, params={})
         self.log("SELL MARKET base order submitted: Symbol={}, Size={}, curtradeid={}, order.ref={}".format(self.data.symbol, size, self.strategy.curtradeid, order.ref), True)
         return order
 
     def close_position(self):
-        order = self.strategy.generic_close(tradeid=self.strategy.curtradeid, params={"type": "market"})
+        order = self.strategy.generic_close(tradeid=self.strategy.curtradeid, params={})
         self.log("Closed position by MARKET order: Symbol={}, curtradeid={}, order.ref={}".format(self.data.symbol, self.strategy.curtradeid, order.ref), True)
         return order

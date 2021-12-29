@@ -206,17 +206,36 @@ class CCXTBroker(with_metaclass(MetaCCXTBroker, BrokerBase)):
                 data = o_order.data
                 pos = self.getposition(data, clone=False)
                 size = ccxt_order['amount']
-                price = ccxt_order['price']
+                price = pprice_orig = ccxt_order['price']
                 if ccxt_order['side'] == 'sell':
                     size = -size
                 psize, pprice, opened, closed = pos.update(size, price)
 
-                # comminfo = self.getcommissioninfo(data)
-                closedvalue = closedcomm = 0.0
-                openedvalue = openedcomm = 0.0
-                margin = pnl = 0.0
+                comminfo = self.getcommissioninfo(data)
+                cinfocomp = comminfo
 
-                o_order.execute(data.datetime[0], size, price, closed, closedvalue, closedcomm, opened, openedvalue, openedcomm, margin, pnl, psize, pprice)
+                if closed:
+                    closedvalue = comminfo.getoperationcost(closed, pprice_orig)
+                    closedcomm = comminfo.getcommission(closed, price)
+                else:
+                    closedvalue = closedcomm = 0.0
+
+                if opened:
+                    openedvalue = comminfo.getoperationcost(opened, price)
+                    openedcomm = cinfocomp.getcommission(opened, price)
+                else:
+                    openedvalue = openedcomm = 0.0
+
+                execsize = closed + opened
+
+                if execsize:
+                    # Confimrm the operation to the comminfo object
+                    comminfo.confirmexec(execsize, price)
+
+                    margin = pnl = 0.0
+
+                    o_order.execute(data.datetime[0], size, price, closed, closedvalue, closedcomm, opened, openedvalue, openedcomm, margin, pnl, psize, pprice)
+                    o_order.addcomminfo(comminfo)
 
                 ######## TODO: Review later ##########
                 #if o_order.executed.remsize:

@@ -104,7 +104,7 @@ class CCXTStore(with_metaclass(MetaSingleton, object)):
         self.currency = currency
         self.retries = retries
         self.rate_limit_factor = rate_limit_factor
-        self.debug = debug
+        self.debug = False
         balance = self.exchange.fetch_balance() if 'secret' in config else 0
         self._cash = 0 if balance == 0 else balance['free'][currency]
         self._value = 0 if balance == 0 else balance['total'][currency]

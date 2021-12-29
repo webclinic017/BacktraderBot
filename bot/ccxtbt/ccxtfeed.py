@@ -87,6 +87,7 @@ class CCXTFeed(with_metaclass(MetaCCXTFeed, DataBase)):
         self._data = deque()  # data queue for price data
         self._last_id = ''  # last processed trade id for ohlcv
         self._last_ts = 0  # last processed timestamp for ohlcv
+        self.params.debug = False
 
     def start(self, ):
         DataBase.start(self)

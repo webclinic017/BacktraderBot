@@ -1,5 +1,5 @@
 backtrader==1.9.74.123
-ccxt==1.46.47
+ccxt==1.64.81
 matplotlib==2.2.3
 cryptocmd==0.5.2
 pandas==1.2.4

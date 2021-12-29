@@ -11,6 +11,7 @@ from bot.config.broker_mappings import BrokerMappings
 from bot.utils import send_telegram_message
 from config.strategy_enum import BTStrategyEnum
 from config.strategy_config import AppConfig
+from common.constants import *
 import atexit
 import signal
 import sys
@@ -46,7 +47,7 @@ class BacktraderBot(object):
                             help='The type of commission to apply to a trade')
 
         parser.add_argument('--commission',
-                            default=0.002,
+                            default=0.0004,
                             type=float,
                             help='The amount of commission to apply to a trade')
 
@@ -72,11 +73,19 @@ class BacktraderBot(object):
 
     def get_broker_config(self, exchange, botid):
         exchange_rest_api_config = BotConfig.get_exchange_rest_api_config_for_bot(exchange, botid)
-        return {
-            'apiKey': exchange_rest_api_config.get("apikey"),
-            'secret': exchange_rest_api_config.get("secret"),
-            'nonce': lambda: str(int(time.time() * 1000)),
-        }
+        if exchange == BINANCE_EXCHANGE:
+            return {
+                'apiKey': exchange_rest_api_config.get("apikey"),
+                'secret': exchange_rest_api_config.get("secret"),
+                'enableRateLimit': exchange_rest_api_config.get("enableRateLimit"),
+                'options': exchange_rest_api_config.get("options")
+            }
+        else:
+            return {
+                'apiKey': exchange_rest_api_config.get("apikey"),
+                'secret': exchange_rest_api_config.get("secret"),
+                'nonce': lambda: str(int(time.time() * 1000)),
+            }
 
     def calc_history_start_date(self, timeframe):
         prefetch_num_minutes = 500 * timeframe
@@ -94,9 +103,9 @@ class BacktraderBot(object):
 
         broker_mapping = BrokerMappings.get_broker_mapping(exchange)
         broker = store.getbroker(broker_mapping=broker_mapping)
+        cerebro.setbroker(broker)
         if args.commtype.lower() == 'percentage':
             broker.setcommission(args.commission)
-        cerebro.setbroker(broker)
 
         hist_start_date = self.calc_history_start_date(self.bot_strategy_config.timeframe)
         data = store.getdata(
