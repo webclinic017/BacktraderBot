@@ -16,6 +16,8 @@ REPORT_GEN_MODE_ALL = (0, "[All]")
 
 IS_PRINT_ALL_TRADES_FLAG = True
 
+MAX_DD_INITIAL_CAPITAL_USDT = 20
+
 
 class MTReportAnalyzer(object):
     def __init__(self):
@@ -111,6 +113,50 @@ class MTReportAnalyzer(object):
     def get_stats_key(self, prefix, key):
         return "{} {}".format(prefix, key)
 
+    def get_max_loss_streak(self, df):
+        curr_loss_count = 0
+        max_loss_count = 0
+        for net_pnl in df['net_pnl_usdt']:
+            if net_pnl < 0:
+                curr_loss_count += 1
+                max_loss_count = max(curr_loss_count, max_loss_count)
+            if net_pnl > 0:
+                curr_loss_count = 0
+        return max_loss_count
+
+    def get_max_win_streak(self, df):
+        curr_win_count = 0
+        max_win_count = 0
+        for net_pnl in df['net_pnl_usdt']:
+            if net_pnl > 0:
+                curr_win_count += 1
+                max_win_count = max(curr_win_count, max_win_count)
+            if net_pnl < 0:
+                curr_win_count = 0
+        return max_win_count
+
+    def get_max_drawdown_pct(self, initial_capital, df):
+        maxportfoliovalue = tradeclosevalue = initial_capital
+        max_moneydown = 0
+        max_drawdown_pct = 0
+        if len(df) == 0:
+            return 0
+        for net_pnl in df['net_pnl_usdt']:
+            tradeclosevalue = tradeclosevalue + net_pnl
+            if tradeclosevalue < maxportfoliovalue:
+                moneydown = tradeclosevalue - maxportfoliovalue
+                drawdown_pct = 100.0 * moneydown / maxportfoliovalue
+            else:
+                maxportfoliovalue = tradeclosevalue
+                moneydown = 0
+                drawdown_pct = 0
+
+            # maximum drawdown values
+            max_moneydown = min(max_moneydown, moneydown)
+            max_drawdown_pct = min(max_drawdown_pct, drawdown_pct)
+
+        return max_drawdown_pct
+
     def calculate_trade_side_stats(self, df, symbol, side):
         result_dict = {}
 
@@ -130,11 +176,14 @@ class MTReportAnalyzer(object):
         loss_trades_pnl_pct_max = round(symbol_loss_trades_pnl_pct_df['pnl_pct'].min(), 2) if len(symbol_loss_trades_pnl_pct_df) > 0 else 0
         loss_trades_pnl_pct_avg = round(symbol_loss_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(symbol_loss_trades_pnl_pct_df) > 0 else 0
         loss_trades_net_pnl_usdt_avg = abs(symbol_loss_trades_net_pnl_usdt_df['net_pnl_usdt'].mean()) if len(symbol_loss_trades_net_pnl_usdt_df) > 0 else 0
+        max_loss_streak = self.get_max_loss_streak(symbol_df)
         win_trades_count = len(symbol_df[symbol_df['net_pnl_usdt'] > 0])
         win_trades_pct = round(100 * (win_trades_count / symbol_trade_count), 2) if symbol_trade_count != 0 else 0
         win_trades_pnl_pct_max = round(symbol_win_trades_pnl_pct_df['pnl_pct'].max(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
         win_trades_pnl_pct_avg = round(symbol_win_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
         win_trades_net_pnl_usdt_avg = abs(symbol_win_trades_net_pnl_usdt_df['net_pnl_usdt'].mean()) if len(symbol_win_trades_net_pnl_usdt_df) > 0 else 0
+        max_win_streak = self.get_max_win_streak(symbol_df)
+        max_drawdown_pct = round(self.get_max_drawdown_pct(MAX_DD_INITIAL_CAPITAL_USDT, symbol_df), 2)
         loss_all_trades_pnl_pct_avg = round(all_symbols_loss_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(all_symbols_loss_trades_pnl_pct_df) > 0 else 0
         deep_loss_trades_count = len(symbol_df[symbol_df['pnl_pct'] < loss_all_trades_pnl_pct_avg * (1 + MAX_SLIPPAGE_PCT / 100)])
         expectancy_usdt = round((win_trades_count / symbol_trade_count) * win_trades_net_pnl_usdt_avg - (loss_trades_count / symbol_trade_count) * loss_trades_net_pnl_usdt_avg, 4) if symbol_trade_count != 0 else 0
@@ -150,11 +199,14 @@ class MTReportAnalyzer(object):
         result_dict[self.get_stats_key(side, 'loss_trades_pct')] = loss_trades_pct
         result_dict[self.get_stats_key(side, 'loss_trades_pnl_pct_max')] = loss_trades_pnl_pct_max
         result_dict[self.get_stats_key(side, 'loss_trades_pnl_pct_avg')] = loss_trades_pnl_pct_avg
+        result_dict[self.get_stats_key(side, 'max_loss_streak')] = max_loss_streak
         result_dict[self.get_stats_key(side, 'win_trades_count')] = win_trades_count
         result_dict[self.get_stats_key(side, 'win_trades_pct')] = win_trades_pct
         result_dict[self.get_stats_key(side, 'win_trades_pnl_pct_max')] = win_trades_pnl_pct_max
         result_dict[self.get_stats_key(side, 'win_trades_pnl_pct_avg')] = win_trades_pnl_pct_avg
         result_dict[self.get_stats_key(side, 'deep_loss_trades_count')] = deep_loss_trades_count
+        result_dict[self.get_stats_key(side, 'max_win_streak')] = max_win_streak
+        result_dict[self.get_stats_key(side, 'max_drawdown_pct')] = max_drawdown_pct
         result_dict[self.get_stats_key(side, 'is_blacklist_flag')] = is_blacklist_flag
         result_dict[self.get_stats_key(side, 'is_whitelist_flag')] = is_whitelist_flag
 
@@ -179,6 +231,9 @@ class MTReportAnalyzer(object):
         total_pnl_usdt = round(df['net_pnl_usdt'].sum(), 2)
         expectancy_usdt = round(win_rate * win_trades_net_pnl_usdt_avg - loss_rate * loss_trades_net_pnl_usdt_avg, 4)
         expectancy_pct = "{}%".format(round(100 * expectancy_usdt / df['volume_usdt'].mean(), 2)) if expectancy_usdt != 0 else 0
+        max_loss_streak = self.get_max_loss_streak(df)
+        max_win_streak = self.get_max_win_streak(df)
+        max_drawdown_pct = round(self.get_max_drawdown_pct(MAX_DD_INITIAL_CAPITAL_USDT, df), 2)
 
         result_dict['total_trade_count'] = total_trade_count
         result_dict['long_trades_lost_count'] = long_trades_lost_count
@@ -190,6 +245,9 @@ class MTReportAnalyzer(object):
         result_dict['total_pnl_usdt'] = total_pnl_usdt
         result_dict['expectancy_usdt'] = expectancy_usdt
         result_dict['expectancy_pct'] = expectancy_pct
+        result_dict['max_loss_streak'] = max_loss_streak
+        result_dict['max_win_streak'] = max_win_streak
+        result_dict['max_drawdown_pct'] = max_drawdown_pct
         result_dict['actual_win_rate_pct'] = round(100 * win_rate, 2)
 
         long_blacklist_arr  = [x for x in model_dict.keys() if model_dict[x]["LONG is_blacklist_flag"] is True]
@@ -246,6 +304,9 @@ class MTReportAnalyzer(object):
         report_rows.append(["Total PnL, USDT:", total_stats_dict['total_pnl_usdt']])
         report_rows.append(["Trading Expectancy, USDT:", total_stats_dict['expectancy_usdt']])
         report_rows.append(["Trading Expectancy, %:", total_stats_dict['expectancy_pct']])
+        report_rows.append(["Max Loss Streak:", total_stats_dict['max_loss_streak']])
+        report_rows.append(["Max Win Streak:", total_stats_dict['max_win_streak']])
+        report_rows.append(["Maximum Drawdown, % (for capital {} USDT):".format(MAX_DD_INITIAL_CAPITAL_USDT), total_stats_dict['max_drawdown_pct']])
         report_rows.append(["Actual Win Rate, %:", total_stats_dict['actual_win_rate_pct']])
         if report_gen_mode == REPORT_GEN_MODE_ALL:
             report_rows.append([""])
