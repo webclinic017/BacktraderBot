@@ -34,7 +34,7 @@ echo Running MT Report Analyzer
 ssh $vps_ip_address "python c:/Python/Scalping/mt_report_analyzer.py"
 
 echo Copying remote report files into $working_folder
-scp $vps_ip_address:c:/Python/Scalping/\*.csv $working_folder
+scp $vps_ip_address:c:/Python/Scalping/\*.xlsx $working_folder
 
-echo Deleting old analyzer files on VPS$vps_id_param
-ssh $vps_ip_address "del c:\Python\Scalping\*.csv"
+echo Cleaning up on VPS$vps_id_param
+ssh $vps_ip_address "del c:\Python\Scalping\*.xlsx"

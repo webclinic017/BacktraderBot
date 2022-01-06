@@ -3,20 +3,26 @@ import pandas as pd
 import os
 import random
 import fdb
+import datetime as dt
 
 DEFAULT_WORKING_PATH = "c:/Python/Scalping"
 FDB_REPORT_FILENAME = "c:/MoonTrader/data/mt-core/mtdb022.fdb"
 
 MAX_SLIPPAGE_PCT = 50
 
-BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD = 4
-WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD = 30
+BL_FLAG_CRIT1_SYMBOL_TRADES_SS_COUNT = 7
+BL_FLAG_CRIT1_WIN_RATE_PCT = 60
+BL_FLAG_CRIT2_ALL_LOSS_TRADES_MIN_COUNT = 4
+BL_FLAG_CRIT2_ALL_LOSS_TRADES_MAX_COUNT = 6
+BL_FLAG_CRIT3_DEEP_LOSS_TRADES_COUNT = 2
+WL_FLAG_CRIT1_SYMBOL_TRADE_SS_COUNT = 20
+WL_FLAG_CRIT1_SYMBOL_WIN_RATE_PCT = 80
 
 REPORT_GEN_MODE_ALL = (0, "[All]")
 
 IS_PRINT_ALL_TRADES_FLAG = True
 
-MAX_DD_INITIAL_CAPITAL_USDT = 20
+DEFAULT_LEVERAGE = 5
 
 
 class MTReportAnalyzer(object):
@@ -40,11 +46,13 @@ class MTReportAnalyzer(object):
         return FDB_REPORT_FILENAME
 
     def get_trades_filename(self):
-        return '{}/all-trades.csv'.format(DEFAULT_WORKING_PATH)
+        curr_dt = dt.datetime.now().strftime("%Y%m%d_%H%M")
+        return '{}/{}-all-trades.xlsx'.format(DEFAULT_WORKING_PATH, curr_dt)
 
     def get_output_analysis_filename(self, report_gen_mode, strategy_id):
         if report_gen_mode == REPORT_GEN_MODE_ALL:
-            return '{}/report_analysis_all-{}.csv'.format(DEFAULT_WORKING_PATH, strategy_id)
+            curr_dt = dt.datetime.now().strftime("%Y%m%d_%H%M")
+            return '{}/{}-report_analysis_all-{}.xlsx'.format(DEFAULT_WORKING_PATH, curr_dt, strategy_id)
         else:
             raise Exception("Wrong report_gen_mode value provided: {}".format(report_gen_mode))
 
@@ -105,7 +113,7 @@ class MTReportAnalyzer(object):
                     strat_id = strat_id[strat_id.index("Info:") + 6 : ]
                 df['strategy_id'].values[i] = strat_id
             if IS_PRINT_ALL_TRADES_FLAG:
-                df.to_csv(self.get_trades_filename())
+                df.to_excel(self.get_trades_filename(), engine='xlsxwriter')
         except Exception as e:
             raise Exception("Error during connecting to FDB database: {}".format(e))
         return df
@@ -157,7 +165,17 @@ class MTReportAnalyzer(object):
 
         return max_drawdown_pct
 
-    def calculate_trade_side_stats(self, df, symbol, side):
+    def is_bl_condition(self, symbol_pnl_usdt, symbol_trade_count, loss_trades_count, win_trades_pct, deep_loss_trades_count):
+        criterion1_flag = symbol_pnl_usdt < 0 and symbol_trade_count >= BL_FLAG_CRIT1_SYMBOL_TRADES_SS_COUNT and win_trades_pct < BL_FLAG_CRIT1_WIN_RATE_PCT
+        criterion2_flag = symbol_pnl_usdt < 0 and loss_trades_count >= BL_FLAG_CRIT2_ALL_LOSS_TRADES_MIN_COUNT and loss_trades_count <= BL_FLAG_CRIT2_ALL_LOSS_TRADES_MAX_COUNT and win_trades_pct == 0
+        criterion3_flag = symbol_pnl_usdt < 0 and deep_loss_trades_count >= BL_FLAG_CRIT3_DEEP_LOSS_TRADES_COUNT
+        return criterion1_flag or criterion2_flag or criterion3_flag
+
+    def is_wl_condition(self, symbol_pnl_usdt, symbol_trade_count, win_trades_pct):
+        criterion1_flag = symbol_pnl_usdt > 0 and symbol_trade_count >= WL_FLAG_CRIT1_SYMBOL_TRADE_SS_COUNT and win_trades_pct >= WL_FLAG_CRIT1_SYMBOL_WIN_RATE_PCT
+        return criterion1_flag
+
+    def calculate_trade_side_stats(self, df, symbol, side, deposit_size):
         result_dict = {}
 
         data_df = df[df['side'] == side]
@@ -183,13 +201,13 @@ class MTReportAnalyzer(object):
         win_trades_pnl_pct_avg = round(symbol_win_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(symbol_win_trades_pnl_pct_df) > 0 else 0
         win_trades_net_pnl_usdt_avg = abs(symbol_win_trades_net_pnl_usdt_df['net_pnl_usdt'].mean()) if len(symbol_win_trades_net_pnl_usdt_df) > 0 else 0
         max_win_streak = self.get_max_win_streak(symbol_df)
-        max_drawdown_pct = round(self.get_max_drawdown_pct(MAX_DD_INITIAL_CAPITAL_USDT, symbol_df), 2)
+        max_drawdown_pct = round(self.get_max_drawdown_pct(deposit_size, symbol_df), 2)
         loss_all_trades_pnl_pct_avg = round(all_symbols_loss_trades_pnl_pct_df['pnl_pct'].mean(), 2) if len(all_symbols_loss_trades_pnl_pct_df) > 0 else 0
         deep_loss_trades_count = len(symbol_df[symbol_df['pnl_pct'] < loss_all_trades_pnl_pct_avg * (1 + MAX_SLIPPAGE_PCT / 100)])
         expectancy_usdt = round((win_trades_count / symbol_trade_count) * win_trades_net_pnl_usdt_avg - (loss_trades_count / symbol_trade_count) * loss_trades_net_pnl_usdt_avg, 4) if symbol_trade_count != 0 else 0
         expectancy_pct = "{}%".format(round(100 * expectancy_usdt / symbol_df['volume_usdt'].mean(), 2)) if expectancy_usdt != 0 else 0
-        is_blacklist_flag = True if symbol_pnl_usdt < 0 and loss_trades_count >= BL_FLAG_LOSS_TRADES_COUNT_THRESHOLD else False
-        is_whitelist_flag = True if not is_blacklist_flag and symbol_pnl_usdt > 0 and symbol_trade_count >= WL_FLAG_SYMBOL_TRADE_COUNT_THRESHOLD else False
+        is_blacklist_flag = self.is_bl_condition(symbol_pnl_usdt, symbol_trade_count, loss_trades_count, win_trades_pct, deep_loss_trades_count)
+        is_whitelist_flag = self.is_wl_condition(symbol_pnl_usdt, symbol_trade_count, win_trades_pct)
 
         result_dict[self.get_stats_key(side, 'symbol_trade_count')] = symbol_trade_count
         result_dict[self.get_stats_key(side, 'symbol_pnl_usdt')] = symbol_pnl_usdt
@@ -212,7 +230,7 @@ class MTReportAnalyzer(object):
 
         return result_dict
 
-    def calculate_total_stats(self, args, df, model_dict):
+    def calculate_total_stats(self, df, model_dict, deposit_size, avg_order_size):
         result_dict = {}
 
         long_trades_count = len(df[df['side'] == "LONG"])
@@ -233,7 +251,7 @@ class MTReportAnalyzer(object):
         expectancy_pct = "{}%".format(round(100 * expectancy_usdt / df['volume_usdt'].mean(), 2)) if expectancy_usdt != 0 else 0
         max_loss_streak = self.get_max_loss_streak(df)
         max_win_streak = self.get_max_win_streak(df)
-        max_drawdown_pct = round(self.get_max_drawdown_pct(MAX_DD_INITIAL_CAPITAL_USDT, df), 2)
+        max_drawdown_pct = round(self.get_max_drawdown_pct(deposit_size, df), 2)
 
         result_dict['total_trade_count'] = total_trade_count
         result_dict['long_trades_lost_count'] = long_trades_lost_count
@@ -247,6 +265,8 @@ class MTReportAnalyzer(object):
         result_dict['expectancy_pct'] = expectancy_pct
         result_dict['max_loss_streak'] = max_loss_streak
         result_dict['max_win_streak'] = max_win_streak
+        result_dict['deposit_size'] = round(deposit_size, 2)
+        result_dict['avg_order_size'] = round(avg_order_size, 2)
         result_dict['max_drawdown_pct'] = max_drawdown_pct
         result_dict['actual_win_rate_pct'] = round(100 * win_rate, 2)
 
@@ -261,9 +281,12 @@ class MTReportAnalyzer(object):
 
         return result_dict
 
-    def create_model(self, args, report_data_df):
+    def create_model(self, report_data_df):
         self._model_dict = {}
         self._total_stats_dict = {}
+
+        deposit_size = self.get_deposit_size(report_data_df)
+        avg_order_size = self.get_avg_order_size(report_data_df)
 
         symbol_list = report_data_df['symbol'].unique()
         symbol_list.sort()
@@ -273,14 +296,14 @@ class MTReportAnalyzer(object):
             symbol_df = report_data_df[report_data_df['symbol'] == symbol]
             row_dict['total_symbol_trade_count'] = len(symbol_df)
 
-            long_trades_stats_dict = self.calculate_trade_side_stats(report_data_df, symbol, "LONG")
-            shorts_trades_stats_dict = self.calculate_trade_side_stats(report_data_df, symbol, "SHORT")
+            long_trades_stats_dict = self.calculate_trade_side_stats(report_data_df, symbol, "LONG", deposit_size)
+            shorts_trades_stats_dict = self.calculate_trade_side_stats(report_data_df, symbol, "SHORT", deposit_size)
             row_dict.update(long_trades_stats_dict)
             row_dict.update({'_sep_': ""})
             row_dict.update(shorts_trades_stats_dict)
             self._model_dict[symbol] = row_dict
 
-        self._total_stats_dict = self.calculate_total_stats(args, report_data_df, self._model_dict)
+        self._total_stats_dict = self.calculate_total_stats(report_data_df, self._model_dict, deposit_size, avg_order_size)
 
     def format_list(self, arr):
         return ",".join(arr)
@@ -306,7 +329,9 @@ class MTReportAnalyzer(object):
         report_rows.append(["Trading Expectancy, %:", total_stats_dict['expectancy_pct']])
         report_rows.append(["Max Loss Streak:", total_stats_dict['max_loss_streak']])
         report_rows.append(["Max Win Streak:", total_stats_dict['max_win_streak']])
-        report_rows.append(["Maximum Drawdown, % (for capital {} USDT):".format(MAX_DD_INITIAL_CAPITAL_USDT), total_stats_dict['max_drawdown_pct']])
+        report_rows.append(["Deposit Size:", total_stats_dict['deposit_size']])
+        report_rows.append(["Average Order Size:", total_stats_dict['avg_order_size']])
+        report_rows.append(["Maximum Drawdown, %:", total_stats_dict['max_drawdown_pct']])
         report_rows.append(["Actual Win Rate, %:", total_stats_dict['actual_win_rate_pct']])
         if report_gen_mode == REPORT_GEN_MODE_ALL:
             report_rows.append([""])
@@ -336,16 +361,22 @@ class MTReportAnalyzer(object):
 
         report_filename = self.get_output_analysis_filename(report_gen_mode, strategy_id)
         df = pd.DataFrame(report_rows, columns=header).set_index('symbol')
-        df.to_csv(report_filename)
+        df.to_excel(report_filename, engine='xlsxwriter')
 
         print("Saved report analysis file: {}\n".format(report_filename))
+
+    def get_avg_order_size(self, df):
+        return df['volume_usdt'].mean()
+
+    def get_deposit_size(self, df):
+        return self.get_avg_order_size(df) / DEFAULT_LEVERAGE
 
     def get_report_strategies_list(self, df):
         s_list = df['strategy_id'].unique()
         s_list.sort()
         return list(s_list)
 
-    def generate_report(self, args, df, report_gen_mode):
+    def generate_report(self, df, report_gen_mode):
         if report_gen_mode == REPORT_GEN_MODE_ALL:
             report_df = df
         else:
@@ -355,7 +386,7 @@ class MTReportAnalyzer(object):
             strategies_list = self.get_report_strategies_list(report_df)
             for strategy_id in strategies_list:
                 strat_df = report_df.loc[report_df['strategy_id'] == strategy_id]
-                self.create_model(args, strat_df)
+                self.create_model(strat_df)
                 stats_report_rows = self.compile_stats_report(self._total_stats_dict, report_gen_mode)
                 self.write_analysis_report(stats_report_rows, report_gen_mode, strategy_id)
         else:
@@ -371,7 +402,7 @@ class MTReportAnalyzer(object):
             print("*** No report data found! Quitting.")
             exit(-1)
 
-        self.generate_report(args, report_data_df, REPORT_GEN_MODE_ALL)
+        self.generate_report(report_data_df, REPORT_GEN_MODE_ALL)
 
 
 def main():
