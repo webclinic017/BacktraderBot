@@ -52,7 +52,7 @@ class MTReportAnalyzer(object):
     def get_output_analysis_filename(self, report_gen_mode, strategy_id):
         if report_gen_mode == REPORT_GEN_MODE_ALL:
             curr_dt = dt.datetime.now().strftime("%Y%m%d_%H%M")
-            return '{}/{}-report_analysis_all-{}.xlsx'.format(DEFAULT_WORKING_PATH, curr_dt, strategy_id)
+            return '{}/{}-report-{}.xlsx'.format(DEFAULT_WORKING_PATH, curr_dt, strategy_id)
         else:
             raise Exception("Wrong report_gen_mode value provided: {}".format(report_gen_mode))
 
@@ -118,7 +118,13 @@ class MTReportAnalyzer(object):
             raise Exception("Error during connecting to FDB database: {}".format(e))
         return df
 
-    def get_stats_key(self, prefix, key):
+    def get_stats_key(self, side, key):
+        prefix = "NA"
+        if side == "LONG":
+            prefix = "L"
+        elif side == "SHORT":
+            prefix = "S"
+
         return "{} {}".format(prefix, key)
 
     def get_max_loss_streak(self, df):
@@ -270,10 +276,10 @@ class MTReportAnalyzer(object):
         result_dict['max_drawdown_pct'] = max_drawdown_pct
         result_dict['actual_win_rate_pct'] = round(100 * win_rate, 2)
 
-        long_blacklist_arr  = [x for x in model_dict.keys() if model_dict[x]["LONG is_blacklist_flag"] is True]
-        short_blacklist_arr = [x for x in model_dict.keys() if model_dict[x]["SHORT is_blacklist_flag"] is True]
-        long_whitelist_arr  = [x for x in model_dict.keys() if model_dict[x]["LONG is_whitelist_flag"] is True]
-        short_whitelist_arr = [x for x in model_dict.keys() if model_dict[x]["SHORT is_whitelist_flag"] is True]
+        long_blacklist_arr  = [x for x in model_dict.keys() if model_dict[x]["L is_blacklist_flag"] is True]
+        short_blacklist_arr = [x for x in model_dict.keys() if model_dict[x]["S is_blacklist_flag"] is True]
+        long_whitelist_arr  = [x for x in model_dict.keys() if model_dict[x]["L is_whitelist_flag"] is True]
+        short_whitelist_arr = [x for x in model_dict.keys() if model_dict[x]["S is_whitelist_flag"] is True]
         result_dict['long_blacklist_arr']  = long_blacklist_arr
         result_dict['short_blacklist_arr'] = short_blacklist_arr
         result_dict['long_whitelist_arr']  = long_whitelist_arr
@@ -308,13 +314,14 @@ class MTReportAnalyzer(object):
     def format_list(self, arr):
         return ",".join(arr)
 
-    def compile_stats_report(self, total_stats_dict, report_gen_mode):
+    def compile_stats_report(self, strategy_id, total_stats_dict, report_gen_mode):
         if report_gen_mode == REPORT_GEN_MODE_ALL:
             stats_title = "ALL Statistics:"
         else:
             raise Exception("Wrong report_gen_mode value provided: {}".format(report_gen_mode))
         report_rows = list()
         report_rows.append([""])
+        report_rows.append([strategy_id])
         report_rows.append(["-" * 20])
         report_rows.append([stats_title])
         report_rows.append(["Trades Number:", total_stats_dict['total_trade_count']])
@@ -387,7 +394,7 @@ class MTReportAnalyzer(object):
             for strategy_id in strategies_list:
                 strat_df = report_df.loc[report_df['strategy_id'] == strategy_id]
                 self.create_model(strat_df)
-                stats_report_rows = self.compile_stats_report(self._total_stats_dict, report_gen_mode)
+                stats_report_rows = self.compile_stats_report(strategy_id, self._total_stats_dict, report_gen_mode)
                 self.write_analysis_report(stats_report_rows, report_gen_mode, strategy_id)
         else:
             print("There is no data to process {} mode!".format(report_gen_mode[1]))
