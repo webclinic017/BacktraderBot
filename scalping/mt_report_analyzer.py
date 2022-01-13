@@ -253,11 +253,13 @@ class MTReportAnalyzer(object):
         loss_trades_net_pnl_usdt_avg = abs(df[df['net_pnl_usdt'] < 0]['net_pnl_usdt'].mean())
         win_trades_net_pnl_usdt_avg = abs(df[df['net_pnl_usdt'] > 0]['net_pnl_usdt'].mean())
         total_pnl_usdt = round(df['net_pnl_usdt'].sum(), 2)
+        total_pnl_pct = round(100 * df['net_pnl_usdt'].sum() / deposit_size, 2)
         expectancy_usdt = round(win_rate * win_trades_net_pnl_usdt_avg - loss_rate * loss_trades_net_pnl_usdt_avg, 4)
         expectancy_pct = "{}%".format(round(100 * expectancy_usdt / df['volume_usdt'].mean(), 2)) if expectancy_usdt != 0 else 0
         max_loss_streak = self.get_max_loss_streak(df)
         max_win_streak = self.get_max_win_streak(df)
         max_drawdown_pct = round(self.get_max_drawdown_pct(deposit_size, df), 2)
+        recovery_factor_pct = round(total_pnl_pct / max_drawdown_pct, 2)
 
         result_dict['total_trade_count'] = total_trade_count
         result_dict['long_trades_lost_count'] = long_trades_lost_count
@@ -267,6 +269,7 @@ class MTReportAnalyzer(object):
         result_dict['short_trades_pnl_usdt'] = short_trades_pnl_usdt
         result_dict['short_trades_win_rate'] = short_trades_win_rate
         result_dict['total_pnl_usdt'] = total_pnl_usdt
+        result_dict['total_pnl_pct'] = total_pnl_pct
         result_dict['expectancy_usdt'] = expectancy_usdt
         result_dict['expectancy_pct'] = expectancy_pct
         result_dict['max_loss_streak'] = max_loss_streak
@@ -274,6 +277,7 @@ class MTReportAnalyzer(object):
         result_dict['deposit_size'] = round(deposit_size, 2)
         result_dict['avg_order_size'] = round(avg_order_size, 2)
         result_dict['max_drawdown_pct'] = max_drawdown_pct
+        result_dict['recovery_factor_pct'] = recovery_factor_pct
         result_dict['actual_win_rate_pct'] = round(100 * win_rate, 2)
 
         long_blacklist_arr  = [x for x in model_dict.keys() if model_dict[x]["L is_blacklist_flag"] is True]
