@@ -1,11 +1,12 @@
 #! /bin/bash
 
-if [[ $# -ne 1 ]]; then
-    echo "Please specify valid parameters to run the script: analyze_report.sh <VPS_ID:1|2>"
+if [[ $# -eq 0 || $# -ge 3 ]]; then
+    echo "Please specify valid parameters to run the script: analyze_report.sh <VPS_ID:1|2> <append deltas:y|n>"
     exit -1
 fi
 
 declare -a vps_id_param=${1}
+declare -a append_deltas=${2}
 
 if [[ "$vps_id_param" == "1" ]]; then
     declare -a vps_ip_address=45.76.214.140
@@ -38,3 +39,8 @@ scp $vps_ip_address:c:/Python/Scalping/\*.xlsx $working_folder
 
 echo Cleaning up on VPS$vps_id_param
 ssh $vps_ip_address "del c:\Python\Scalping\*.xlsx"
+
+if [[ "$append_deltas" == "y" ]]; then
+    cd ..
+    python -m scalping.mt_report_deltas_appender
+fi

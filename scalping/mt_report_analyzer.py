@@ -259,7 +259,7 @@ class MTReportAnalyzer(object):
         max_loss_streak = self.get_max_loss_streak(df)
         max_win_streak = self.get_max_win_streak(df)
         max_drawdown_pct = round(self.get_max_drawdown_pct(deposit_size, df), 2)
-        recovery_factor_pct = round(total_pnl_pct / max_drawdown_pct, 2)
+        recovery_factor = round(abs(total_pnl_pct / max_drawdown_pct), 2)
 
         result_dict['total_trade_count'] = total_trade_count
         result_dict['long_trades_lost_count'] = long_trades_lost_count
@@ -277,7 +277,7 @@ class MTReportAnalyzer(object):
         result_dict['deposit_size'] = round(deposit_size, 2)
         result_dict['avg_order_size'] = round(avg_order_size, 2)
         result_dict['max_drawdown_pct'] = max_drawdown_pct
-        result_dict['recovery_factor_pct'] = recovery_factor_pct
+        result_dict['recovery_factor'] = recovery_factor
         result_dict['actual_win_rate_pct'] = round(100 * win_rate, 2)
 
         long_blacklist_arr  = [x for x in model_dict.keys() if model_dict[x]["L is_blacklist_flag"] is True]
@@ -343,6 +343,7 @@ class MTReportAnalyzer(object):
         report_rows.append(["Deposit Size:", total_stats_dict['deposit_size']])
         report_rows.append(["Average Order Size:", total_stats_dict['avg_order_size']])
         report_rows.append(["Maximum Drawdown, %:", total_stats_dict['max_drawdown_pct']])
+        report_rows.append(["Recovery Factor:", total_stats_dict['recovery_factor']])
         report_rows.append(["Actual Win Rate, %:", total_stats_dict['actual_win_rate_pct']])
         if report_gen_mode == REPORT_GEN_MODE_ALL:
             report_rows.append([""])
