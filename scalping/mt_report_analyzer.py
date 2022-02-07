@@ -259,7 +259,7 @@ class MTReportAnalyzer(object):
         max_loss_streak = self.get_max_loss_streak(df)
         max_win_streak = self.get_max_win_streak(df)
         max_drawdown_pct = round(self.get_max_drawdown_pct(deposit_size, df), 2)
-        recovery_factor = round(abs(total_pnl_pct / max_drawdown_pct), 2)
+        recovery_factor = round(total_pnl_pct / max_drawdown_pct, 2)
 
         result_dict['total_trade_count'] = total_trade_count
         result_dict['long_trades_lost_count'] = long_trades_lost_count

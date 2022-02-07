@@ -272,7 +272,7 @@ class BinanceTradeDataDownloader(object):
         try:
             self.w_exchange = ccxt.binance({
                 'enableRateLimit': True,
-                'rateLimit': 2,
+                'rateLimit': 5,
 
                 'options': {
                     'defaultType': self.get_symbol_type_str(is_future),

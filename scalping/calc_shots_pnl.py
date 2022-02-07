@@ -17,6 +17,8 @@ WORKING_MODE = WORKING_MODE_IQR
 MIN_TOTAL_SHOTS_COUNT = 3
 SS_FILTER_MIN_SHOTS_COUNT = 0
 
+ALLOW_SHORT_SHOTS_FLAG = True
+
 SPOT_MAKER_FEE_PCT = 0.075
 SPOT_TAKER_FEE_PCT = 0.075
 SPOT_FEES_PCT = SPOT_MAKER_FEE_PCT + SPOT_TAKER_FEE_PCT
@@ -507,6 +509,8 @@ class ShotsPnlCalculator(object):
             self.process_data(args, "SHORT")
         else:
             self.process_data(args, "LONG")
+            if ALLOW_SHORT_SHOTS_FLAG:
+                self.process_data(args, "SHORT")
 
         self.sort_best_pnl_file_rows(args)
 

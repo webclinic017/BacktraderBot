@@ -5,7 +5,7 @@
 
 declare -a excluded_symbols_regex="BTCUSDT BTCSTUSDT BNBUSDT ETHUSDT LTCUSDT XRPUSDT"
 
-python get_symb ols.py -q USDT -f
+python get_symbols.py -q USDT -f
 
 declare -a symbol_list
 while read line; do

@@ -10,6 +10,8 @@ FIND_BOUNCE_SMA_FIELD_NAME = "SMA40"
 PRESHOT_TRADES_MIN_NUMBER_THRESHOLD = 3
 PRESHOT_DEPTH_MIN_THRESHOLD_PCT = 0.1
 
+ALLOW_SHORT_SHOTS_FLAG = True
+
 SHOT_DEPTH_SPOT_MIN_THRESHOLD_PCT_US_MODE = 0.3
 SHOT_DEPTH_FUTURE_MIN_THRESHOLD_PCT_US_MODE = 0.2
 SHOT_DEPTH_MIN_THRESHOLD_PCT = 0.4
@@ -233,7 +235,7 @@ class ShotsDetector(object):
             max_price_val = last_price
             ci = last_trade.index.values[0]
 
-            if not args.future and shot_type == "SHORT":
+            if not args.future and shot_type == "SHORT" and not ALLOW_SHORT_SHOTS_FLAG:
                 continue
 
             if last_shot and group_timestamp < last_shot.end_timestamp + LAST_FOUND_SHOT_ALLOWANCE_MSEC:
